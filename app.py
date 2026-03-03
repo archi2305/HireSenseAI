@@ -1,3 +1,6 @@
+from ai_suggestions import generate_suggestions
+import os
+
 import streamlit as st
 from resume_parser import extract_text_from_pdf
 from skill_matcher import extract_skills, calculate_ats_score
@@ -58,3 +61,14 @@ if st.button("Analyze Resume"):
             st.markdown(f"- {skill}")
     else:
         st.write("No missing skills. Resume fully matches job description.")
+
+    st.subheader("AI Resume Improvement Suggestions")
+
+    with st.spinner("Generating suggestions..."):
+        suggestions = generate_suggestions(
+            resume_text,
+            job_description,
+            missing_skills
+    )
+
+    st.write(suggestions)
