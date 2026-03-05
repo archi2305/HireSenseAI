@@ -1,122 +1,143 @@
-from database import SessionLocal
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Query, Security
+from fastapi.security import APIKeyHeader
+from sqlalchemy.orm import Session
+from datetime import datetime
+import logging
+
+from database import get_db
 from models import Analysis
-from database import engine
-from models import Base
-from fastapi import FastAPI, UploadFile, File, Form
+from schemas import AnalysisResponse, AnalysisUpdate
 from services.resume_parser import extract_text_from_pdf
-from services.skill_matcher import extract_skills, calculate_ats_score
+from services.skill_matcher import calculate_ats_score
 from services.suggestion_engine import generate_suggestions
 
-app = FastAPI(title="HireSense AI API")
-Base.metadata.create_all(bind=engine)
+app = FastAPI()
 
+# ------------------ Logging ------------------
 
-@app.get("/")
-def root():
-    return {"message": "HireSense AI Backend Running"}
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# ------------------ API Key Security ------------------
 
-@app.post("/analyze")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+def verify_api_key(api_key: str = Security(api_key_header)):
+    if api_key != "supersecretkey":
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return api_key
+
+# ------------------ POST ------------------
+
+@app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_resume(
     resume: UploadFile = File(...),
-    job_description: str = Form(...)
+    job_description: str = Form(...),
+    db: Session = Depends(get_db),
+    api_key: str = Security(verify_api_key)  # secure endpoint
 ):
+    try:
+        resume.file.seek(0)  # move pointer to start
+        resume_text = extract_text_from_pdf(resume.file)
 
-    resume_text = extract_text_from_pdf(resume.file)
+        # calculate ATS
+        ats_score, matched_skills, missing_skills = calculate_ats_score(
+            resume_text, job_description
+        )
 
-    resume_skills = extract_skills(resume_text)
-    jd_skills = extract_skills(job_description)
+        # generate suggestions
+        suggestions = generate_suggestions(
+            resume_text, job_description, missing_skills
+        )
 
-    ats_score, matched_skills = calculate_ats_score(resume_skills, jd_skills)
-    missing_skills = list(set(jd_skills) - set(resume_skills))
+        # save to database
+        analysis = Analysis(
+            ats_score=ats_score,
+            matched_skills=matched_skills,
+            missing_skills=missing_skills,
+            suggestions=suggestions,
+            created_at=datetime.now()
+        )
 
-    suggestions = generate_suggestions(
-        resume_text,
-        job_description,
-        missing_skills
-    )
+        db.add(analysis)
+        db.commit()
+        db.refresh(analysis)
 
-   
+        logger.info("New analysis created")
 
-    db = SessionLocal()
+        return analysis
 
-    new_record = Analysis(
-        ats_score=ats_score,
-        matched_skills=matched_skills,
-        missing_skills=missing_skills,
-        suggestions=suggestions
-)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    db.add(new_record)
-    db.commit()
-    db.refresh(new_record)
-    db.close()
 
-    # -------- DATABASE SAVE ENDS HERE --------
+# ------------------ GET ALL (Pagination) ------------------
 
-    return {
-        "analysis_id": new_record.id,
-        "ats_score": ats_score,
-        "matched_skills": matched_skills,
-        "missing_skills": missing_skills,
-        "suggestions": suggestions
-    }
+@app.get("/analysis", response_model=list[AnalysisResponse])
+def get_all_analysis(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    return db.query(Analysis).offset(skip).limit(limit).all()
 
-@app.get("/analysis/{analysis_id}")
-def get_analysis(analysis_id: int):
 
-    db = SessionLocal()
+# ------------------ GET SINGLE ------------------
 
-    record = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+@app.get("/analysis/{analysis_id}", response_model=AnalysisResponse)
+def get_analysis(analysis_id: int, db: Session = Depends(get_db)):
+    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
 
-    db.close()
-
-    if not record:
+    if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
 
-    return {
-        "id": record.id,
-        "ats_score": record.ats_score,
-        "matched_skills": record.matched_skills,
-        "missing_skills": record.missing_skills,
-        "suggestions": record.suggestions
-    }
-@app.get("/analyses")
-def get_all_analyses():
+    return analysis
 
-    db = SessionLocal()
 
-    records = db.query(Analysis).all()
+# ------------------ UPDATE ------------------
 
-    db.close()
+@app.put("/analysis/{analysis_id}", response_model=AnalysisResponse)
+def update_analysis(
+    analysis_id: int,
+    data: AnalysisUpdate,
+    db: Session = Depends(get_db),
+    api_key: str = Security(verify_api_key)  # secure endpoint
+):
+    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
 
-    results = []
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
 
-    for record in records:
-        results.append({
-            "id": record.id,
-            "ats_score": record.ats_score,
-            "matched_skills": record.matched_skills,
-            "missing_skills": record.missing_skills,
-            "suggestions": record.suggestions
-        })
+    analysis.ats_score = data.ats_score
+    analysis.matched_skills = data.matched_skills
+    analysis.missing_skills = data.missing_skills
+    analysis.suggestions = data.suggestions
+    analysis.updated_at = datetime.now()
 
-    return results
+    db.commit()
+    db.refresh(analysis)
 
+    logger.info(f"Analysis {analysis_id} updated")
+
+    return analysis
+
+
+# ------------------ DELETE ------------------
 
 @app.delete("/analysis/{analysis_id}")
-def delete_analysis(analysis_id: int):
+def delete_analysis(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    api_key: str = Security(verify_api_key)  # secure endpoint
+):
+    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
 
-    db = SessionLocal()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
 
-    record = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-
-    if not record:
-        db.close()
-        return {"error": "Analysis not found"}
-
-    db.delete(record)
+    db.delete(analysis)
     db.commit()
-    db.close()
 
-    return {"message": f"Analysis {analysis_id} deleted successfully"}
+    logger.info(f"Analysis {analysis_id} deleted")
+
+    return {"message": "Deleted successfully"}

@@ -18,12 +18,38 @@ def extract_skills(text):
 
     return found
 
-def calculate_ats_score(resume_skills, jd_skills):
-    matched = list(set(resume_skills) & set(jd_skills))
+def calculate_ats_score(resume_text, job_description):
 
-    if len(jd_skills) == 0:
-        return 0, matched
+    # Define technical skills we care about
+    SKILLS = [
+        "python",
+        "sql",
+        "docker",
+        "fastapi",
+        "aws",
+        "git",
+        "rest"
+    ]
 
-    score = (len(matched) / len(jd_skills)) * 100
+    resume_text = resume_text.lower()
+    job_description = job_description.lower()
 
-    return round(score, 2), matched
+    matched_skills = []
+    missing_skills = []
+
+    # Check only real technical skills
+    for skill in SKILLS:
+        if skill in job_description:
+            if skill in resume_text:
+                matched_skills.append(skill)
+            else:
+                missing_skills.append(skill)
+
+    total_required = len(matched_skills) + len(missing_skills)
+
+    if total_required == 0:
+        ats_score = 0
+    else:
+        ats_score = int((len(matched_skills) / total_required) * 100)
+
+    return ats_score, matched_skills, missing_skills
