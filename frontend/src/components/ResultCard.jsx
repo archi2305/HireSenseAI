@@ -1,63 +1,41 @@
-import SkillChart from "./SkillChart"
-import ATSScore from "./ATSScore"
-import StatsCard from "./StatsCard"
+import StatsCards from "./StatsCards"
+import { ScoreHistoryChart, SectionScoresChart, ApplicationStatsChart } from "./AnalyticsCharts"
+import ATSScoreCard from "./ATSScoreCard"
+import SkillsAnalysis from "./SkillsAnalysis"
+
 function ResultCard({ result }) {
 
   return (
+
     <div className="bg-white p-6 rounded-xl shadow-md mt-6">
 
-        <div className="grid grid-cols-4 gap-4 mb-6">
+      <StatsCards />
 
-  <StatsCard
-    title="Total Skills"
-    value={result.matched_skills.length + result.missing_skills.length}
-  />
+      <div className="mt-6">
+        <ATSScoreCard score={result.ats_score} />
+      </div>
 
-  <StatsCard
-    title="Matched Skills"
-    value={result.matched_skills.length}
-  />
+      <div className="mt-6">
+        <SkillsAnalysis
+          matchedSkills={result.matched_skills}
+          missingSkills={result.missing_skills}
+          suggestions={result.suggestions}
+        />
+      </div>
 
-  <StatsCard
-    title="Missing Skills"
-    value={result.missing_skills.length}
-  />
+      <div className="grid grid-cols-3 gap-6 mt-6">
 
-  <StatsCard
-    title="ATS Score"
-    value={`${result.ats_score}%`}
-  />
+        <ScoreHistoryChart />
 
-</div>
+        <SectionScoresChart />
 
-      {/* ATS SCORE */}
-
-      <div className="flex items-center justify-between mb-6">
-
-        <div>
-          <h2 className="text-xl font-semibold">
-            ATS Score
-          </h2>
-
-          <p className="text-gray-500 text-sm">
-            Resume match score
-          </p>
-        </div>
-
-        <ATSScore score={result.ats_score} />
+        <ApplicationStatsChart />
 
       </div>
 
-      {/* SKILL MATCH CHART */}
-
-      <SkillChart
-        matched={result.matched_skills}
-        missing={result.missing_skills}
-      />
-
       {/* MATCHED SKILLS */}
 
-      <div className="mb-5">
+      <div className="mt-6">
 
         <h3 className="font-semibold mb-2">
           Matched Skills
@@ -80,7 +58,7 @@ function ResultCard({ result }) {
 
       {/* MISSING SKILLS */}
 
-      <div className="mb-5">
+      <div className="mt-6">
 
         <h3 className="font-semibold mb-2">
           Missing Skills
@@ -103,7 +81,7 @@ function ResultCard({ result }) {
 
       {/* SUGGESTIONS */}
 
-      <div className="bg-blue-50 p-4 rounded-lg">
+      <div className="bg-blue-50 p-4 rounded-lg mt-6">
 
         <h3 className="font-semibold mb-1">
           Suggestions
@@ -116,6 +94,7 @@ function ResultCard({ result }) {
       </div>
 
     </div>
+
   )
 }
 
