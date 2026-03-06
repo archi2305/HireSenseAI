@@ -1,32 +1,35 @@
-import { Link } from "react-router-dom"
-function Sidebar() {
+function Sidebar({ setPage }) {
+
   return (
+
     <div className="w-64 h-screen bg-gray-900 text-white p-6">
-      <h1 className="text-2xl font-bold mb-10">HireSense</h1>
 
-    <ul className="space-y-4">
+      <h1 className="text-2xl font-bold mb-10">
+        HireSense AI
+      </h1>
 
-  <li>
-    <Link to="/" className="hover:text-blue-400">
-      Dashboard
-    </Link>
-  </li>
+      <div className="flex flex-col gap-4">
 
-  <li>
-    <Link to="/" className="hover:text-blue-400">
-      Analyze Resume
-    </Link>
-  </li>
+        <button
+          onClick={() => setPage("analyze")}
+          className="text-left hover:bg-gray-700 p-2 rounded"
+        >
+          Analyze Resume
+        </button>
 
-  <li>
-    <Link to="/history" className="hover:text-blue-400">
-      History
-    </Link>
-  </li>
+        <button
+          onClick={() => setPage("history")}
+          className="text-left hover:bg-gray-700 p-2 rounded"
+        >
+          History
+        </button>
 
-</ul>
+      </div>
+
     </div>
+
   )
+
 }
 
 export default Sidebar

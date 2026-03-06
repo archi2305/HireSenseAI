@@ -1,9 +1,34 @@
 import SkillChart from "./SkillChart"
-
+import ATSScore from "./ATSScore"
+import StatsCard from "./StatsCard"
 function ResultCard({ result }) {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md mt-6">
+
+        <div className="grid grid-cols-4 gap-4 mb-6">
+
+  <StatsCard
+    title="Total Skills"
+    value={result.matched_skills.length + result.missing_skills.length}
+  />
+
+  <StatsCard
+    title="Matched Skills"
+    value={result.matched_skills.length}
+  />
+
+  <StatsCard
+    title="Missing Skills"
+    value={result.missing_skills.length}
+  />
+
+  <StatsCard
+    title="ATS Score"
+    value={`${result.ats_score}%`}
+  />
+
+</div>
 
       {/* ATS SCORE */}
 
@@ -19,9 +44,7 @@ function ResultCard({ result }) {
           </p>
         </div>
 
-        <div className="text-3xl font-bold text-green-600">
-          {result.ats_score}%
-        </div>
+        <ATSScore score={result.ats_score} />
 
       </div>
 

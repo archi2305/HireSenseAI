@@ -1,22 +1,30 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-
-import Dashboard from "./pages/Dashboard"
-import History from "./pages/History"
+import { useState } from "react"
+import ResumeAnalyzer from "./components/ResumeAnalyzer"
+import History from "./components/History"
+import Sidebar from "./components/Sidebar"
 
 function App() {
+
+  const [page, setPage] = useState("analyze")
+
   return (
-    <BrowserRouter>
 
-      <Routes>
+    <div className="flex">
 
-        <Route path="/" element={<Dashboard />} />
+      <Sidebar setPage={setPage} />
 
-        <Route path="/history" element={<History />} />
+      <div className="flex-1 p-10 bg-gray-100 min-h-screen">
 
-      </Routes>
+        {page === "analyze" && <ResumeAnalyzer />}
 
-    </BrowserRouter>
+        {page === "history" && <History />}
+
+      </div>
+
+    </div>
+
   )
+
 }
 
 export default App
