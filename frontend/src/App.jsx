@@ -1,5 +1,5 @@
 import { useState } from "react"
-
+import RecentAnalyses from "./components/RecentAnalyses"
 import Sidebar from "./components/Sidebar"
 import DashboardHeader from "./components/DashboardHeader"
 import ResumeUpload from "./components/ResumeUpload"
@@ -31,11 +31,25 @@ function App() {
 
           {/* DASHBOARD */}
 
-          {page === "dashboard" && (
-            <>
-              <StatsCards />
-            </>
-          )}
+{page === "dashboard" && (
+  <>
+
+    <StatsCards />
+
+    <div className="grid grid-cols-2 gap-6 mt-6">
+
+      <ScoreHistoryChart />
+
+      <SectionScoresChart />
+
+    </div>
+
+    <div className="mt-6">
+      <RecentAnalyses />
+    </div>
+
+  </>
+)}
 
           {/* UPLOAD RESUME */}
 
