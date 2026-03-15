@@ -1,7 +1,7 @@
 import { useState } from "react"
 import RecentAnalyses from "./components/RecentAnalyses"
-import Sidebar from "./components/Sidebar"
-import DashboardHeader from "./components/DashboardHeader"
+import Sidebar from "./components/sidebar"
+import Header from "./components/Header"
 import ResumeUpload from "./components/ResumeUpload"
 import ResultCard from "./components/ResultCard"
 import StatsCards from "./components/StatsCards"
@@ -14,7 +14,7 @@ import {
 import MyResumes from "./components/MyResumes"
 
 function App() {
-  const [page, setPage] = useState("upload")
+  const [page, setPage] = useState("dashboard")
   const [result, setResult] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [notifications, setNotifications] = useState([])
@@ -36,13 +36,13 @@ function App() {
 
       {/* SIDEBAR */}
 
-      <Sidebar setPage={setPage} />
+      <Sidebar active={page} onChange={setPage} />
 
       {/* MAIN CONTENT */}
 
       <div className="flex-1 flex flex-col">
 
-        <DashboardHeader
+        <Header
           search={searchQuery}
           onSearchChange={handleSearch}
           notifications={notifications}
@@ -67,7 +67,7 @@ function App() {
           )}
           {/* UPLOAD RESUME */}
 
-          {page === "upload" && (
+          {page === "analyzer" && (
             <>
               <ResumeUpload
                 setResult={setResult}
