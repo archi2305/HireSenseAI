@@ -1,108 +1,207 @@
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts"
-import { TrendingUp, BarChart3, PieChart as PieChartIcon } from "lucide-react"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts"
 
-const scoreHistory = [
-  { month: "Jan", score: 45 },
-  { month: "Feb", score: 52 },
-  { month: "Mar", score: 58 },
-  { month: "Apr", score: 65 },
-  { month: "May", score: 72 },
-  { month: "Jun", score: 78 },
-]
+const API_BASE_URL = "http://127.0.0.1:8001"
 
-const sectionScores = [
-  { section: "Experience", score: 85 },
-  { section: "Skills", score: 92 },
-  { section: "Education", score: 88 },
-  { section: "Projects", score: 70 },
-  { section: "Summary", score: 75 },
-]
 
-const applicationStats = [
-  { name: "Interviews", value: 12, color: "#6366f1" },
-  { name: "Pending", value: 8, color: "#22c55e" },
-  { name: "Rejected", value: 5, color: "#ef4444" },
-]
+/* ---------------- SCORE HISTORY CHART ---------------- */
 
 export function ScoreHistoryChart() {
-  return (
-    <div className="bg-white p-5 rounded-xl shadow-md">
-      <h3 className="flex items-center gap-2 font-semibold mb-4">
-        <TrendingUp size={18} /> Score History
-      </h3>
+  const [data, setData] = useState([])
 
-      <div style={{ width: "100%", height: 200 }}>
-        <ResponsiveContainer>
-          <AreaChart data={scoreHistory}>
-            <XAxis dataKey="month" />
-            <YAxis domain={[0, 100]} />
-            <Tooltip />
-            <Area type="monotone" dataKey="score" stroke="#6366f1" fill="#6366f1" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/score-history`)
+        setData(res.data || [])
+      } catch (err) {
+        console.error("Failed to load score history", err)
+        setData([])
+      }
+    }
+    fetchHistory()
+  }, [])
+
+  return (
+
+    <div className="bg-white p-6 rounded-xl shadow">
+
+      <h2 className="text-lg font-semibold mb-4">
+        Score History
+      </h2>
+
+      <ResponsiveContainer width="100%" height={250}>
+
+        <LineChart data={data}>
+
+          <XAxis dataKey="name" />
+
+          <YAxis />
+
+          <Tooltip />
+
+          <Line
+            type="monotone"
+            dataKey="score"
+            stroke="#6366f1"
+            strokeWidth={3}
+          />
+
+        </LineChart>
+
+      </ResponsiveContainer>
+
     </div>
+
   )
 }
+
+
+/* ---------------- SECTION SCORES ---------------- */
 
 export function SectionScoresChart() {
-  return (
-    <div className="bg-white p-5 rounded-xl shadow-md">
-      <h3 className="flex items-center gap-2 font-semibold mb-4">
-        <BarChart3 size={18} /> Section Analysis
-      </h3>
+  const [data, setData] = useState([])
 
-      <div style={{ width: "100%", height: 200 }}>
-        <ResponsiveContainer>
-          <BarChart data={sectionScores} layout="vertical">
-            <XAxis type="number" domain={[0, 100]} />
-            <YAxis dataKey="section" type="category" width={80} />
-            <Tooltip />
-            <Bar dataKey="score" fill="#6366f1" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+  useEffect(() => {
+    const fetchSections = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/section-scores`)
+        setData(res.data || [])
+      } catch (err) {
+        console.error("Failed to load section scores", err)
+        setData([])
+      }
+    }
+    fetchSections()
+  }, [])
+
+  return (
+
+    <div className="bg-white p-6 rounded-xl shadow">
+
+      <h2 className="text-lg font-semibold mb-4">
+        Section Scores
+      </h2>
+
+      <ResponsiveContainer width="100%" height={250}>
+
+        <BarChart data={data}>
+
+          <XAxis dataKey="name" />
+
+          <YAxis />
+
+          <Tooltip />
+
+          <Bar
+            dataKey="score"
+            fill="#6366f1"
+          />
+
+        </BarChart>
+
+      </ResponsiveContainer>
+
     </div>
+
   )
 }
 
+
+/* ---------------- APPLICATION STATS ---------------- */
+
 export function ApplicationStatsChart() {
+  const [data, setData] = useState([])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/analyses`)
+        const analyses = res.data || []
+
+        const buckets = {
+          low: 0,
+          medium: 0,
+          high: 0,
+        }
+
+        analyses.forEach((a) => {
+          const score = a.ats_score ?? 0
+          if (score < 50) buckets.low += 1
+          else if (score < 75) buckets.medium += 1
+          else buckets.high += 1
+        })
+
+        setData([
+          { name: "Low (<50)", value: buckets.low },
+          { name: "Medium (50-74)", value: buckets.medium },
+          { name: "High (75+)", value: buckets.high },
+        ])
+      } catch (err) {
+        console.error("Failed to load application stats", err)
+        setData([])
+      }
+    }
+    fetchStats()
+  }, [])
+
+  const COLORS = [
+    "#ef4444",
+    "#f97316",
+    "#22c55e",
+  ]
+
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md">
-      <h3 className="flex items-center gap-2 font-semibold mb-4">
-        <PieChartIcon size={18} /> Application Status
-      </h3>
 
-      <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-        <div style={{ width: 160, height: 160 }}>
-          <ResponsiveContainer>
-            <PieChart>
-              <Pie data={applicationStats} innerRadius={40} outerRadius={70} dataKey="value">
-                {applicationStats.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+    <div className="bg-white p-6 rounded-xl shadow">
 
-        <div>
-          {applicationStats.map((stat) => (
-            <div key={stat.name} style={{ display: "flex", gap: "10px", marginBottom: "8px" }}>
-              <div
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  backgroundColor: stat.color,
-                }}
+      <h2 className="text-lg font-semibold mb-4">
+        Application Stats
+      </h2>
+
+      <ResponsiveContainer width="100%" height={250}>
+
+        <PieChart>
+
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            outerRadius={90}
+            label
+          >
+
+            {data.map((entry, index) => (
+
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
               />
-              <span>{stat.name}</span>
-              <strong>{stat.value}</strong>
-            </div>
-          ))}
-        </div>
-      </div>
+
+            ))}
+
+          </Pie>
+
+          <Tooltip />
+
+        </PieChart>
+
+      </ResponsiveContainer>
+
     </div>
+
   )
 }

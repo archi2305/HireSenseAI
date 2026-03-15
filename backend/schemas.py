@@ -20,3 +20,5 @@ class AnalysisUpdate(BaseModel):
     matched_skills: List[str]
     missing_skills: List[str]
     suggestions: str
+
+    

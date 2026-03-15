@@ -1,94 +1,86 @@
-import { FileText, Target, TrendingUp, CheckCircle } from "lucide-react"
+import { useEffect, useState } from "react"
+import axios from "axios"
 
-const stats = [
-  {
-    title: "Total Resumes",
-    value: "12",
-    description: "Analyzed this month",
-    icon: FileText,
-    trend: "+3 from last month",
-  },
-  {
-    title: "Avg. ATS Score",
-    value: "78",
-    description: "Current average",
-    icon: Target,
-    trend: "+12% improvement",
-  },
-  {
-    title: "Applications",
-    value: "25",
-    description: "Jobs applied to",
-    icon: TrendingUp,
-    trend: "+8 this week",
-  },
-  {
-    title: "Interviews",
-    value: "7",
-    description: "Scheduled",
-    icon: CheckCircle,
-    trend: "28% success rate",
-  },
-]
+const API_BASE_URL = "http://127.0.0.1:8001"
 
-function StatsCards() {
+function StatsCards({ setPage }) {
+  const [stats, setStats] = useState({
+    total_resumes: 0,
+    avg_score: 0,
+    total_analyses: 0,
+    system_status: "Loading..."
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/dashboard`)
+        setStats(res.data)
+      } catch (err) {
+        console.error("Failed to load dashboard stats", err)
+        setError("Failed to load")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  const safeStats = stats || {}
+
+  const handleNavigate = (target) => {
+    if (typeof setPage === "function") {
+      setPage(target)
+    }
+  }
+
   return (
+    <div className="grid grid-cols-4 gap-6">
 
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <button
+        type="button"
+        onClick={() => handleNavigate("resumes")}
+        className="bg-white p-6 rounded-xl shadow text-left hover:shadow-md transition"
+      >
+        <p className="text-gray-500">Total Resumes</p>
+        <h2 className="text-2xl font-bold">
+          {loading ? "Loading..." : safeStats.total_resumes ?? 0}
+        </h2>
+      </button>
 
-      {stats.map((stat, index) => {
+      <button
+        type="button"
+        onClick={() => handleNavigate("analytics")}
+        className="bg-white p-6 rounded-xl shadow text-left hover:shadow-md transition"
+      >
+        <p className="text-gray-500">Avg ATS Score</p>
+        <h2 className="text-2xl font-bold">
+          {loading ? "Loading..." : safeStats.avg_score ?? 0}
+        </h2>
+      </button>
 
-        const Icon = stat.icon
+      <button
+        type="button"
+        onClick={() => handleNavigate("history")}
+        className="bg-white p-6 rounded-xl shadow text-left hover:shadow-md transition"
+      >
+        <p className="text-gray-500">Total Analyses</p>
+        <h2 className="text-2xl font-bold">
+          {loading ? "Loading..." : safeStats.total_analyses ?? 0}
+        </h2>
+      </button>
 
-        return (
-
-          <div
-            key={index}
-            className="bg-white p-5 rounded-xl shadow-md"
-          >
-
-            <div className="flex justify-between items-start">
-
-              <div>
-
-                <p className="text-sm text-gray-500">
-                  {stat.title}
-                </p>
-
-                <p className="text-3xl font-bold mt-1">
-                  {stat.value}
-                </p>
-
-                <p className="text-xs text-gray-400 mt-1">
-                  {stat.description}
-                </p>
-
-              </div>
-
-              <div className="bg-indigo-100 p-2 rounded-lg">
-                <Icon size={20} className="text-indigo-600" />
-              </div>
-
-            </div>
-
-            <div className="flex items-center gap-1 text-xs mt-3 text-green-600">
-
-              <TrendingUp size={12} />
-
-              <span>
-                {stat.trend}
-              </span>
-
-            </div>
-
-          </div>
-
-        )
-
-      })}
+      <div className="bg-white p-6 rounded-xl shadow">
+        <p className="text-gray-500">System Status</p>
+        <h2 className="text-green-500 font-bold">
+          {loading ? "Checking..." : error || safeStats.system_status}
+        </h2>
+      </div>
 
     </div>
-
   )
 }
 

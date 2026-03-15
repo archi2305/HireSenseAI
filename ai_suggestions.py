@@ -1,21 +1,17 @@
 def generate_suggestions(resume_text, job_description, missing_skills):
 
-    if not missing_skills:
-        return (
-            "The resume strongly aligns with the job description. "
-            "All required technical skills are present. "
-            "To further improve, consider adding measurable achievements "
-            "and quantifiable results for each project."
-        )
+    suggestions = ""
 
-    suggestions = "The following improvements are recommended:\n\n"
+    if missing_skills:
+        suggestions += "Skill Gap Analysis:\n"
+        for skill in missing_skills:
+            suggestions += f"- Consider adding practical experience with {skill}.\n"
+        suggestions += "\n"
 
-    for skill in missing_skills:
-        suggestions += f"- Add experience or projects demonstrating {skill}.\n"
-
-    suggestions += (
-        "\nAdditionally, include action verbs, quantify achievements, "
-        "and tailor your summary section to match the job description."
-    )
+    suggestions += "Resume Optimization Tips:\n"
+    suggestions += "- Use measurable achievements (e.g., improved performance by 30%).\n"
+    suggestions += "- Use action verbs such as designed, implemented, optimized.\n"
+    suggestions += "- Align summary section with job description keywords.\n"
+    suggestions += "- Highlight impact rather than responsibilities.\n"
 
     return suggestions

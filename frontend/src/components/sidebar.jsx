@@ -1,3 +1,57 @@
+import { LayoutDashboard, FileText, History, Settings } from "lucide-react"
+
+const navItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "analyzer", label: "Resume Analyzer", icon: FileText },
+  { id: "history", label: "History", icon: History },
+  { id: "settings", label: "Settings", icon: Settings },
+]
+
+function Sidebar({ active, onChange }) {
+  return (
+    <aside className="w-64 bg-gradient-to-b from-lavender via-softPink to-pastelBlue text-slate-900 min-h-screen p-6">
+      <div className="mb-10">
+        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-cardBg/80 shadow-sm">
+          <span className="w-7 h-7 rounded-lg bg-mint flex items-center justify-center text-slate-800 text-sm font-bold">
+            H
+          </span>
+          <div>
+            <p className="text-sm font-semibold leading-tight">
+              HireSense AI
+            </p>
+            <p className="text-[11px] text-slate-500">
+              Resume Intelligence
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <nav className="flex flex-col gap-1">
+        {navItems.map(({ id, label, icon: Icon }) => {
+          const isActive = active === id
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChange?.(id)}
+              className={`flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? "bg-cardBg text-slate-900 shadow-md"
+                  : "text-slate-800/80 hover:bg-cardBg/40"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{label}</span>
+            </button>
+          )
+        })}
+      </nav>
+    </aside>
+  )
+}
+
+export default Sidebar
+
 import {
   LayoutDashboard,
   Upload,

@@ -1,16 +1,12 @@
-from sqlalchemy import Column, Integer, Text, JSON, DateTime
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, Float, DateTime
 from database import Base
+from datetime import datetime
 
-
-class Analysis(Base):
-    __tablename__ = "analysis"
+class ResumeAnalysis(Base):
+    __tablename__ = "resume_analysis"
 
     id = Column(Integer, primary_key=True, index=True)
-    ats_score = Column(Integer)
-    matched_skills = Column(JSON)
-    missing_skills = Column(JSON)
-    suggestions = Column(Text)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    resume_name = Column(String)
+    job_role = Column(String)
+    ats_score = Column(Float)
+    created_at = Column(DateTime, default=datetime.utcnow)

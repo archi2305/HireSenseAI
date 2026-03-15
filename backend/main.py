@@ -1,143 +1,234 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Query, Security
-from fastapi.security import APIKeyHeader
-from sqlalchemy.orm import Session
-from datetime import datetime
-import logging
+from datetime import datetime, timedelta
+from typing import List
 
-from database import get_db
-from models import Analysis
-from schemas import AnalysisResponse, AnalysisUpdate
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
 from services.resume_parser import extract_text_from_pdf
 from services.skill_matcher import calculate_ats_score
 from services.suggestion_engine import generate_suggestions
 
+
+class DashboardStats(BaseModel):
+    total_resumes: int
+    avg_score: float
+    total_analyses: int
+    system_status: str
+
+
+class AnalysisResult(BaseModel):
+    id: int
+    resume_name: str
+    job_role: str
+    ats_score: int
+    matched_skills: List[str]
+    missing_skills: List[str]
+    suggestions: str
+    created_at: datetime
+
+
 app = FastAPI()
 
-# ------------------ Logging ------------------
+# Allow frontend to access backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "*",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# In-memory store for analyses (used when no DB is configured)
+ANALYSES_MEMORY: List[AnalysisResult] = []
 
-# ------------------ API Key Security ------------------
 
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+def _seed_demo_data() -> None:
+    """
+    Seed a few demo analyses so the dashboard is not empty on first run.
+    This keeps the app functional even before any real uploads.
+    """
+    if ANALYSES_MEMORY:
+        return
 
-def verify_api_key(api_key: str = Security(api_key_header)):
-    if api_key != "supersecretkey":
-        raise HTTPException(status_code=403, detail="Invalid API Key")
-    return api_key
+    now = datetime.utcnow()
 
-# ------------------ POST ------------------
+    samples = [
+        AnalysisResult(
+            id=1,
+            resume_name="resume_ml_engineer.pdf",
+            job_role="ML Engineer",
+            ats_score=78,
+            matched_skills=["python", "sql", "git"],
+            missing_skills=["docker", "aws"],
+            suggestions="Good alignment with ML role. Consider adding Docker and AWS experience.",
+            created_at=now - timedelta(days=2),
+        ),
+        AnalysisResult(
+            id=2,
+            resume_name="resume_backend.pdf",
+            job_role="Backend Engineer",
+            ats_score=85,
+            matched_skills=["python", "fastapi", "rest", "git"],
+            missing_skills=["aws"],
+            suggestions="Strong backend profile. Add more detail on cloud deployments (AWS).",
+            created_at=now - timedelta(days=1),
+        ),
+        AnalysisResult(
+            id=3,
+            resume_name="resume_data_analyst.pdf",
+            job_role="Data Analyst",
+            ats_score=70,
+            matched_skills=["python", "sql"],
+            missing_skills=["aws"],
+            suggestions="Highlight data visualization tools and cloud skills to improve fit.",
+            created_at=now,
+        ),
+    ]
 
-@app.post("/analyze", response_model=AnalysisResponse)
+    ANALYSES_MEMORY.extend(samples)
+
+
+_seed_demo_data()
+
+
+@app.post("/analyze")
 async def analyze_resume(
     resume: UploadFile = File(...),
     job_description: str = Form(...),
-    db: Session = Depends(get_db),
-    api_key: str = Security(verify_api_key)  # secure endpoint
+    job_role: str = Form(""),
 ):
+    """
+    Analyze a resume against a job description and store the result in memory.
+    """
     try:
-        resume.file.seek(0)  # move pointer to start
+        resume.file.seek(0)
         resume_text = extract_text_from_pdf(resume.file)
 
-        # calculate ATS
         ats_score, matched_skills, missing_skills = calculate_ats_score(
             resume_text, job_description
         )
 
-        # generate suggestions
         suggestions = generate_suggestions(
             resume_text, job_description, missing_skills
         )
 
-        # save to database
-        analysis = Analysis(
+        analysis_id = len(ANALYSES_MEMORY) + 1
+        created_at = datetime.utcnow()
+
+        analysis = AnalysisResult(
+            id=analysis_id,
+            resume_name=resume.filename or "uploaded_resume",
+            job_role=job_role or "Not specified",
             ats_score=ats_score,
             matched_skills=matched_skills,
             missing_skills=missing_skills,
             suggestions=suggestions,
-            created_at=datetime.now()
+            created_at=created_at,
         )
 
-        db.add(analysis)
-        db.commit()
-        db.refresh(analysis)
+        ANALYSES_MEMORY.append(analysis)
 
-        logger.info("New analysis created")
-
-        return analysis
+        # Shape the response for the current frontend
+        return {
+            "id": analysis.id,
+            "ats_score": analysis.ats_score,
+            "matched_skills": analysis.matched_skills,
+            "missing_skills": analysis.missing_skills,
+            "suggestions": analysis.suggestions,
+            "created_at": analysis.created_at,
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ------------------ GET ALL (Pagination) ------------------
+@app.get("/dashboard", response_model=DashboardStats)
+def get_dashboard_stats():
+    """
+    Return summary statistics for the dashboard based on in-memory analyses.
+    """
+    total = len(ANALYSES_MEMORY)
+    if total == 0:
+        avg_score = 0.0
+    else:
+        avg_score = sum(a.ats_score for a in ANALYSES_MEMORY) / total
 
-@app.get("/analysis", response_model=list[AnalysisResponse])
-def get_all_analysis(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
-    db: Session = Depends(get_db)
-):
-    return db.query(Analysis).offset(skip).limit(limit).all()
-
-
-# ------------------ GET SINGLE ------------------
-
-@app.get("/analysis/{analysis_id}", response_model=AnalysisResponse)
-def get_analysis(analysis_id: int, db: Session = Depends(get_db)):
-    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-
-    if not analysis:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-
-    return analysis
+    return DashboardStats(
+        total_resumes=total,
+        avg_score=round(avg_score, 2),
+        total_analyses=total,
+        system_status="Active",
+    )
 
 
-# ------------------ UPDATE ------------------
-
-@app.put("/analysis/{analysis_id}", response_model=AnalysisResponse)
-def update_analysis(
-    analysis_id: int,
-    data: AnalysisUpdate,
-    db: Session = Depends(get_db),
-    api_key: str = Security(verify_api_key)  # secure endpoint
-):
-    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
-
-    if not analysis:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-
-    analysis.ats_score = data.ats_score
-    analysis.matched_skills = data.matched_skills
-    analysis.missing_skills = data.missing_skills
-    analysis.suggestions = data.suggestions
-    analysis.updated_at = datetime.now()
-
-    db.commit()
-    db.refresh(analysis)
-
-    logger.info(f"Analysis {analysis_id} updated")
-
-    return analysis
+@app.get("/analyses")
+def list_analyses():
+    """
+    Return recent analyses in a simplified shape for the dashboard and history.
+    """
+    results = []
+    for a in sorted(ANALYSES_MEMORY, key=lambda x: x.created_at, reverse=True):
+        results.append(
+            {
+                "id": a.id,
+                "resume_name": a.resume_name,
+                "job_role": a.job_role,
+                "ats_score": a.ats_score,
+                "date": a.created_at.isoformat(),
+            }
+        )
+    return results
 
 
-# ------------------ DELETE ------------------
+@app.get("/score-history")
+def get_score_history():
+    """
+    Simple score history derived from analyses; falls back to empty list.
+    """
+    if not ANALYSES_MEMORY:
+        return []
 
-@app.delete("/analysis/{analysis_id}")
-def delete_analysis(
-    analysis_id: int,
-    db: Session = Depends(get_db),
-    api_key: str = Security(verify_api_key)  # secure endpoint
-):
-    analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+    history = []
+    for idx, a in enumerate(
+        sorted(ANALYSES_MEMORY, key=lambda x: x.created_at)
+    ):
+        history.append(
+            {
+                "name": f"Run {idx + 1}",
+                "score": a.ats_score,
+            }
+        )
+    return history
 
-    if not analysis:
-        raise HTTPException(status_code=404, detail="Analysis not found")
 
-    db.delete(analysis)
-    db.commit()
+@app.get("/section-scores")
+def get_section_scores():
+    """
+    Placeholder section scores so charts have real API data.
+    Currently derived from overall ATS score.
+    """
+    if not ANALYSES_MEMORY:
+        base_score = 60
+    else:
+        base_score = ANALYSES_MEMORY[-1].ats_score
 
-    logger.info(f"Analysis {analysis_id} deleted")
+    # Distribute around the base score for a simple breakdown
+    return [
+        {"name": "Experience", "score": max(0, min(100, base_score + 5))},
+        {"name": "Skills", "score": max(0, min(100, base_score + 10))},
+        {"name": "Education", "score": max(0, min(100, base_score - 5))},
+        {"name": "Projects", "score": max(0, min(100, base_score - 10))},
+    ]
 
-    return {"message": "Deleted successfully"}
+
+@app.get("/recent-analyses")
+def recent_analyses():
+    """
+    Backwards-compatible alias for /analyses if needed.
+    """
+    return list_analyses()

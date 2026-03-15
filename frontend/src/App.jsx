@@ -6,16 +6,33 @@ import ResumeUpload from "./components/ResumeUpload"
 import ResultCard from "./components/ResultCard"
 import StatsCards from "./components/StatsCards"
 import History from "./components/History"
-import { ScoreHistoryChart, SectionScoresChart, ApplicationStatsChart } from "./components/AnalyticsCharts"
+import {
+  ScoreHistoryChart,
+  SectionScoresChart,
+  ApplicationStatsChart
+} from "./components/AnalyticsCharts"
+import MyResumes from "./components/MyResumes"
 
 function App() {
-
   const [page, setPage] = useState("upload")
   const [result, setResult] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [notifications, setNotifications] = useState([])
+
+  const handleSearch = (value) => {
+    setSearchQuery(value)
+  }
+
+  const addNotification = (message) => {
+    setNotifications((prev) => [
+      { id: Date.now(), message },
+      ...prev.slice(0, 9),
+    ])
+  }
 
   return (
 
-    <div className="flex bg-gray-100 min-h-screen">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-sky-50">
 
       {/* SIDEBAR */}
 
@@ -23,39 +40,41 @@ function App() {
 
       {/* MAIN CONTENT */}
 
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
 
-        <DashboardHeader />
-
+        <DashboardHeader
+          onSearch={handleSearch}
+          setPage={setPage}
+          notifications={notifications}
+        />
         <div className="p-6 space-y-6">
 
           {/* DASHBOARD */}
 
-{page === "dashboard" && (
-  <>
+          {page === "dashboard" && (
+            <>
+              <StatsCards setPage={setPage} />
 
-    <StatsCards />
+              <div className="grid grid-cols-2 gap-6 mt-6">
+                <ScoreHistoryChart />
+                <SectionScoresChart />
+              </div>
 
-    <div className="grid grid-cols-2 gap-6 mt-6">
-
-      <ScoreHistoryChart />
-
-      <SectionScoresChart />
-
-    </div>
-
-    <div className="mt-6">
-      <RecentAnalyses />
-    </div>
-
-  </>
-)}
-
+              <div className="mt-6">
+                <RecentAnalyses searchQuery={searchQuery} />
+              </div>
+            </>
+          )}
           {/* UPLOAD RESUME */}
 
           {page === "upload" && (
             <>
-              <ResumeUpload setResult={setResult} />
+              <ResumeUpload
+                setResult={setResult}
+                onAnalyzed={() =>
+                  addNotification("Resume analyzed successfully • ATS score generated")
+                }
+              />
 
               {result && (
                 <ResultCard result={result} />
@@ -82,21 +101,13 @@ function App() {
           {/* HISTORY */}
 
           {page === "history" && (
-            <History />
+            <History searchQuery={searchQuery} />
           )}
 
           {/* MY RESUMES (placeholder for now) */}
 
           {page === "resumes" && (
-            <div className="bg-white p-6 rounded-xl shadow-md">
-              <h2 className="text-xl font-semibold mb-2">
-                My Resumes
-              </h2>
-
-              <p className="text-gray-500">
-                Resume management feature coming soon.
-              </p>
-            </div>
+            <MyResumes searchQuery={searchQuery} />
           )}
 
         </div>

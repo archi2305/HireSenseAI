@@ -2,7 +2,9 @@ import { useState } from "react"
 import axios from "axios"
 import { Upload, FileText, X, CheckCircle2 } from "lucide-react"
 
-function ResumeUpload({ setResult }) {
+const API_BASE_URL = "http://127.0.0.1:8001"
+
+function ResumeUpload({ setResult = () => {} }) {
 
   const [file, setFile] = useState(null)
   const [jobDescription, setJobDescription] = useState("")
@@ -35,12 +37,11 @@ function ResumeUpload({ setResult }) {
       setIsAnalyzing(true)
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/analyze",
+        `${API_BASE_URL}/analyze`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            "X-API-Key": "supersecretkey"
           }
         }
       )
@@ -52,7 +53,8 @@ function ResumeUpload({ setResult }) {
 
     } catch (error) {
 
-      console.error(error)
+      console.error("Failed to analyze resume", error)
+      alert("Failed to analyze resume. Please check that the backend is running on port 8001.")
       setIsAnalyzing(false)
 
     }
@@ -114,8 +116,10 @@ function ResumeUpload({ setResult }) {
       />
 
       <button
+        type="button"
         onClick={analyzeResume}
-        className="bg-blue-600 text-white px-4 py-2 rounded mt-4"
+        className="bg-blue-600 text-white px-4 py-2 rounded mt-4 disabled:opacity-60"
+        disabled={isAnalyzing}
       >
         Analyze Resume
       </button>
