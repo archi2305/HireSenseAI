@@ -1,21 +1,23 @@
-import { useState } from "react"
-import RecentAnalyses from "./components/RecentAnalyses"
+import { useState, useEffect } from "react"
+import { Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom"
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
-import ResumeUpload from "./components/ResumeUpload"
-import ResultCard from "./components/ResultCard"
-import StatsCards from "./components/StatsCards"
-import History from "./components/History"
-import {
-  ScoreHistoryChart,
-  SectionScoresChart,
-  ApplicationStatsChart
-} from "./components/AnalyticsCharts"
-import MyResumes from "./components/MyResumes"
+import Login from "./pages/Login"
+import Signup from "./pages/Signup"
+import Dashboard from "./pages/Dashboard"
+import ResumeAnalyzer from "./components/ResumeAnalyzer"
+import History from "./pages/History"
+import Settings from "./pages/Settings"
 
-function App() {
-  const [page, setPage] = useState("dashboard")
-  const [result, setResult] = useState(null)
+function ProtectedRoute({ children }) {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true"
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+  return children
+}
+
+function Layout() {
   const [searchQuery, setSearchQuery] = useState("")
   const [notifications, setNotifications] = useState([])
 
@@ -23,99 +25,71 @@ function App() {
     setSearchQuery(value)
   }
 
-  const addNotification = (message) => {
-    setNotifications((prev) => [
-      { id: Date.now(), message },
-      ...prev.slice(0, 9),
+  // Adding some initial notifications for the dropdown testing
+  useEffect(() => {
+    setNotifications([
+      { id: 1, message: "Welcome to HireSense UI!" },
+      { id: 2, message: "Your ATS score is now available for John Doe." }
     ])
-  }
+  }, [])
 
   return (
+    <div className="flex h-screen overflow-hidden bg-dashboard-gradient">
+      {/* SIDEBAR (Left) */}
+      <Sidebar />
 
-    <div className="flex min-h-screen bg-dashboard-gradient">
-
-      {/* SIDEBAR */}
-
-      <Sidebar active={page} onChange={setPage} />
-
-      {/* MAIN CONTENT */}
-
-      <div className="flex-1 flex flex-col">
-
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col relative w-full h-full">
+        {/* HEADER (Top) */}
         <Header
           search={searchQuery}
           onSearchChange={handleSearch}
           notifications={notifications}
         />
-        <div className="p-6 space-y-6">
-
-          {/* DASHBOARD */}
-
-          {page === "dashboard" && (
-            <>
-              <StatsCards setPage={setPage} />
-
-              <div className="grid grid-cols-2 gap-6 mt-6">
-                <ScoreHistoryChart />
-                <SectionScoresChart />
-              </div>
-
-              <div className="mt-6">
-                <RecentAnalyses searchQuery={searchQuery} />
-              </div>
-            </>
-          )}
-          {/* UPLOAD RESUME */}
-
-          {page === "analyzer" && (
-            <>
-              <ResumeUpload
-                setResult={setResult}
-                onAnalyzed={() =>
-                  addNotification("Resume analyzed successfully • ATS score generated")
-                }
-              />
-
-              {result && (
-                <ResultCard result={result} />
-              )}
-            </>
-          )}
-
-          {/* ANALYTICS */}
-
-          {page === "analytics" && (
-
-            <div className="grid grid-cols-3 gap-6">
-
-              <ScoreHistoryChart />
-
-              <SectionScoresChart />
-
-              <ApplicationStatsChart />
-
-            </div>
-
-          )}
-
-          {/* HISTORY */}
-
-          {page === "history" && (
-            <History searchQuery={searchQuery} />
-          )}
-
-          {/* MY RESUMES (placeholder for now) */}
-
-          {page === "resumes" && (
-            <MyResumes searchQuery={searchQuery} />
-          )}
-
-        </div>
-
+        
+        {/* PAGE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+          <Outlet context={{ searchQuery }} />
+        </main>
       </div>
-
     </div>
+  )
+}
 
+function App() {
+  const navigate = useNavigate()
+
+  const handleLogin = (user) => {
+    localStorage.setItem("isAuthenticated", "true")
+    localStorage.setItem("user", JSON.stringify(user))
+    navigate("/dashboard")
+  }
+
+  const handleSignup = (user) => {
+    localStorage.setItem("isAuthenticated", "true")
+    localStorage.setItem("user", JSON.stringify(user))
+    navigate("/dashboard")
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login onLogin={handleLogin} />} />
+      <Route path="/signup" element={<Signup onSignup={handleSignup} />} />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/analyzer" element={<ResumeAnalyzer />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+    </Routes>
   )
 }
 
