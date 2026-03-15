@@ -36,36 +36,32 @@ export function ScoreHistoryChart() {
   }, [])
 
   return (
-
-    <div className="bg-white p-6 rounded-xl shadow">
-
-      <h2 className="text-lg font-semibold mb-4">
+    <div className="bg-white/80 backdrop-blur p-6 rounded-2xl shadow-md border border-slate-100/50">
+      <h2 className="text-lg font-bold text-slate-900 mb-4">
         Score History
       </h2>
 
       <ResponsiveContainer width="100%" height={250}>
-
         <LineChart data={data}>
-
-          <XAxis dataKey="name" />
-
-          <YAxis />
-
-          <Tooltip />
-
+          <XAxis dataKey="name" stroke="#cbd5e1" />
+          <YAxis stroke="#cbd5e1" />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px"
+            }}
+          />
           <Line
             type="monotone"
             dataKey="score"
-            stroke="#6366f1"
+            stroke="#E4C1F9"
             strokeWidth={3}
+            dot={{ fill: "#FFC8DD", r: 4 }}
           />
-
         </LineChart>
-
       </ResponsiveContainer>
-
     </div>
-
   )
 }
 
@@ -89,34 +85,30 @@ export function SectionScoresChart() {
   }, [])
 
   return (
-
-    <div className="bg-white p-6 rounded-xl shadow">
-
-      <h2 className="text-lg font-semibold mb-4">
+    <div className="bg-white/80 backdrop-blur p-6 rounded-2xl shadow-md border border-slate-100/50">
+      <h2 className="text-lg font-bold text-slate-900 mb-4">
         Section Scores
       </h2>
 
       <ResponsiveContainer width="100%" height={250}>
-
         <BarChart data={data}>
-
-          <XAxis dataKey="name" />
-
-          <YAxis />
-
-          <Tooltip />
-
+          <XAxis dataKey="name" stroke="#cbd5e1" />
+          <YAxis stroke="#cbd5e1" />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px"
+            }}
+          />
           <Bar
             dataKey="score"
-            fill="#6366f1"
+            fill="#BDE0FE"
+            radius={[8, 8, 0, 0]}
           />
-
         </BarChart>
-
       </ResponsiveContainer>
-
     </div>
-
   )
 }
 
@@ -159,49 +151,42 @@ export function ApplicationStatsChart() {
   }, [])
 
   const COLORS = [
-    "#ef4444",
-    "#f97316",
-    "#22c55e",
+    "#FFC8DD",
+    "#E4C1F9",
+    "#A8E6CF",
   ]
 
   return (
-
-    <div className="bg-white p-6 rounded-xl shadow">
-
-      <h2 className="text-lg font-semibold mb-4">
+    <div className="bg-white/80 backdrop-blur p-6 rounded-2xl shadow-md border border-slate-100/50">
+      <h2 className="text-lg font-bold text-slate-900 mb-4">
         Application Stats
       </h2>
 
       <ResponsiveContainer width="100%" height={250}>
-
         <PieChart>
-
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
             outerRadius={90}
-            label
+            label={{ fill: "#0f172a", fontSize: 12, fontWeight: 600 }}
           >
-
             {data.map((entry, index) => (
-
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
               />
-
             ))}
-
           </Pie>
-
-          <Tooltip />
-
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px"
+            }}
+          />
         </PieChart>
-
       </ResponsiveContainer>
-
     </div>
-
   )
 }

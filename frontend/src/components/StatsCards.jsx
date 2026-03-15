@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { TrendingUp, FileCheck, Zap, CheckCircle } from "lucide-react"
 
 const API_BASE_URL = "http://127.0.0.1:8001"
 
@@ -37,49 +38,59 @@ function StatsCards({ setPage }) {
     }
   }
 
+  const statCards = [
+    {
+      title: "Total Resumes",
+      value: loading ? "..." : safeStats.total_resumes ?? 0,
+      icon: FileCheck,
+      onClick: () => handleNavigate("resumes"),
+      gradient: "from-softPink to-lavender"
+    },
+    {
+      title: "Avg ATS Score",
+      value: loading ? "..." : `${safeStats.avg_score ?? 0}%`,
+      icon: TrendingUp,
+      onClick: () => handleNavigate("analytics"),
+      gradient: "from-pastelBlue to-mint"
+    },
+    {
+      title: "Total Analyses",
+      value: loading ? "..." : safeStats.total_analyses ?? 0,
+      icon: Zap,
+      onClick: () => handleNavigate("history"),
+      gradient: "from-lavender to-pastelBlue"
+    },
+    {
+      title: "System Status",
+      value: loading ? "..." : "Online",
+      icon: CheckCircle,
+      onClick: () => {},
+      gradient: "from-mint to-softPink"
+    }
+  ]
+
   return (
     <div className="grid grid-cols-4 gap-6">
-
-      <button
-        type="button"
-        onClick={() => handleNavigate("resumes")}
-        className="bg-white p-6 rounded-xl shadow text-left hover:shadow-md transition"
-      >
-        <p className="text-gray-500">Total Resumes</p>
-        <h2 className="text-2xl font-bold">
-          {loading ? "Loading..." : safeStats.total_resumes ?? 0}
-        </h2>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleNavigate("analytics")}
-        className="bg-white p-6 rounded-xl shadow text-left hover:shadow-md transition"
-      >
-        <p className="text-gray-500">Avg ATS Score</p>
-        <h2 className="text-2xl font-bold">
-          {loading ? "Loading..." : safeStats.avg_score ?? 0}
-        </h2>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => handleNavigate("history")}
-        className="bg-white p-6 rounded-xl shadow text-left hover:shadow-md transition"
-      >
-        <p className="text-gray-500">Total Analyses</p>
-        <h2 className="text-2xl font-bold">
-          {loading ? "Loading..." : safeStats.total_analyses ?? 0}
-        </h2>
-      </button>
-
-      <div className="bg-white p-6 rounded-xl shadow">
-        <p className="text-gray-500">System Status</p>
-        <h2 className="text-green-500 font-bold">
-          {loading ? "Checking..." : error || safeStats.system_status}
-        </h2>
-      </div>
-
+      {statCards.map((card, idx) => {
+        const Icon = card.icon
+        return (
+          <button
+            key={idx}
+            onClick={card.onClick}
+            className="group bg-white/80 backdrop-blur p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 text-left border border-slate-100/50"
+          >
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-slate-600 text-sm font-medium">
+              {card.title}
+            </p>
+            <h2 className="text-3xl font-bold text-slate-900 mt-2">
+              {card.value}
+            </h2>
+          </button>
+        )
+      })}
     </div>
   )
 }

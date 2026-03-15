@@ -32,7 +32,7 @@ function App() {
 
   return (
 
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-sky-50">
+    <div className="flex min-h-screen bg-dashboard-gradient">
 
       {/* SIDEBAR */}
 
@@ -43,8 +43,8 @@ function App() {
       <div className="flex-1 flex flex-col">
 
         <DashboardHeader
-          onSearch={handleSearch}
-          setPage={setPage}
+          search={searchQuery}
+          onSearchChange={handleSearch}
           notifications={notifications}
         />
         <div className="p-6 space-y-6">

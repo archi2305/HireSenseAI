@@ -14,6 +14,9 @@ export default {
         dashboardBg: "#F8FAFC",
         cardBg: "#FFFFFF",
       },
+      backgroundImage: {
+        "dashboard-gradient": "linear-gradient(to bottom right, #F8FAFC, #EEF7FF, #FDF4FF)",
+      },
     },
   },
   plugins: [],
