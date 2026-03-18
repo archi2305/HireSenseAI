@@ -57,7 +57,7 @@ function Login() {
 
   const handleSocialLogin = (provider) => {
     setLoading(true);
-    window.location.href = `http://127.0.0.1:8000/api/oauth/${provider.toLowerCase()}/login`;
+    window.location.href = `http://localhost:8000/auth/${provider.toLowerCase()}/login`;
   };
 
   const GoogleIcon = (props) => (

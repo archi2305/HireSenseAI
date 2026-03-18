@@ -62,7 +62,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(oauth.router, prefix="/api/oauth", tags=["oauth"])
+app.include_router(oauth.router, prefix="/auth", tags=["oauth"])
 app.include_router(password.router, prefix="/api/auth", tags=["password"])
 
 # In-memory store for analyses (used when no DB is configured)

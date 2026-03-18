@@ -8,6 +8,9 @@ import models
 from database import get_db
 from utils.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter()
 oauth = OAuth()
@@ -43,7 +46,7 @@ async def login(request: Request, provider: str):
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not supported")
-    redirect_uri = f"http://127.0.0.1:8000/api/oauth/{provider}/callback"
+    redirect_uri = f"http://127.0.0.1:8000/auth/{provider}/callback"
     return await client.authorize_redirect(request, redirect_uri)
 
 @router.get("/{provider}/callback")
