@@ -60,6 +60,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithToken = async (token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("isAuthenticated", "true");
+    await checkUser();
+    toast.success("Successfully logged in via Social Account!", {
+      style: { background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" }
+    });
+    return true;
+  };
+
   const signup = async (fullname, email, password) => {
     try {
       await api.post("/auth/signup", { fullname, email, password });
@@ -97,7 +107,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, loginWithToken }}>
       {!loading && children}
     </AuthContext.Provider>
   );

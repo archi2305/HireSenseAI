@@ -83,3 +83,4 @@ email-validator
 authlib
 httpx
 python-dotenv
+itsdangerous

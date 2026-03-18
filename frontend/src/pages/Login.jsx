@@ -56,7 +56,8 @@ function Login() {
   };
 
   const handleSocialLogin = (provider) => {
-    console.log(`Logging in with ${provider}`);
+    setLoading(true);
+    window.location.href = `http://127.0.0.1:8000/api/oauth/${provider.toLowerCase()}/login`;
   };
 
   const GoogleIcon = (props) => (
@@ -153,9 +154,9 @@ function Login() {
                 <input type="checkbox" className="w-[18px] h-[18px] rounded-md border-slate-300 text-pastelBlue focus:ring-pastelBlue/30 transition-colors" />
                 <span className="text-sm font-medium text-slate-600 group-hover:text-slate-800 transition-colors">Remember me</span>
               </label>
-              <a href="#" className="text-sm font-semibold text-pastelBlue hover:text-indigo-500 transition-colors">
+              <Link to="/forgot-password" className="text-sm font-semibold text-pastelBlue hover:text-indigo-500 transition-colors">
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <button

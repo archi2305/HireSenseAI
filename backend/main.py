@@ -10,7 +10,12 @@ from services.suggestion_engine import generate_suggestions
 
 from database import engine
 import models
-from routes import auth
+from routes import auth, oauth, password
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -33,7 +38,15 @@ class AnalysisResult(BaseModel):
     created_at: datetime
 
 
+from starlette.middleware.sessions import SessionMiddleware
+
 app = FastAPI()
+
+# OAuth Requires Session Middleware
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=os.environ.get("SESSION_SECRET", "super-secret-default")
+)
 
 # Allow frontend to access backend
 app.add_middleware(
@@ -49,6 +62,8 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(oauth.router, prefix="/api/oauth", tags=["oauth"])
+app.include_router(password.router, prefix="/api/auth", tags=["password"])
 
 # In-memory store for analyses (used when no DB is configured)
 ANALYSES_MEMORY: List[AnalysisResult] = []

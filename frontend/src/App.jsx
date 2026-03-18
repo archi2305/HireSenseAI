@@ -11,6 +11,9 @@ import Dashboard from "./pages/Dashboard"
 import ResumeAnalyzer from "./components/ResumeAnalyzer"
 import History from "./pages/History"
 import Settings from "./pages/Settings"
+import OAuthSuccess from "./pages/OAuthSuccess"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -77,6 +80,9 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/oauth-success" element={<OAuthSuccess />} />
 
         <Route
           element={

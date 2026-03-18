@@ -64,7 +64,8 @@ function Signup() {
   };
 
   const handleSocialSignup = (provider) => {
-    console.log(`Signing up with ${provider}`);
+    setLoading(true);
+    window.location.href = `http://127.0.0.1:8000/api/oauth/${provider.toLowerCase()}/login`;
   };
 
   const GoogleIcon = (props) => (
