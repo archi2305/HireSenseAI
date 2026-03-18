@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Mail, Lock, User } from "lucide-react";
+import { Loader2, Mail, Lock, User, BrainCircuit } from "lucide-react";
 
 import InputField from "../components/InputField";
 import SocialButton from "../components/SocialButton";
@@ -83,79 +83,52 @@ function Signup() {
   );
 
   return (
-    <div className="min-h-screen flex w-full bg-slate-50 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-y-auto bg-slate-50 font-sans">
       
-      {/* Background Floating Orbs for Mobile */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-softPink/30 blur-3xl lg:hidden animation-float"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-mint/30 blur-3xl lg:hidden animation-float" style={{ animationDelay: '2s' }}></div>
-      <div className="absolute top-[40%] right-[-20%] w-[50%] h-[50%] rounded-full bg-pastelBlue/20 blur-3xl lg:hidden animation-float" style={{ animationDelay: '4s' }}></div>
+      {/* Dynamic Pastel Gradient Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-softPink/30 via-pink-50 to-pastelBlue/20 z-0"></div>
+      
+      {/* Floating Blurred Orbs */}
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-softPink/40 blur-[80px] sm:blur-[100px] animation-float z-0"></div>
+      <div className="fixed bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] max-w-[600px] max-h-[600px] rounded-full bg-pastelBlue/40 blur-[90px] sm:blur-[120px] animation-float z-0" style={{ animationDelay: '2s' }}></div>
+      <div className="fixed top-[20%] right-[30%] w-[35vw] h-[35vw] max-w-[400px] max-h-[400px] rounded-full bg-mint/30 blur-[70px] sm:blur-[100px] animation-float z-0" style={{ animationDelay: '4s' }}></div>
 
-      {/* LEFT SIDE: Brand / Welcome (Hidden on Mobile) */}
-      <div className="hidden lg:flex w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-softPink via-pastelBlue to-mint relative overflow-hidden">
-        {/* Decorative glass shapes */}
-        <div className="absolute top-[20%] right-[10%] w-64 h-64 bg-white/20 backdrop-blur-3xl rounded-full mix-blend-overlay animate-pulse"></div>
-        <div className="absolute bottom-[10%] left-[20%] w-80 h-80 bg-white/20 backdrop-blur-2xl rounded-full mix-blend-overlay animate-pulse" style={{ animationDelay: '2s' }}></div>
+      {/* Main Content Container - Add minimal margin for scroll padding */}
+      <div className="w-full max-w-[420px] relative z-10 flex flex-col items-center my-8">
         
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/30 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/40">
-            <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-slate-800" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
+        {/* Modern AI Logo */}
+        <div className="flex flex-col items-center justify-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-mint via-pastelBlue to-softPink p-[2px] shadow-xl shadow-softPink/20 mb-4 transform hover:scale-105 transition-transform duration-300">
+             <div className="w-full h-full bg-white/95 backdrop-blur-xl rounded-[14px] flex items-center justify-center">
+               <BrainCircuit className="w-7 h-7 text-slate-800" />
+             </div>
           </div>
-          <span className="text-2xl font-bold text-slate-800 tracking-tight">HireSense AI</span>
-        </div>
-
-        <div className="relative z-10 max-w-md">
-          <h1 className="text-5xl font-extrabold text-slate-900 mb-6 leading-tight">
-            Join the future <br/> of hiring.
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
+            HireSkillAI
           </h1>
-          <p className="text-lg text-slate-800/80 leading-relaxed font-medium">
-            Seamlessly scan, score, and analyze resumes with cutting-edge artificial intelligence.
-          </p>
         </div>
 
-        <div className="relative z-10 flex gap-4 text-slate-800/70 text-sm font-medium">
-          <span>Targeted analytics</span>
-          <span>•</span>
-          <span>Precision matching</span>
-        </div>
-      </div>
-
-      {/* RIGHT SIDE: Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:py-12 relative z-10 overflow-y-auto">
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_40px_rgb(0,0,0,0.06)] p-8 sm:p-10 border border-white my-auto">
+        {/* Auth Glass Card */}
+        <div className="w-full bg-white/70 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-white/60 p-8 sm:p-10">
           
-          {/* Mobile Logo */}
-          <div className="flex lg:hidden items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-softPink to-pastelBlue flex items-center justify-center shadow-md">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-slate-800" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-            </div>
-            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">HireSense AI</span>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Create Account</h2>
+            <p className="text-slate-500 text-sm font-medium">Join us and start analyzing resumes.</p>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-slate-800 tracking-tight mb-2">Create Account</h2>
-            <p className="text-slate-500 text-sm">Sign up and start analyzing resumes today.</p>
-          </div>
-
-          {/* Social Sign Up (Horizontal Layout) */}
+          {/* Equal Width Social Sign Up */}
           <div className="flex gap-3 mb-6">
-            <SocialButton icon={GoogleIcon} provider="Google" onClick={() => handleSocialSignup('Google')} disabled={loading} />
-            <div className="hidden sm:block">
-              <SocialButton icon={GithubIcon} provider="GitHub" onClick={() => handleSocialSignup('GitHub')} disabled={loading} />
+            <div className="flex-1">
+              <SocialButton icon={GoogleIcon} text="Google" provider="Google" onClick={() => handleSocialSignup('Google')} disabled={loading} />
+            </div>
+            <div className="flex-1">
+              <SocialButton icon={GithubIcon} text="GitHub" provider="GitHub" onClick={() => handleSocialSignup('GitHub')} disabled={loading} />
             </div>
           </div>
 
           <div className="mb-6 flex items-center gap-4">
             <div className="flex-1 h-px bg-slate-200"></div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Or sign up with email</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Or</span>
             <div className="flex-1 h-px bg-slate-200"></div>
           </div>
 
@@ -212,13 +185,15 @@ function Signup() {
               type="submit"
               disabled={loading}
               className={`
-                w-full mt-2 flex items-center justify-center py-3.5 rounded-2xl text-sm font-bold text-slate-800
-                bg-gradient-to-r from-softPink via-lavender to-pastelBlue
-                shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300
+                w-full mt-4 flex items-center justify-center py-3.5 rounded-2xl text-sm font-bold text-white
+                bg-gradient-to-r from-softPink via-lavender to-pastelBlue background-animate
+                shadow-lg shadow-pink-500/20 hover:shadow-xl hover:shadow-pink-500/30 
+                hover:-translate-y-0.5 transition-all duration-300
                 focus:outline-none focus:ring-4 focus:ring-softPink/30
                 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 
                 relative overflow-hidden group
               `}
+              style={{ backgroundSize: '200% auto' }}
             >
               {/* Shine effect */}
               <div className="absolute inset-0 w-1/4 h-full bg-white/30 transform skew-x-12 -translate-x-full group-hover:animate-[shine_1.5s_ease-in-out]"></div>
@@ -234,7 +209,7 @@ function Signup() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-8">
+          <p className="text-center text-sm text-slate-500 mt-8 font-medium">
             Already have an account?{" "}
             <Link to="/login" className="font-bold text-softPink hover:text-pink-500 transition-colors">
               Log in
@@ -243,17 +218,24 @@ function Signup() {
         </div>
       </div>
       
-      {/* Tailwind Custom Keyframes applied via index.css usually, but can use Arbitrary variants */}
       <style>{`
         @keyframes shine {
           100% { transform: translateX(400%) skewX(12deg); }
         }
         @keyframes float {
           0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.05); }
+          50% { transform: translateY(-15px) scale(1.02); }
+        }
+        @keyframes gradientX {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
         .animation-float {
-          animation: float 6s ease-in-out infinite;
+          animation: float 8s ease-in-out infinite;
+        }
+        .background-animate:hover {
+          animation: gradientX 3s ease infinite;
         }
       `}</style>
     </div>

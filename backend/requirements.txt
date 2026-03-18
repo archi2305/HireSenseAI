@@ -80,3 +80,6 @@ PyJWT
 python-multipart
 fastapi
 email-validator
+authlib
+httpx
+python-dotenv
