@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock, User } from "lucide-react";
+
+import InputField from "../components/InputField";
+import SocialButton from "../components/SocialButton";
 
 function Signup() {
   const { signup } = useAuth();
@@ -14,7 +17,6 @@ function Signup() {
     confirmPassword: ""
   });
   
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -24,7 +26,7 @@ function Signup() {
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email format is invalid";
+      newErrors.email = "Please enter a valid email address";
     }
     if (!formData.password) {
       newErrors.password = "Password is required";
@@ -39,7 +41,6 @@ function Signup() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear error when user types
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: "" });
     }
@@ -62,105 +63,199 @@ function Signup() {
     }
   };
 
+  const handleSocialSignup = (provider) => {
+    console.log(`Signing up with ${provider}`);
+  };
+
+  const GoogleIcon = (props) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  );
+
+  const GithubIcon = (props) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+    </svg>
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-lavender/30 p-4">
-      <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 w-full max-w-md border border-white">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 mb-2">Create Account</h1>
-          <p className="text-slate-500">Join HireSense AI to analyze resumes</p>
+    <div className="min-h-screen flex w-full bg-slate-50 relative overflow-hidden">
+      
+      {/* Background Floating Orbs for Mobile */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-softPink/30 blur-3xl lg:hidden animation-float"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-mint/30 blur-3xl lg:hidden animation-float" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute top-[40%] right-[-20%] w-[50%] h-[50%] rounded-full bg-pastelBlue/20 blur-3xl lg:hidden animation-float" style={{ animationDelay: '4s' }}></div>
+
+      {/* LEFT SIDE: Brand / Welcome (Hidden on Mobile) */}
+      <div className="hidden lg:flex w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-softPink via-pastelBlue to-mint relative overflow-hidden">
+        {/* Decorative glass shapes */}
+        <div className="absolute top-[20%] right-[10%] w-64 h-64 bg-white/20 backdrop-blur-3xl rounded-full mix-blend-overlay animate-pulse"></div>
+        <div className="absolute bottom-[10%] left-[20%] w-80 h-80 bg-white/20 backdrop-blur-2xl rounded-full mix-blend-overlay animate-pulse" style={{ animationDelay: '2s' }}></div>
+        
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/30 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/40">
+            <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-slate-800" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <span className="text-2xl font-bold text-slate-800 tracking-tight">HireSense AI</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-              Full Name
-            </label>
-            <input
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-5xl font-extrabold text-slate-900 mb-6 leading-tight">
+            Join the future <br/> of hiring.
+          </h1>
+          <p className="text-lg text-slate-800/80 leading-relaxed font-medium">
+            Seamlessly scan, score, and analyze resumes with cutting-edge artificial intelligence.
+          </p>
+        </div>
+
+        <div className="relative z-10 flex gap-4 text-slate-800/70 text-sm font-medium">
+          <span>Targeted analytics</span>
+          <span>•</span>
+          <span>Precision matching</span>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: Auth Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:py-12 relative z-10 overflow-y-auto">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_40px_rgb(0,0,0,0.06)] p-8 sm:p-10 border border-white my-auto">
+          
+          {/* Mobile Logo */}
+          <div className="flex lg:hidden items-center justify-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-softPink to-pastelBlue flex items-center justify-center shadow-md">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-slate-800" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">HireSense AI</span>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-slate-800 tracking-tight mb-2">Create Account</h2>
+            <p className="text-slate-500 text-sm">Sign up and start analyzing resumes today.</p>
+          </div>
+
+          {/* Social Sign Up (Horizontal Layout) */}
+          <div className="flex gap-3 mb-6">
+            <SocialButton icon={GoogleIcon} provider="Google" onClick={() => handleSocialSignup('Google')} disabled={loading} />
+            <div className="hidden sm:block">
+              <SocialButton icon={GithubIcon} provider="GitHub" onClick={() => handleSocialSignup('GitHub')} disabled={loading} />
+            </div>
+          </div>
+
+          <div className="mb-6 flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-200"></div>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Or sign up with email</span>
+            <div className="flex-1 h-px bg-slate-200"></div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <InputField
+              label="Full Name"
               type="text"
               name="fullname"
-              className={`w-full bg-slate-50 border ${errors.fullname ? 'border-red-300' : 'border-slate-200'} rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-softPink focus:border-transparent transition-all`}
-              placeholder="John Doe"
+              icon={User}
               value={formData.fullname}
               onChange={handleChange}
+              error={errors.fullname}
+              success={formData.fullname && !errors.fullname}
               disabled={loading}
             />
-            {errors.fullname && <p className="text-red-500 text-xs mt-1 ml-1">{errors.fullname}</p>}
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-              Email Address
-            </label>
-            <input
+
+            <InputField
+              label="Email Address"
               type="email"
               name="email"
-              className={`w-full bg-slate-50 border ${errors.email ? 'border-red-300' : 'border-slate-200'} rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-softPink focus:border-transparent transition-all`}
-              placeholder="you@example.com"
+              icon={Mail}
               value={formData.email}
               onChange={handleChange}
+              error={errors.email}
+              success={formData.email && !errors.email}
               disabled={loading}
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                className={`w-full bg-slate-50 border ${errors.password ? 'border-red-300' : 'border-slate-200'} rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-softPink focus:border-transparent transition-all`}
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {errors.password && <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>}
-          </div>
+            <InputField
+              label="Password"
+              type="password"
+              name="password"
+              icon={Lock}
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              success={formData.password.length >= 6 && !errors.password}
+              disabled={loading}
+            />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-              Confirm Password
-            </label>
-            <input
-              type={showPassword ? "text" : "password"}
+            <InputField
+              label="Confirm Password"
+              type="password"
               name="confirmPassword"
-              className={`w-full bg-slate-50 border ${errors.confirmPassword ? 'border-red-300' : 'border-slate-200'} rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-softPink focus:border-transparent transition-all`}
-              placeholder="••••••••"
+              icon={Lock}
               value={formData.confirmPassword}
               onChange={handleChange}
+              error={errors.confirmPassword}
+              success={formData.confirmPassword && formData.password === formData.confirmPassword && !errors.confirmPassword}
               disabled={loading}
             />
-            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1 ml-1">{errors.confirmPassword}</p>}
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-4 inline-flex items-center justify-center px-4 py-3 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-softPink to-lavender shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-          >
-            {loading ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
-            {loading ? "Creating account..." : "Sign Up"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`
+                w-full mt-2 flex items-center justify-center py-3.5 rounded-2xl text-sm font-bold text-slate-800
+                bg-gradient-to-r from-softPink via-lavender to-pastelBlue
+                shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300
+                focus:outline-none focus:ring-4 focus:ring-softPink/30
+                disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 
+                relative overflow-hidden group
+              `}
+            >
+              {/* Shine effect */}
+              <div className="absolute inset-0 w-1/4 h-full bg-white/30 transform skew-x-12 -translate-x-full group-hover:animate-[shine_1.5s_ease-in-out]"></div>
+              
+              {loading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" />
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
 
-        <p className="text-center text-sm text-slate-500 mt-8">
-          Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-softPink hover:text-pink-600 transition-colors">
-            Log in
-          </Link>
-        </p>
+          <p className="text-center text-sm text-slate-500 mt-8">
+            Already have an account?{" "}
+            <Link to="/login" className="font-bold text-softPink hover:text-pink-500 transition-colors">
+              Log in
+            </Link>
+          </p>
+        </div>
       </div>
+      
+      {/* Tailwind Custom Keyframes applied via index.css usually, but can use Arbitrary variants */}
+      <style>{`
+        @keyframes shine {
+          100% { transform: translateX(400%) skewX(12deg); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-20px) scale(1.05); }
+        }
+        .animation-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }
