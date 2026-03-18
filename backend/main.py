@@ -5,9 +5,14 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from services.resume_parser import extract_text_from_pdf
 from services.skill_matcher import calculate_ats_score
 from services.suggestion_engine import generate_suggestions
+
+from database import engine
+import models
+from routes import auth
+
+models.Base.metadata.create_all(bind=engine)
 
 
 class DashboardStats(BaseModel):
@@ -42,6 +47,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 
 # In-memory store for analyses (used when no DB is configured)
 ANALYSES_MEMORY: List[AnalysisResult] = []

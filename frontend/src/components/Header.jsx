@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from "react"
 import { Bell, User, Search, Settings, LogOut, ChevronDown } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import NotificationDropdown from "./NotificationDropdown"
+import { useAuth } from "../context/AuthContext"
 
 function Header({ search, onSearchChange, notifications }) {
   const [bellOpen, setBellOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
   
   const profileRef = useRef(null)
   const bellRef = useRef(null)
@@ -26,8 +28,7 @@ function Header({ search, onSearchChange, notifications }) {
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("user")
+    logout()
     navigate("/login")
   }
 
@@ -82,8 +83,8 @@ function Header({ search, onSearchChange, notifications }) {
               <User className="w-4 h-4 text-slate-800" />
             </div>
             <div className="flex flex-col text-left mr-1">
-              <span className="text-xs font-semibold text-slate-700 leading-none">Guest User</span>
-              <span className="text-[10px] text-slate-500 leading-none mt-0.5">guest@hiresense.ai</span>
+              <span className="text-xs font-semibold text-slate-700 leading-none">{user?.fullname || "Guest User"}</span>
+              <span className="text-[10px] text-slate-500 leading-none mt-0.5">{user?.email || "guest@hiresense.ai"}</span>
             </div>
             <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
           </button>

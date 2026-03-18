@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react"
 import { Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
+import { AuthProvider, useAuth } from "./context/AuthContext"
+
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
 import Login from "./pages/Login"
@@ -10,10 +13,20 @@ import History from "./pages/History"
 import Settings from "./pages/Settings"
 
 function ProtectedRoute({ children }) {
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true"
-  if (!isAuthenticated) {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-dashboardBg">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pastelBlue"></div>
+      </div>
+    )
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />
   }
+  
   return children
 }
 
@@ -57,39 +70,28 @@ function Layout() {
 }
 
 function App() {
-  const navigate = useNavigate()
-
-  const handleLogin = (user) => {
-    localStorage.setItem("isAuthenticated", "true")
-    localStorage.setItem("user", JSON.stringify(user))
-    navigate("/dashboard")
-  }
-
-  const handleSignup = (user) => {
-    localStorage.setItem("isAuthenticated", "true")
-    localStorage.setItem("user", JSON.stringify(user))
-    navigate("/dashboard")
-  }
-
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/login" element={<Login onLogin={handleLogin} />} />
-      <Route path="/signup" element={<Signup onSignup={handleSignup} />} />
+    <AuthProvider>
+      <Toaster position="top-right" />
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
-      <Route
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/analyzer" element={<ResumeAnalyzer />} />
-        <Route path="/history" element={<History />} />
-        <Route path="/settings" element={<Settings />} />
-      </Route>
-    </Routes>
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/analyzer" element={<ResumeAnalyzer />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Routes>
+    </AuthProvider>
   )
 }
 
