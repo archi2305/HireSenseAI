@@ -46,7 +46,7 @@ async def login(request: Request, provider: str):
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not supported")
-    redirect_uri = f"http://127.0.0.1:8000/auth/{provider}/callback"
+    redirect_uri = f"http://localhost:8000/auth/{provider}/callback"
     return await client.authorize_redirect(request, redirect_uri)
 
 @router.get("/{provider}/callback")
