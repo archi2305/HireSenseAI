@@ -3,8 +3,10 @@ import { Bell, User, Search, Settings, LogOut, ChevronDown } from "lucide-react"
 import { useNavigate, Link } from "react-router-dom"
 import NotificationDropdown from "./NotificationDropdown"
 import { useAuth } from "../context/AuthContext"
+import { useDashboard } from "../context/DashboardContext"
 
-function Header({ search, onSearchChange, notifications }) {
+function Header({ notifications }) {
+  const { searchTerm, setSearchTerm } = useDashboard()
   const [bellOpen, setBellOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const navigate = useNavigate()
@@ -41,8 +43,8 @@ function Header({ search, onSearchChange, notifications }) {
         <input
           type="text"
           placeholder="Search resumes, skills, or candidates..."
-          value={search}
-          onChange={(e) => onSearchChange?.(e.target.value)}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="bg-transparent text-sm outline-none w-full text-slate-700 placeholder:text-slate-400"
         />
       </div>

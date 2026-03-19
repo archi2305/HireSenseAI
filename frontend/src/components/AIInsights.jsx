@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Sparkles } from 'lucide-react';
+import { useDashboard } from '../context/DashboardContext';
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 export default function AIInsights() {
+  const { updateCounter } = useDashboard();
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +22,7 @@ export default function AIInsights() {
         
         if (overview.data.avg_score > 70) {
           newInsights.push("Average ATS score is solid, indicating quality candidates.");
-        } else {
+        } else if (overview.data.avg_score > 0) {
           newInsights.push("Average ATS score is low. Consider adjusting job descriptions.");
         }
         
@@ -42,7 +44,7 @@ export default function AIInsights() {
       }
     };
     generateInsights();
-  }, []);
+  }, [updateCounter]);
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl shadow-sm border border-indigo-100 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { AuthProvider, useAuth } from "./context/AuthContext"
+import { DashboardProvider } from "./context/DashboardContext"
 
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
@@ -35,12 +36,7 @@ function ProtectedRoute({ children }) {
 }
 
 function Layout() {
-  const [searchQuery, setSearchQuery] = useState("")
   const [notifications, setNotifications] = useState([])
-
-  const handleSearch = (value) => {
-    setSearchQuery(value)
-  }
 
   // Adding some initial notifications for the dropdown testing
   useEffect(() => {
@@ -58,15 +54,11 @@ function Layout() {
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col relative w-full h-full">
         {/* HEADER (Top) */}
-        <Header
-          search={searchQuery}
-          onSearchChange={handleSearch}
-          notifications={notifications}
-        />
+        <Header notifications={notifications} />
         
         {/* PAGE CONTENT */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          <Outlet context={{ searchQuery }} />
+          <Outlet />
         </main>
       </div>
     </div>
@@ -76,29 +68,31 @@ function Layout() {
 function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" />
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/oauth-success" element={<OAuthSuccess />} />
+      <DashboardProvider>
+        <Toaster position="top-right" />
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
 
-        <Route
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/analyzer" element={<ResumeAnalyzer />} />
-          <Route path="/matching" element={<CandidateMatching />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Routes>
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/analyzer" element={<ResumeAnalyzer />} />
+            <Route path="/matching" element={<CandidateMatching />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+        </Routes>
+      </DashboardProvider>
     </AuthProvider>
   )
 }

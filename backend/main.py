@@ -7,6 +7,12 @@ from pydantic import BaseModel
 
 from services.skill_matcher import calculate_ats_score
 from services.suggestion_engine import generate_suggestions
+from services.resume_parser import extract_text_from_pdf
+
+import shutil
+import uuid
+import os
+from fastapi.responses import FileResponse, JSONResponse
 
 from database import engine
 import models
@@ -118,44 +124,43 @@ def _seed_demo_data() -> None:
 _seed_demo_data()
 
 
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 @app.post("/analyze")
-async def analyze_resume(
+@app.post("/upload-resume")
+async def upload_resume(
     resume: UploadFile = File(...),
-    job_description: str = Form(...),
+    job_description: str = Form(""),
     job_role: str = Form(""),
 ):
-    """
-    Analyze a resume against a job description and store the result in memory.
-    """
+    file_ext = os.path.splitext(resume.filename)[1]
+    unique_filename = f"{uuid.uuid4().hex}{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(resume.file, buffer)
+        
     try:
         resume.file.seek(0)
         resume_text = extract_text_from_pdf(resume.file)
-
-        ats_score, matched_skills, missing_skills = calculate_ats_score(
-            resume_text, job_description
-        )
-
-        suggestions = generate_suggestions(
-            resume_text, job_description, missing_skills
-        )
-
-        analysis_id = len(ANALYSES_MEMORY) + 1
-        created_at = datetime.utcnow()
+        jd = job_description or "Provide a comprehensive matching score based on standard industry skills."
+        ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
+        suggestions = generate_suggestions(resume_text, jd, missing_skills)
 
         analysis = AnalysisResult(
-            id=analysis_id,
+            id=len(ANALYSES_MEMORY) + 1,
             resume_name=resume.filename or "uploaded_resume",
             job_role=job_role or "Not specified",
             ats_score=ats_score,
             matched_skills=matched_skills,
             missing_skills=missing_skills,
             suggestions=suggestions,
-            created_at=created_at,
+            created_at=datetime.utcnow()
         )
-
+        setattr(analysis, "file_path", file_path)
         ANALYSES_MEMORY.append(analysis)
 
-        # Shape the response for the current frontend
         return {
             "id": analysis.id,
             "ats_score": analysis.ats_score,
@@ -166,7 +171,77 @@ async def analyze_resume(
         }
 
     except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
         raise HTTPException(status_code=500, detail=str(e))
+
+from typing import List
+
+@app.post("/bulk-upload")
+async def bulk_upload(
+    resumes: List[UploadFile] = File(...),
+    job_description: str = Form(""),
+    job_role: str = Form(""),
+):
+    results = []
+    jd = job_description or "General tech role requiring modern skills"
+    for resume in resumes:
+        file_ext = os.path.splitext(resume.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(resume.file, buffer)
+            
+        try:
+            resume.file.seek(0)
+            resume_text = extract_text_from_pdf(resume.file)
+            ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
+            suggestions = generate_suggestions(resume_text, jd, missing_skills)
+            analysis = AnalysisResult(
+                id=len(ANALYSES_MEMORY) + 1,
+                resume_name=resume.filename or "uploaded_resume",
+                job_role=job_role or "Not specified",
+                ats_score=ats_score,
+                matched_skills=matched_skills,
+                missing_skills=missing_skills,
+                suggestions=suggestions,
+                created_at=datetime.utcnow()
+            )
+            setattr(analysis, "file_path", file_path)
+            ANALYSES_MEMORY.append(analysis)
+            results.append({"filename": resume.filename, "status": "success", "id": analysis.id})
+        except Exception as e:
+            if os.path.exists(file_path): os.remove(file_path)
+            results.append({"filename": resume.filename, "status": "error", "message": str(e)})
+            
+    return {"processed": len(results), "results": results}
+
+@app.delete("/candidate/{candidate_id}")
+def delete_candidate(candidate_id: int):
+    global ANALYSES_MEMORY
+    candidate = next((a for a in ANALYSES_MEMORY if a.id == candidate_id), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+        
+    ANALYSES_MEMORY = [a for a in ANALYSES_MEMORY if a.id != candidate_id]
+    
+    file_path = getattr(candidate, "file_path", None)
+    if file_path and os.path.exists(file_path):
+        os.remove(file_path)
+        
+    return {"ok": True, "message": "Candidate deleted successfully"}
+
+@app.get("/download/{candidate_id}")
+def download_candidate(candidate_id: int):
+    candidate = next((a for a in ANALYSES_MEMORY if a.id == candidate_id), None)
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+        
+    file_path = getattr(candidate, "file_path", None)
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Resume file not found on server")
+        
+    return FileResponse(path=file_path, filename=candidate.resume_name, media_type='application/octet-stream')
 
 
 @app.get("/dashboard", response_model=DashboardStats)
@@ -336,6 +411,8 @@ def list_candidates(
             "role": a.job_role,
             "ats_score": a.ats_score,
             "skills": a.matched_skills,
+            "missing_skills": a.missing_skills,
+            "suggestions": a.suggestions,
             "status": "Reviewed" if a.ats_score > 70 else "Pending",
             "date": a.created_at.isoformat()
         })
