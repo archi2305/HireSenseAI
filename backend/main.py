@@ -33,6 +33,8 @@ class DashboardStats(BaseModel):
     system_status: str
 
 
+from typing import List, Optional
+
 class AnalysisResult(BaseModel):
     id: int
     resume_name: str
@@ -42,6 +44,7 @@ class AnalysisResult(BaseModel):
     missing_skills: List[str]
     suggestions: str
     created_at: datetime
+    file_path: Optional[str] = None
 
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -156,9 +159,9 @@ async def upload_resume(
             matched_skills=matched_skills,
             missing_skills=missing_skills,
             suggestions=suggestions,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            file_path=file_path
         )
-        setattr(analysis, "file_path", file_path)
         ANALYSES_MEMORY.append(analysis)
 
         return {
@@ -205,9 +208,9 @@ async def bulk_upload(
                 matched_skills=matched_skills,
                 missing_skills=missing_skills,
                 suggestions=suggestions,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
+                file_path=file_path
             )
-            setattr(analysis, "file_path", file_path)
             ANALYSES_MEMORY.append(analysis)
             results.append({"filename": resume.filename, "status": "success", "id": analysis.id})
         except Exception as e:
@@ -387,11 +390,14 @@ def list_candidates(
     max_score: Optional[int] = None
 ):
     results = ANALYSES_MEMORY
-    
     if search:
         search_lower = search.lower()
-        results = [r for r in results if search_lower in r.resume_name.lower() or search_lower in r.job_role.lower()]
-        
+        results = [
+            r for r in results 
+            if search_lower in r.resume_name.lower() 
+            or search_lower in r.job_role.lower()
+            or any(search_lower in mk.lower() for mk in r.matched_skills)
+        ]
     if min_score is not None:
         results = [r for r in results if r.ats_score >= min_score]
         

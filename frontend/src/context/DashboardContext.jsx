@@ -68,15 +68,15 @@ export function DashboardProvider({ children }) {
     formData.append("job_description", "");
     formData.append("job_role", "");
     
+    const toastId = toast.loading("Analyzing resume...");
     try {
-      const toastId = toast.loading("Analyzing resume...");
       await axios.post(`${API_BASE_URL}/upload-resume`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       toast.success("Resume parsed successfully!", { id: toastId });
       fetchDashboardData();
     } catch (err) {
-      toast.error("Failed to upload resume");
+      toast.error("Failed to upload resume", { id: toastId });
     }
   };
 
@@ -88,15 +88,15 @@ export function DashboardProvider({ children }) {
     formData.append("job_description", "");
     formData.append("job_role", "");
     
+    const toastId = toast.loading(`Uploading ${files.length} resumes...`);
     try {
-      const toastId = toast.loading(`Uploading ${files.length} resumes...`);
       const res = await axios.post(`${API_BASE_URL}/bulk-upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       toast.success(`Successfully processed ${res.data.processed} resumes!`, { id: toastId });
       fetchDashboardData();
     } catch (err) {
-      toast.error("Bulk upload failed");
+      toast.error("Bulk upload failed", { id: toastId });
     }
   };
 
