@@ -254,3 +254,109 @@ def recent_analyses():
     Backwards-compatible alias for /analyses if needed.
     """
     return list_analyses()
+
+@app.get("/analytics/overview")
+def analytics_overview():
+    total = len(ANALYSES_MEMORY)
+    if total == 0:
+        avg_score = 0.0
+    else:
+        avg_score = sum(a.ats_score for a in ANALYSES_MEMORY) / total
+    return {
+        "total_resumes": total,
+        "avg_score": round(avg_score, 2),
+        "recent_matches": len([a for a in ANALYSES_MEMORY if a.ats_score >= 80])
+    }
+
+@app.get("/analytics/skills")
+def analytics_skills():
+    skill_counts = {}
+    for a in ANALYSES_MEMORY:
+        for skill in a.matched_skills:
+            skill_counts[skill] = skill_counts.get(skill, 0) + 1
+    # Sort and return top 5
+    sorted_skills = sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    return [{"name": k.title(), "count": v} for k, v in sorted_skills]
+
+@app.get("/analytics/scores")
+def analytics_scores():
+    ranges = {"0-50": 0, "50-80": 0, "80+": 0}
+    for a in ANALYSES_MEMORY:
+        if a.ats_score <= 50:
+            ranges["0-50"] += 1
+        elif a.ats_score <= 80:
+            ranges["50-80"] += 1
+        else:
+            ranges["80+"] += 1
+    return [{"name": k, "value": v} for k, v in ranges.items()]
+
+@app.get("/analytics/trend")
+def analytics_trend():
+    # Return count of resumes by date
+    counts_by_date = {}
+    for a in ANALYSES_MEMORY:
+        date_str = a.created_at.strftime("%Y-%m-%d")
+        counts_by_date[date_str] = counts_by_date.get(date_str, 0) + 1
+    
+    # Sort by date
+    sorted_dates = sorted(counts_by_date.items(), key=lambda x: x[0])
+    return [{"date": k, "count": v} for k, v in sorted_dates]
+
+from typing import Optional
+
+@app.get("/candidates")
+def list_candidates(
+    search: Optional[str] = None,
+    skills: Optional[str] = None,
+    min_score: Optional[int] = None,
+    max_score: Optional[int] = None
+):
+    results = ANALYSES_MEMORY
+    
+    if search:
+        search_lower = search.lower()
+        results = [r for r in results if search_lower in r.resume_name.lower() or search_lower in r.job_role.lower()]
+        
+    if min_score is not None:
+        results = [r for r in results if r.ats_score >= min_score]
+        
+    if max_score is not None:
+        results = [r for r in results if r.ats_score <= max_score]
+        
+    if skills:
+        skill_list = [s.strip().lower() for s in skills.split(",")]
+        # Match if candidate has ANY of the requested skills
+        results = [r for r in results if any(s.lower() in [mk.lower() for mk in r.matched_skills] for s in skill_list)]
+        
+    out = []
+    for a in results:
+        out.append({
+            "id": a.id,
+            "name": a.resume_name.replace(".pdf", "").replace("_", " ").title(),
+            "role": a.job_role,
+            "ats_score": a.ats_score,
+            "skills": a.matched_skills,
+            "status": "Reviewed" if a.ats_score > 70 else "Pending",
+            "date": a.created_at.isoformat()
+        })
+    return out
+
+@app.post("/candidates/match")
+def match_candidates(job_description: str = Form(...)):
+    jd_lower = job_description.lower()
+    results = []
+    for a in ANALYSES_MEMORY:
+        match_score = a.ats_score
+        if a.job_role.lower() in jd_lower:
+            match_score = min(100, match_score + 10)
+        
+        results.append({
+            "id": a.id,
+            "name": a.resume_name.replace(".pdf", "").replace("_", " ").title(),
+            "role": a.job_role,
+            "match_percentage": match_score,
+            "skills": a.matched_skills
+        })
+        
+    results.sort(key=lambda x: x["match_percentage"], reverse=True)
+    return results

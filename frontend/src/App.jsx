@@ -9,6 +9,7 @@ import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import Dashboard from "./pages/Dashboard"
 import ResumeAnalyzer from "./components/ResumeAnalyzer"
+import CandidateMatching from "./pages/CandidateMatching"
 import History from "./pages/History"
 import Settings from "./pages/Settings"
 import OAuthSuccess from "./pages/OAuthSuccess"
@@ -93,6 +94,7 @@ function App() {
         >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/analyzer" element={<ResumeAnalyzer />} />
+          <Route path="/matching" element={<CandidateMatching />} />
           <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
