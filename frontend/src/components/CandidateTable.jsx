@@ -145,7 +145,7 @@ export default function CandidateTable() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-[11px] uppercase tracking-wide font-bold rounded-md ${c.status === 'Reviewed' ? 'bg-indigo-50 border border-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`px-2 py-1 text-[11px] uppercase tracking-wide font-bold rounded-md ${c.status === 'High Match' ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : c.status === 'Good Match' ? 'bg-amber-50 border border-amber-100 text-amber-700' : 'bg-rose-50 border border-rose-100 text-rose-700'}`}>
                           {c.status}
                         </span>
                       </td>

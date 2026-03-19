@@ -474,7 +474,7 @@ def list_candidates(
             "skills": a.matched_skills,
             "missing_skills": a.missing_skills,
             "suggestions": a.suggestions,
-            "status": "Reviewed" if a.ats_score > 70 else "Pending",
+            "status": "High Match" if a.ats_score >= 80 else ("Good Match" if a.ats_score >= 60 else "Low Match"),
             "date": a.created_at.isoformat()
         })
     return out
