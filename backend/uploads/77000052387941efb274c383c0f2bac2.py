@@ -123,68 +123,12 @@ def _seed_demo_data() -> None:
 
     ANALYSES_MEMORY.extend(samples)
 
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-def _seed_demo_data() -> None:
-    """
-    Seed a few demo analyses so the dashboard is not empty on first run.
-    This keeps the app functional even before any real uploads.
-    """
-    if ANALYSES_MEMORY:
-        return
-
-    now = datetime.utcnow()
-
-    samples = [
-        AnalysisResult(
-            id=1,
-            resume_name="resume_ml_engineer.pdf",
-            job_role="ML Engineer",
-            ats_score=78,
-            matched_skills=["python", "sql", "git"],
-            missing_skills=["docker", "aws"],
-            suggestions="Good alignment with ML role. Consider adding Docker and AWS experience.",
-            created_at=now - timedelta(days=2),
-            file_path=os.path.join(UPLOAD_DIR, "resume_ml_engineer.pdf")
-        ),
-        AnalysisResult(
-            id=2,
-            resume_name="resume_backend.pdf",
-            job_role="Backend Engineer",
-            ats_score=85,
-            matched_skills=["python", "fastapi", "rest", "git"],
-            missing_skills=["aws"],
-            suggestions="Strong backend profile. Add more detail on cloud deployments (AWS).",
-            created_at=now - timedelta(days=1),
-            file_path=os.path.join(UPLOAD_DIR, "resume_backend.pdf")
-        ),
-        AnalysisResult(
-            id=3,
-            resume_name="resume_data_analyst.pdf",
-            job_role="Data Analyst",
-            ats_score=70,  
-            matched_skills=["python", "sql"],
-            missing_skills=["aws"],
-            suggestions="Highlight data visualization tools and cloud skills to improve fit.",
-            created_at=now,
-            file_path=os.path.join(UPLOAD_DIR, "resume_data_analyst.pdf")
-        ),
-    ]
-
-    ANALYSES_MEMORY.extend(samples)
-    
-    # Create valid dummy PDFs on disk so download works for seeded data without throwing 404
-    for s in samples:
-        try:
-            if not os.path.exists(s.file_path):
-                # We can write a tiny valid pseudo-PDF to prevent errors from purely empty bytes if a system tries opening it.
-                with open(s.file_path, "wb") as f:
-                    f.write(b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \ntrailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n198\n%%EOF\n")
-        except Exception:
-            pass
 
 _seed_demo_data()
+
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/analyze")
 @app.post("/upload-resume")
@@ -252,7 +196,8 @@ async def bulk_upload(
             shutil.copyfileobj(resume.file, buffer)
             
         try:
-            resume_text = extract_text_from_pdf(file_path)
+            resume.file.seek(0)
+            resume_text = extract_text_from_pdf(resume.file)
             ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
             suggestions = generate_suggestions(resume_text, jd, missing_skills)
             analysis = AnalysisResult(
