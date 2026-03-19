@@ -46,6 +46,13 @@ async def login(request: Request, provider: str):
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not supported")
+        
+    if not client.client_id:
+        raise HTTPException(
+            status_code=500,
+            detail=f"{provider.capitalize()} Client keys are fully unconfigured! Please append the secret values dynamically into your backend/.env file to initialize!"
+        )
+        
     redirect_uri = f"http://localhost:8000/auth/{provider}/callback"
     return await client.authorize_redirect(request, redirect_uri)
 

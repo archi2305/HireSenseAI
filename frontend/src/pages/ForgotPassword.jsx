@@ -20,7 +20,7 @@ function ForgotPassword() {
     setLoading(true);
     try {
       const response = await api.post("/auth/forgot-password", { email });
-      toast.success(response.data.message || "Reset link dispatched natively!", {
+      toast.success(response.data.message || "Reset link printed to Uvicorn natively!", {
         duration: 5000,
         style: { background: "#f0fdf4", color: "#166534", border: "1px solid #bbf7d0" },
       });
@@ -83,7 +83,7 @@ function ForgotPassword() {
           ) : (
             <div className="text-center bg-mint/20 p-4 rounded-xl border border-mint/40 mb-6">
               <p className="text-slate-700 text-sm font-medium">
-                Check your inbox explicitly. If your email was successfully verified dynamically in our mappings, you'll receive a strict expiring reset link.
+                Check your background Python Terminal log output strictly. Since active SMTP is disabled currently, your expiring reset payload has successfully mapped directly onto Uvicorn's standard output directly!
               </p>
             </div>
           )}
