@@ -215,7 +215,7 @@ async def upload_resume(
             matched_skills=matched_skills,
             missing_skills=missing_skills,
             suggestions=suggestions,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             file_path=file_path
         )
         ANALYSES_MEMORY.append(analysis)
@@ -263,7 +263,7 @@ async def bulk_upload(
                 matched_skills=matched_skills,
                 missing_skills=missing_skills,
                 suggestions=suggestions,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 file_path=file_path
             )
             ANALYSES_MEMORY.append(analysis)
