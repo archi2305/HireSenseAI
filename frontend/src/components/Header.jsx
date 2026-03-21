@@ -81,9 +81,13 @@ function Header({ notifications }) {
             }}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/50 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-pastelBlue bg-white shadow-sm"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-mint to-pastelBlue flex items-center justify-center shadow-sm">
-              <User className="w-4 h-4 text-slate-800" />
-            </div>
+            {user?.avatar_url ? (
+              <img src={`http://127.0.0.1:8000${user.avatar_url}`} alt="Avatar" className="w-8 h-8 rounded-lg object-cover shadow-sm border border-slate-200" />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-mint to-pastelBlue flex items-center justify-center shadow-sm">
+                <User className="w-4 h-4 text-slate-800" />
+              </div>
+            )}
             <div className="flex flex-col text-left mr-1">
               <span className="text-xs font-semibold text-slate-700 leading-none">{user?.fullname || "Guest User"}</span>
               <span className="text-[10px] text-slate-500 leading-none mt-0.5">{user?.email || "guest@hiresense.ai"}</span>
