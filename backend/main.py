@@ -74,6 +74,10 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(oauth.router, prefix="/auth", tags=["oauth"])
 app.include_router(password.router, prefix="/api/auth", tags=["password"])
+app.include_router(profile.router, prefix="/api", tags=["profile"])
+
+os.makedirs("uploads/avatars", exist_ok=True)
+app.mount("/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
 
 # In-memory store for analyses (used when no DB is configured)
 ANALYSES_MEMORY: List[AnalysisResult] = []
