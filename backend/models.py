@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, Float, DateTime
 from database import Base
 from datetime import datetime
 
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, JSON
+
 class User(Base):
     __tablename__ = "users"
 
@@ -10,6 +12,20 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # --- Profile Enhancement Columns --- #
+    company = Column(String, nullable=True)
+    job_role = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    
+    # Tags
+    preferred_roles = Column(JSON, default=list)
+    preferred_skills = Column(JSON, default=list)
+    
+    # Notifications
+    email_alerts = Column(Boolean, default=True)
+    weekly_reports = Column(Boolean, default=False)
 
 class ResumeAnalysis(Base):
     __tablename__ = "resume_analysis"

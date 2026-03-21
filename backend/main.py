@@ -16,7 +16,8 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from database import engine
 import models
-from routes import auth, oauth, password
+from routes import auth, oauth, password, profile
+from fastapi.staticfiles import StaticFiles
 
 from dotenv import load_dotenv
 import os
