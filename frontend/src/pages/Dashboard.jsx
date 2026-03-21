@@ -26,7 +26,10 @@ function Dashboard() {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      await uploadResume(file);
+      const role = prompt("Enter the Job Role for this candidate (or leave blank for generic comparison):", "");
+      if (role !== null) {
+        await uploadResume(file, role);
+      }
       e.target.value = ""; // Reset
     }
   };
@@ -34,7 +37,10 @@ function Dashboard() {
   const handleBulkChange = async (e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      await bulkUploadResumes(files);
+      const role = prompt("Enter a Job Role for this batch of resumes (or leave blank for generic comparison):", "");
+      if (role !== null) {
+        await bulkUploadResumes(files, role);
+      }
       e.target.value = ""; // Reset
     }
   };

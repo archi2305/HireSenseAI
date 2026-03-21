@@ -62,11 +62,11 @@ export function DashboardProvider({ children }) {
     }
   };
 
-  const uploadResume = async (file) => {
+  const uploadResume = async (file, role = "") => {
     const formData = new FormData();
     formData.append("resume", file);
     formData.append("job_description", "");
-    formData.append("job_role", "");
+    formData.append("job_role", role);
     
     try {
       await toast.promise(
@@ -85,13 +85,13 @@ export function DashboardProvider({ children }) {
     }
   };
 
-  const bulkUploadResumes = async (files) => {
+  const bulkUploadResumes = async (files, role = "") => {
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
         formData.append("resumes", files[i]);
     }
     formData.append("job_description", "");
-    formData.append("job_role", "");
+    formData.append("job_role", role);
     
     try {
       await toast.promise(

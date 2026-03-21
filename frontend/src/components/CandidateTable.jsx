@@ -100,6 +100,9 @@ export default function CandidateTable() {
               </th>
               <th className="py-3 px-4">Skills</th>
               <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => toggleSort('date')}>
+                <div className="flex items-center gap-1">Added On <ArrowUpDown size={14} className="text-slate-400" /></div>
+              </th>
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -107,7 +110,7 @@ export default function CandidateTable() {
             {loading ? (
               [1, 2, 3].map(i => (
                 <tr key={i} className="border-b border-slate-100">
-                  <td colSpan="6" className="py-4 px-4">
+                  <td colSpan="7" className="py-4 px-4">
                     <div className="animate-pulse flex space-x-4">
                       <div className="h-4 bg-slate-100 rounded w-1/4"></div>
                       <div className="h-4 bg-slate-100 rounded w-1/4"></div>
@@ -119,7 +122,7 @@ export default function CandidateTable() {
               ))
             ) : sortedCandidates.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center py-12 text-slate-500 bg-slate-50/50">
+                <td colSpan="7" className="text-center py-12 text-slate-500 bg-slate-50/50">
                   <div className="flex flex-col items-center justify-center">
                     <Search className="w-8 h-8 text-slate-300 mb-2" />
                     <p>No candidates found matching your criteria.</p>
@@ -148,6 +151,9 @@ export default function CandidateTable() {
                         <span className={`px-2 py-1 text-[11px] uppercase tracking-wide font-bold rounded-md ${c.status === 'High Match' ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : c.status === 'Good Match' ? 'bg-amber-50 border border-amber-100 text-amber-700' : 'bg-rose-50 border border-rose-100 text-rose-700'}`}>
                           {c.status}
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-xs font-medium text-slate-500">
+                        {new Date(c.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
