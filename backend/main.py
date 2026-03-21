@@ -86,7 +86,7 @@ def _seed_demo_data() -> None:
     if ANALYSES_MEMORY:
         return
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     samples = [
         AnalysisResult(
@@ -134,7 +134,7 @@ def _seed_demo_data() -> None:
     if ANALYSES_MEMORY:
         return
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     samples = [
         AnalysisResult(
