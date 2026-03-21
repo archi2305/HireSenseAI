@@ -16,6 +16,7 @@ import Settings from "./pages/Settings"
 import OAuthSuccess from "./pages/OAuthSuccess"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
+import Profile from "./pages/Profile"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -89,6 +90,7 @@ function App() {
             <Route path="/analyzer" element={<ResumeAnalyzer />} />
             <Route path="/matching" element={<CandidateMatching />} />
             <Route path="/history" element={<History />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

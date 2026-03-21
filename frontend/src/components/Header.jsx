@@ -97,7 +97,7 @@ function Header({ notifications }) {
                 <p className="text-sm font-semibold text-slate-800">My Account</p>
               </div>
               
-              <Link to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+              <Link to="/profile" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                 <User className="w-4 h-4" />
                 Profile
               </Link>

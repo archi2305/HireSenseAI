@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { LayoutDashboard, FileText, History, Settings, Target } from "lucide-react"
+import { LayoutDashboard, FileText, History, Settings, Target, User } from "lucide-react"
 
 function Sidebar() {
   const location = useLocation()
@@ -9,6 +9,7 @@ function Sidebar() {
     { name: "Resume Analyzer", path: "/analyzer", icon: FileText },
     { name: "Candidate Match", path: "/matching", icon: Target },
     { name: "History", path: "/history", icon: History },
+    { name: "Profile", path: "/profile", icon: User },
     { name: "Settings", path: "/settings", icon: Settings }
   ]
 
