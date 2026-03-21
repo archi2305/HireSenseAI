@@ -153,7 +153,7 @@ export default function CandidateTable() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-xs font-medium text-slate-500">
-                        {new Date(c.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                        {new Date(c.date).toLocaleString("en-IN", { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
