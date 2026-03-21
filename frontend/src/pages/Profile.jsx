@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { User, Mail, Briefcase, Camera, Shield, Bell, Save, Trash2, Sliders, LogOut, CheckCircle, UploadCloud, Download, Lock } from "lucide-react";
+import { User, Mail, Briefcase, Camera, Shield, Bell, Save, Trash2, Sliders, LogOut, CheckCircle, UploadCloud, Download, Lock, FileText } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import api from "../services/api";
