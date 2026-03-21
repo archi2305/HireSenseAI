@@ -159,13 +159,14 @@ export default function Profile() {
     // Simulating password API for now since backend route wasn't completely fleshed out for password change yet
     const updateToast = toast.loading("Changing password...");
     try {
-      // await api.post("/auth/change-password", { ...passwords }); 
-      setTimeout(() => {
-        toast.success("Password changed securely", { id: updateToast });
-        setPasswords({ current_password: "", new_password: "", confirm_password: "" });
-      }, 1000);
+      await api.post("/profile/change-password", { 
+        current_password: passwords.current_password,
+        new_password: passwords.new_password 
+      }); 
+      toast.success("Password changed securely", { id: updateToast });
+      setPasswords({ current_password: "", new_password: "", confirm_password: "" });
     } catch (error) {
-      toast.error("Failed to change password", { id: updateToast });
+      toast.error(error.response?.data?.detail || "Failed to change password", { id: updateToast });
     }
   };
 

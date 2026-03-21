@@ -72,6 +72,21 @@ def upload_avatar(file: UploadFile = File(...), db: Session = Depends(get_db), c
     
     return {"avatar_url": url_path}
 
+from utils.security import verify_password, get_password_hash
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.post("/change-password")
+def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if not verify_password(req.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    current_user.hashed_password = get_password_hash(req.new_password)
+    db.commit()
+    return {"message": "Password changed successfully"}
+
 @router.get("/activity")
 def get_activity(current_user: models.User = Depends(get_current_user)):
     # Mocking activity since the current resume analysis engine is transient memory-based
