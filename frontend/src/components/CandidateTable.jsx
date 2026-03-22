@@ -125,7 +125,7 @@ export default function CandidateTable() {
                 <td colSpan="7" className="text-center py-12 text-slate-500 bg-slate-50/50">
                   <div className="flex flex-col items-center justify-center">
                     <Search className="w-8 h-8 text-slate-300 mb-2" />
-                    <p>No candidates found matching your criteria.</p>
+                    <p>{(!searchTerm && !skillFilter && !minScoreFilter) ? "Upload your first resume" : "No candidates found matching your criteria."}</p>
                   </div>
                 </td>
               </tr>
@@ -135,9 +135,12 @@ export default function CandidateTable() {
                       <td className="py-3 px-4 font-medium text-slate-800">{c.name}</td>
                       <td className="py-3 px-4 text-slate-600">{c.role}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${c.ats_score >= 80 ? 'bg-emerald-100 text-emerald-700' : c.ats_score >= 60 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
-                          {c.ats_score}%
-                        </span>
+                        <div className="flex flex-col items-start gap-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold shadow-sm border ${c.ats_score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : c.ats_score >= 60 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                            {c.ats_score}% Match
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-medium">({c.skills.length} skills matched)</span>
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">

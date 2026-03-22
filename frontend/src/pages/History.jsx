@@ -70,7 +70,7 @@ function History() {
           </div>
         )) : (
           <div className="text-center py-12 bg-white rounded-xl border border-dashed border-slate-200">
-            <p className="text-slate-500">No history found. Try analyzing a resume!</p>
+            <p className="text-slate-500">No analysis done yet</p>
           </div>
         )}
       </div>

@@ -73,7 +73,7 @@ export default function CandidateMatching() {
             {matches.length === 0 && !loading && (
               <div className="bg-white/60 border border-slate-200 border-dashed rounded-2xl p-12 text-center text-slate-500">
                 <BrainCircuit className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                <p>Paste a job description and click match to see top candidates.</p>
+                <p>Paste job description to find matches</p>
               </div>
             )}
             
