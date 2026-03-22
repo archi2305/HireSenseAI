@@ -15,12 +15,17 @@ load_dotenv()
 router = APIRouter()
 oauth = OAuth()
 
+def get_clean_env(key: str) -> str:
+    # Completely strip any hidden spaces, newlines, or accidental quotes users paste into Render UI
+    val = os.environ.get(key, "")
+    return val.strip(' \n\r"\'-')
+
 # Google config
 oauth.register(
     name='google',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_id=os.environ.get("GOOGLE_CLIENT_ID", ""),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+    client_id=get_clean_env("GOOGLE_CLIENT_ID"),
+    client_secret=get_clean_env("GOOGLE_CLIENT_SECRET"),
     client_kwargs={
         'scope': 'openid email profile'
     }
@@ -29,8 +34,8 @@ oauth.register(
 # GitHub config
 oauth.register(
     name='github',
-    client_id=os.environ.get("GITHUB_CLIENT_ID", ""),
-    client_secret=os.environ.get("GITHUB_CLIENT_SECRET", ""),
+    client_id=get_clean_env("GITHUB_CLIENT_ID"),
+    client_secret=get_clean_env("GITHUB_CLIENT_SECRET"),
     access_token_url='https://github.com/login/oauth/access_token',
     access_token_params=None,
     authorize_url='https://github.com/login/oauth/authorize',
@@ -38,8 +43,6 @@ oauth.register(
     api_base_url='https://api.github.com/',
     client_kwargs={'scope': 'user:email'},
 )
-
-FRONTEND_URL = "http://localhost:5173"
 
 @router.get("/{provider}/login")
 async def login(request: Request, provider: str):
@@ -49,15 +52,18 @@ async def login(request: Request, provider: str):
         
     if not client.client_id:
         raise HTTPException(
-            status_code=500,
-            detail=f"{provider.capitalize()} Client keys are fully unconfigured! Please append the secret values dynamically into your backend/.env file to initialize!"
+            status_code=400,
+            detail=f"{provider.capitalize()} Client attributes missing! Check Render Environment Variables."
         )
         
-    redirect_uri = f"http://localhost:8000/auth/{provider}/callback"
+    # Dynamically build the exact requested redirect URL without localhost hardcoding
+    base_url = str(request.base_url).rstrip("/")
+    redirect_uri = f"{base_url}/auth/{provider}/callback"
     return await client.authorize_redirect(request, redirect_uri)
 
-@router.get("/{provider}/callback")
+@router.get("/{provider}/callback", name="auth_via_provider")
 async def auth_via_provider(request: Request, provider: str, db: Session = Depends(get_db)):
+    FRONTEND_URL = get_clean_env("FRONTEND_URL") or "http://localhost:5173"
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not supported")
