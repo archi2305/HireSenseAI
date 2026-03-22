@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { useDashboard } from '../context/DashboardContext';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 // Pastel Palette
 const COLORS = ['#93C5FD', '#A78BFA', '#FBCFE8', '#86EFAC', '#FDE047'];

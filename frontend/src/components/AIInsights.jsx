@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Sparkles } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function AIInsights() {
   const { updateCounter } = useDashboard();

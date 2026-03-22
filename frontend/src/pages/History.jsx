@@ -11,7 +11,7 @@ function History() {
 
   const fetchHistory = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/analysis") // Mocked API
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/analysis`) // Mocked API
       setAnalyses(response.data)
     } catch (error) {
       console.error(error)

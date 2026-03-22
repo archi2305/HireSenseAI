@@ -202,7 +202,7 @@ export default function Profile() {
           <div className="relative -mt-12 mb-4 inline-block group">
             <div className="w-24 h-24 rounded-2xl bg-white p-1.5 shadow-sm border border-slate-100 relative overflow-hidden">
               {profile.avatar_url ? (
-                <img src={`http://127.0.0.1:8000${profile.avatar_url}`} alt="Avatar" className="w-full h-full object-cover rounded-xl" />
+                <img src={`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}${profile.avatar_url}`} alt="Avatar" className="w-full h-full object-cover rounded-xl" />
               ) : (
                 <div className="w-full h-full rounded-xl bg-gradient-to-br from-mint to-emerald-300 flex items-center justify-center">
                   <User size={40} className="text-emerald-900 opacity-50" />

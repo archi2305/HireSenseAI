@@ -58,14 +58,18 @@ app.add_middleware(
     secret_key=os.environ.get("SESSION_SECRET", "super-secret-default")
 )
 
-# Allow frontend to access backend
+# Dynamic CORS Setup for Vercel + Localhost Dual Config
+frontend_url = os.environ.get("FRONTEND_URL", "")
+origins = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+]
+if frontend_url:
+    origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5173",
-        "http://localhost:5173",
-        "*",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
