@@ -42,64 +42,82 @@ export default function AnalyticsCharts() {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
         <h3 className="text-lg font-bold text-slate-800 mb-4">Resumes Parsed (Trend)</h3>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-              <XAxis dataKey="date" tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} dy={10} />
-              <YAxis tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} dx={-10} />
-              <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} cursor={{stroke: '#E2E8F0', strokeWidth: 1, strokeDasharray: '4 4'}} />
-              <Line type="monotone" dataKey="count" stroke="#A78BFA" strokeWidth={3} dot={{r: 4, fill: '#A78BFA', strokeWidth: 0}} activeDot={{r: 6, fill: '#818CF8', strokeWidth: 0}} />
-            </LineChart>
-          </ResponsiveContainer>
+          {trendData.length === 0 ? (
+             <div className="flex h-full items-center justify-center">
+               <p className="text-slate-400 font-medium">No trend data available yet.</p>
+             </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                <XAxis dataKey="date" tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} dy={10} />
+                <YAxis tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} dx={-10} />
+                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} cursor={{stroke: '#E2E8F0', strokeWidth: 1, strokeDasharray: '4 4'}} />
+                <Line type="monotone" dataKey="count" stroke="#A78BFA" strokeWidth={3} dot={{r: 4, fill: '#A78BFA', strokeWidth: 0}} activeDot={{r: 6, fill: '#818CF8', strokeWidth: 0}} />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
         <h3 className="text-lg font-bold text-slate-800 mb-4">Top Skills Frequency</h3>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={skillsData} layout="vertical" margin={{top: 5, right: 30, left: 40, bottom: 5}}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F1F5F9" />
-              <XAxis type="number" tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} />
-              <YAxis dataKey="name" type="category" tick={{fontSize: 12, fill: '#64748B'}} tickLine={false} axisLine={false} />
-              <Tooltip cursor={{fill: '#F8FAFC'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-              <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={24}>
-                {skillsData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          {skillsData.length === 0 ? (
+             <div className="flex h-full items-center justify-center">
+               <p className="text-slate-400 font-medium">No skills extracted yet.</p>
+             </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={skillsData} layout="vertical" margin={{top: 5, right: 30, left: 40, bottom: 5}}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F1F5F9" />
+                <XAxis type="number" tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} />
+                <YAxis dataKey="name" type="category" tick={{fontSize: 12, fill: '#64748B'}} tickLine={false} axisLine={false} />
+                <Tooltip cursor={{fill: '#F8FAFC'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={24}>
+                  {skillsData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2 hover:shadow-md transition-shadow duration-300">
         <h3 className="text-lg font-bold text-slate-800 mb-4">ATS Score Distribution</h3>
         <div className="h-64 flex justify-center">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={scoresData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={5}
-                dataKey="value"
-                stroke="none"
-              >
-                {scoresData.map((entry, index) => {
-                  let color = "#CBD5E1";
-                  if (entry.name === "80+") color = "#6EE7B7"; // Soft Mint
-                  else if (entry.name === "50-80") color = "#FCD34D"; // Soft Yellow
-                  else if (entry.name === "0-50") color = "#FCA5A5"; // Soft Red
-                  return <Cell key={`cell-${index}`} fill={color} />;
-                })}
-              </Pie>
-              <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-              <Legend verticalAlign="bottom" height={36}/>
-            </PieChart>
-          </ResponsiveContainer>
+          {scoresData.every(d => d.value === 0) ? (
+             <div className="flex h-full w-full items-center justify-center">
+               <p className="text-slate-400 font-medium">Upload a resume to generate score distributions.</p>
+             </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={scoresData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {scoresData.map((entry, index) => {
+                    let color = "#CBD5E1";
+                    if (entry.name === "80+") color = "#6EE7B7"; // Soft Mint
+                    else if (entry.name === "50-80") color = "#FCD34D"; // Soft Yellow
+                    else if (entry.name === "0-50") color = "#FCA5A5"; // Soft Red
+                    return <Cell key={`cell-${index}`} fill={color} />;
+                  })}
+                </Pie>
+                <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                <Legend verticalAlign="bottom" height={36}/>
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>
