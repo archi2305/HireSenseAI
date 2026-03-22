@@ -5,18 +5,11 @@ def run_migrations():
     print("Starting Profile Upgrade Migrations...")
     
     alter_statements = [
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS company VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS job_role VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_roles JSON DEFAULT '[]'::json;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_skills JSON DEFAULT '[]'::json;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_alerts BOOLEAN DEFAULT TRUE;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_reports BOOLEAN DEFAULT FALSE;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS resume_match_alerts BOOLEAN DEFAULT TRUE;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS openai_api_key VARCHAR;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS accent_color VARCHAR DEFAULT 'pastelBlue';"
+        "ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS user_id INTEGER;",
+        "ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS matched_skills JSON DEFAULT '[]'::json;",
+        "ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS missing_skills JSON DEFAULT '[]'::json;",
+        "ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS suggestions VARCHAR;",
+        "ALTER TABLE resume_analysis ADD COLUMN IF NOT EXISTS file_path VARCHAR;"
     ]
     
     try:

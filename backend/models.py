@@ -37,7 +37,12 @@ class ResumeAnalysis(Base):
     __tablename__ = "resume_analysis"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True, nullable=True) # ForeignKey placeholder logic
     resume_name = Column(String)
     job_role = Column(String)
     ats_score = Column(Float)
+    matched_skills = Column(JSON, default=list)
+    missing_skills = Column(JSON, default=list)
+    suggestions = Column(String)
+    file_path = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

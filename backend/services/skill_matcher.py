@@ -1,5 +1,7 @@
 import json
 import os
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 SKILLS_FILE = os.path.join(os.path.dirname(__file__), "skills.json")
 
@@ -48,18 +50,30 @@ def calculate_ats_score(resume_text, job_description):
         ats_score = min(100, len(matched_skills) * 20)
         return ats_score, matched_skills, []
     
-    # Strict matching mode for when a true Job Description is provided
+    # Extract required skills to determine boolean matches
     for skill in required_skills:
         if skill in resume_text:
             matched_skills.append(skill)
         else:
             missing_skills.append(skill)
 
-    total_required = len(matched_skills) + len(missing_skills)
-
-    if total_required == 0:
+    # Transform semantic similarity via Scikit-Learn TF-IDF Vectorization
+    try:
+        vectorizer = TfidfVectorizer(stop_words='english')
+        tfidf_matrix = vectorizer.fit_transform([job_description, resume_text])
+        cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
+        
+        # Base score from pure linguistic vector overlap mapped to 1-100%
+        base_score = int(cosine_sim * 100)
+        
+        # Boost semantics via hard-coded skill arrays 
+        if required_skills:
+            skill_ratio = len(matched_skills) / len(required_skills)
+            ats_score = min(100, int(base_score * 0.5 + (skill_ratio * 100) * 0.5))
+        else:
+            ats_score = min(100, base_score + (len(matched_skills) * 5))
+            
+    except Exception:
         ats_score = 0
-    else:
-        ats_score = int((len(matched_skills) / total_required) * 100)
 
     return ats_score, matched_skills, missing_skills
