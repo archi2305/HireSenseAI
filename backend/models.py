@@ -26,6 +26,12 @@ class User(Base):
     # Notifications
     email_alerts = Column(Boolean, default=True)
     weekly_reports = Column(Boolean, default=False)
+    resume_match_alerts = Column(Boolean, default=True)
+    
+    # Settings & Integrations
+    openai_api_key = Column(String, nullable=True)
+    dark_mode = Column(Boolean, default=False)
+    accent_color = Column(String, default="pastelBlue")
 
 class ResumeAnalysis(Base):
     __tablename__ = "resume_analysis"

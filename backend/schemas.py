@@ -16,6 +16,14 @@ class UserOut(BaseModel):
     fullname: str
     email: EmailStr
     avatar_url: str | None = None
+    company: str | None = None
+    job_role: str | None = None
+    email_alerts: bool | None = None
+    weekly_reports: bool | None = None
+    resume_match_alerts: bool | None = None
+    openai_api_key: str | None = None
+    dark_mode: bool | None = None
+    accent_color: str | None = None
     created_at: datetime
 
     class Config:
@@ -47,4 +55,13 @@ class AnalysisUpdate(BaseModel):
     missing_skills: List[str]
     suggestions: str
 
-    
+class SettingsUpdate(BaseModel):
+    fullname: str | None = None
+    company: str | None = None
+    job_role: str | None = None
+    email_alerts: bool | None = None
+    weekly_reports: bool | None = None
+    resume_match_alerts: bool | None = None
+    openai_api_key: str | None = None
+    dark_mode: bool | None = None
+    accent_color: str | None = None

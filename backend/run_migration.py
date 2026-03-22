@@ -12,7 +12,11 @@ def run_migrations():
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_roles JSON DEFAULT '[]'::json;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_skills JSON DEFAULT '[]'::json;",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_alerts BOOLEAN DEFAULT TRUE;",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_reports BOOLEAN DEFAULT FALSE;"
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_reports BOOLEAN DEFAULT FALSE;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS resume_match_alerts BOOLEAN DEFAULT TRUE;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS openai_api_key VARCHAR;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS dark_mode BOOLEAN DEFAULT FALSE;",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS accent_color VARCHAR DEFAULT 'pastelBlue';"
     ]
     
     try:

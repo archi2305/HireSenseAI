@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from database import engine
 import models
-from routes import auth, oauth, password, profile
+from routes import auth, oauth, password, profile, settings
 from fastapi.staticfiles import StaticFiles
 
 from dotenv import load_dotenv
@@ -75,6 +75,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(oauth.router, prefix="/auth", tags=["oauth"])
 app.include_router(password.router, prefix="/api/auth", tags=["password"])
 app.include_router(profile.router, prefix="/api", tags=["profile"])
+app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 
 os.makedirs("uploads/avatars", exist_ok=True)
 app.mount("/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
