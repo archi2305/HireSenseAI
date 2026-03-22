@@ -18,7 +18,8 @@ oauth = OAuth()
 def get_clean_env(key: str) -> str:
     # Completely strip any hidden spaces, newlines, or accidental quotes users paste into Render UI
     val = os.environ.get(key, "")
-    return val.strip(' \n\r"\'-')
+    val = val.replace('\n', '').replace('\r', '').replace(' ', '')
+    return val.strip('"\'-')
 
 # Google config
 oauth.register(
