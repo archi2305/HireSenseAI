@@ -1,5 +1,7 @@
 import { useState } from "react"
 import axios from "axios"
+import toast from "react-hot-toast"
+import { Loader2 } from "lucide-react"
 import DragDropUpload from "./DragDropUpload"
 import ATSResultCard from "./ATSResultCard"
 
@@ -28,6 +30,7 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
   const [jobDescription, setJobDescription] = useState("")
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const handleRoleChange = (role) => {
     setJobRole(role)
@@ -39,7 +42,7 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
 
   const handleAnalyze = async () => {
     if (!file || !jobDescription) {
-      alert("Please add a resume file and job description.")
+      toast.error("Please add a resume file and job description.")
       return
     }
 
@@ -50,10 +53,19 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
 
     try {
       setLoading(true)
+      setUploadProgress(0)
+      const uploadToast = toast.loading("Analyzing resume...")
+      
       const res = await axios.post(`${API_BASE_URL}/analyze`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          setUploadProgress(percentCompleted)
+        }
       })
+      
       setResult(res.data)
+      toast.success("Analysis complete!", { id: uploadToast })
 
       onAnalysisCompleted?.({
         ...res.data,
@@ -62,9 +74,11 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
       })
     } catch (error) {
       console.error("Failed to analyze resume", error)
-      alert("Failed to analyze resume. Ensure backend is running on port 8001.")
+      toast.dismiss()
+      toast.error("Failed to analyze resume. Ensure backend is running.")
     } finally {
       setLoading(false)
+      setTimeout(() => setUploadProgress(0), 1000)
     }
   }
 
@@ -103,9 +117,19 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
             </label>
             <DragDropUpload onFileSelected={setFile} />
             {file && (
-              <p className="mt-2 text-xs text-slate-600">
-                Selected: <span className="font-medium">{file.name}</span>
-              </p>
+              <div className="mt-3">
+                <p className="text-xs text-slate-600 mb-2 truncate">
+                  Selected: <span className="font-medium text-slate-800">{file.name}</span>
+                </p>
+                {loading && (
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div 
+                      className="bg-pastelBlue h-1.5 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -126,9 +150,9 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
             type="button"
             onClick={handleAnalyze}
             disabled={loading}
-            className="mt-4 inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold text-slate-900 bg-gradient-to-r from-mint to-pastelBlue shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-200 disabled:opacity-60 disabled:hover:scale-100"
+            className="mt-4 w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-900 bg-gradient-to-r from-mint to-pastelBlue shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
           >
-            {loading ? "Analyzing..." : "Analyze Resume"}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : "Analyze Resume"}
           </button>
         </div>
       </div>
