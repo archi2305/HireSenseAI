@@ -59,6 +59,12 @@ async def login(request: Request, provider: str):
         
     # Dynamically build the exact requested redirect URL without localhost hardcoding
     base_url = str(request.base_url).rstrip("/")
+    
+    # CRITICAL FIX: Render terminates HTTPS at its load balancer. Uvicorn thinks it is HTTP. 
+    # Google strictly rejects any redirect_uri starting with 'http://' on production domains.
+    if ".onrender.com" in base_url and base_url.startswith("http://"):
+        base_url = base_url.replace("http://", "https://")
+        
     redirect_uri = f"{base_url}/auth/{provider}/callback"
     return await client.authorize_redirect(request, redirect_uri)
 
