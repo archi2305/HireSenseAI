@@ -70,7 +70,7 @@ async def login(request: Request, provider: str):
 
 @router.get("/{provider}/callback", name="auth_via_provider")
 async def auth_via_provider(request: Request, provider: str, db: Session = Depends(get_db)):
-    FRONTEND_URL = get_clean_env("FRONTEND_URL") or "http://localhost:5173"
+    FRONTEND_URL = get_clean_env("FRONTEND_URL").rstrip("/") or "http://localhost:5173"
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not supported")
