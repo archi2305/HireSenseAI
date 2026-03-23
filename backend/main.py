@@ -59,7 +59,7 @@ app.add_middleware(
 )
 
 # Dynamic CORS Setup for Vercel + Localhost Dual Config
-frontend_url = os.environ.get("FRONTEND_URL", "")
+frontend_url = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
 origins = [
     "http://127.0.0.1:5173",
     "http://localhost:5173",
