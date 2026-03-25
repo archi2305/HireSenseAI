@@ -56,7 +56,7 @@
   }
 
   .linear-input {
-    @apply bg-theme-bg border border-theme-border text-theme-text px-4 py-2.5 rounded-xl outline-none transition-all duration-300 focus:border-theme-accent focus:ring-1 focus:ring-theme-accent/20 placeholder:text-theme-textSecondary/50 font-medium;
+    @apply bg-theme-bg border border-theme-border text-theme-text px-4 py-2.5 rounded-xl outline-none transition-all duration-300 focus:border-theme-accent focus:ring-1 focus:ring-theme-accent placeholder:text-theme-textSecondary font-medium;
   }
 
   .linear-btn-primary {
