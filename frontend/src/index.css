@@ -47,6 +47,10 @@
     @apply bg-theme-surface border border-theme-border rounded-xl shadow-premium transition-all duration-300;
   }
 
+  .shadow-premium {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
   .linear-input {
     @apply bg-theme-bg border border-theme-border rounded-lg px-4 py-2.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:ring-1 focus:ring-theme-accent/30 focus:outline-none transition-all duration-200;
   }
