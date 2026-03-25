@@ -23,6 +23,19 @@ export default function CandidateTable() {
   // Modal State
   const [viewCandidate, setViewCandidate] = useState(null);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const rowVariants = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   const toggleSort = (field) => {
     if (sortField === field) {
       setSortDesc(!sortDesc);
@@ -45,35 +58,42 @@ export default function CandidateTable() {
   });
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl p-6 rounded-[24px] shadow-sm border border-white/60 flex flex-col mt-6 hover:shadow-soft transition-shadow duration-300">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 flex flex-col hover:shadow-hover-card hover:bg-white/80 transition-all duration-300"
+    >
       
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h3 className="text-lg font-bold text-slate-800">Candidate Pipeline</h3>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+        <h3 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">Candidate Pipeline</h3>
         
         {/* Smart Filters */}
-        <div className="flex flex-wrap gap-3 w-full md:w-auto mt-2 md:mt-0">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+        <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
               placeholder="Search by name or role..." 
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pastelBlue transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm border border-white/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:bg-white transition-all duration-300"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="relative w-full md:w-40">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <div className="relative w-full lg:w-48">
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
               placeholder="Skills (Comma sep)" 
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pastelBlue transition-all"
+              className="w-full pl-12 pr-4 py-3 bg-white/60 backdrop-blur-sm border border-white/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:bg-white transition-all duration-300"
               value={skillFilter}
               onChange={(e) => setSkillFilter(e.target.value)}
             />
           </div>
-          <select 
-            className="w-full md:w-32 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-pastelBlue cursor-pointer transition-all"
+          <motion.select 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full lg:w-36 px-4 py-3 bg-white/60 backdrop-blur-sm border border-white/50 rounded-xl text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-pastelBlue focus:bg-white cursor-pointer transition-all duration-300"
             value={minScoreFilter}
             onChange={(e) => setMinScoreFilter(e.target.value)}
           >
@@ -81,30 +101,30 @@ export default function CandidateTable() {
             <option value="50">&gt; 50</option>
             <option value="70">&gt; 70</option>
             <option value="80">&gt; 80</option>
-          </select>
+          </motion.select>
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
+      <div className="overflow-x-auto rounded-2xl border border-white/50 bg-white/30 backdrop-blur-sm">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 text-slate-600 text-sm font-medium border-b border-slate-200">
-              <th className="py-3 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => toggleSort('name')}>
-                <div className="flex items-center gap-1">Candidate <ArrowUpDown size={14} className="text-slate-400" /></div>
+            <tr className="bg-white/50 backdrop-blur-sm text-slate-600 text-sm font-semibold border-b border-white/50">
+              <th className="py-4 px-6 cursor-pointer hover:bg-white/70 transition-all duration-300" onClick={() => toggleSort('name')}>
+                <div className="flex items-center gap-2">Candidate <ArrowUpDown size={16} className="text-slate-400" /></div>
               </th>
-              <th className="py-3 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => toggleSort('role')}>
-                <div className="flex items-center gap-1">Role <ArrowUpDown size={14} className="text-slate-400" /></div>
+              <th className="py-4 px-6 cursor-pointer hover:bg-white/70 transition-all duration-300" onClick={() => toggleSort('role')}>
+                <div className="flex items-center gap-2">Role <ArrowUpDown size={16} className="text-slate-400" /></div>
               </th>
-              <th className="py-3 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => toggleSort('ats_score')}>
-                <div className="flex items-center gap-1">ATS Score <ArrowUpDown size={14} className="text-slate-400" /></div>
+              <th className="py-4 px-6 cursor-pointer hover:bg-white/70 transition-all duration-300" onClick={() => toggleSort('ats_score')}>
+                <div className="flex items-center gap-2">ATS Score <ArrowUpDown size={16} className="text-slate-400" /></div>
               </th>
-              <th className="py-3 px-4">Skills</th>
-              <th className="py-3 px-4">Status</th>
-              <th className="py-3 px-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => toggleSort('date')}>
-                <div className="flex items-center gap-1">Added On <ArrowUpDown size={14} className="text-slate-400" /></div>
+              <th className="py-4 px-6">Skills</th>
+              <th className="py-4 px-6">Status</th>
+              <th className="py-4 px-6 cursor-pointer hover:bg-white/70 transition-all duration-300" onClick={() => toggleSort('date')}>
+                <div className="flex items-center gap-2">Added On <ArrowUpDown size={16} className="text-slate-400" /></div>
               </th>
-              <th className="py-3 px-4 text-right">Actions</th>
+              <th className="py-4 px-6 text-right">Actions</th>
             </tr>
           </thead>
           <motion.tbody
@@ -117,8 +137,12 @@ export default function CandidateTable() {
           >
             {loading ? (
               [1, 2, 3].map(i => (
-                <tr key={i} className="border-b border-slate-100">
-                  <td colSpan="7" className="py-4 px-4">
+                <motion.tr 
+                  key={i} 
+                  variants={rowVariants}
+                  className="border-b border-white/30"
+                >
+                  <td colSpan="7" className="py-6 px-6">
                     <div className="animate-pulse flex space-x-4">
                       <div className="h-4 bg-slate-100 rounded w-1/4"></div>
                       <div className="h-4 bg-slate-100 rounded w-1/4"></div>
@@ -126,55 +150,91 @@ export default function CandidateTable() {
                       <div className="h-4 bg-slate-100 rounded w-1/4"></div>
                     </div>
                   </td>
-                </tr>
+                </motion.tr>
               ))
             ) : sortedCandidates.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="text-center py-12 text-slate-500 bg-slate-50/50">
-                  <div className="flex flex-col items-center justify-center">
-                    <Search className="w-8 h-8 text-slate-300 mb-2" />
-                    <p>{(!searchTerm && !skillFilter && !minScoreFilter) ? "Upload your first resume" : "No candidates found matching your criteria."}</p>
+              <motion.tr variants={rowVariants}>
+                <td colSpan="7" className="text-center py-16 text-slate-500 bg-white/20">
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <Search className="w-12 h-12 text-slate-300" />
+                    <p className="text-lg font-medium">{(!searchTerm && !skillFilter && !minScoreFilter) ? "Upload your first resume" : "No candidates found matching your criteria."}</p>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ) : (
                 sortedCandidates.map((c) => (
                     <motion.tr 
                       key={c.id} 
-                      variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-                      className="border-b border-slate-100/50 hover:bg-white/50 transition-colors group"
+                      variants={rowVariants}
+                      className="border-b border-white/30 hover:bg-white/40 transition-all duration-300 group"
                     >
-                      <td className="py-3 px-4 font-semibold text-slate-800">{c.name}</td>
-                      <td className="py-3 px-4 text-slate-500 font-medium">{c.role}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold shadow-sm border ${c.ats_score >= 80 ? 'bg-mint/40 border-mint text-emerald-800' : c.ats_score >= 60 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-softPink/40 border-softPink text-rose-800'}`}>
+                      <td className="py-4 px-6 font-semibold text-slate-800">{c.name}</td>
+                      <td className="py-4 px-6 text-slate-600 font-medium">{c.role}</td>
+                      <td className="py-4 px-6">
+                        <div className="flex flex-col items-start gap-2">
+                          <motion.span 
+                            whileHover={{ scale: 1.05 }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm border ${c.ats_score >= 80 ? 'bg-mint/40 border-mint text-emerald-800' : c.ats_score >= 60 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-softPink/40 border-softPink text-rose-800'}`}
+                          >
                             {c.ats_score}% Match
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium">({c.skills.length} skills matched)</span>
+                          </motion.span>
+                          <span className="text-xs text-slate-400 font-medium">({c.skills.length} skills matched)</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1">
+                      <td className="py-4 px-6">
+                        <div className="flex flex-wrap gap-2">
                           {c.skills.slice(0, 3).map((s, i) => (
-                            <span key={i} className="bg-slate-50 border border-slate-100/50 text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md shadow-sm">{s}</span>
+                            <motion.span 
+                              key={i} 
+                              whileHover={{ scale: 1.05 }}
+                              className="bg-white/60 backdrop-blur-sm border border-white/50 text-slate-500 text-xs uppercase font-bold px-3 py-1 rounded-lg shadow-sm"
+                            >
+                              {s}
+                            </motion.span>
                           ))}
-                          {c.skills.length > 3 && <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md">+{c.skills.length - 3}</span>}
+                          {c.skills.length > 3 && <span className="bg-white/80 text-slate-600 text-xs font-bold px-3 py-1 rounded-lg">+{c.skills.length - 3}</span>}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 flex w-max text-[10px] uppercase tracking-wide font-extrabold rounded-md shadow-sm ${c.status === 'High Match' ? 'bg-mint text-emerald-900 border border-mint/50' : c.status === 'Good Match' ? 'bg-amber-100 border border-amber-200 text-amber-800' : 'bg-softPink border border-softPink/50 text-rose-900'}`}>
+                      <td className="py-4 px-6">
+                        <motion.span 
+                          whileHover={{ scale: 1.05 }}
+                          className={`px-3 py-1.5 flex w-max text-xs uppercase tracking-wide font-extrabold rounded-lg shadow-sm ${c.status === 'High Match' ? 'bg-mint text-emerald-900 border border-mint/50' : c.status === 'Good Match' ? 'bg-amber-100 border border-amber-200 text-amber-800' : 'bg-softPink border border-softPink/50 text-rose-900'}`}
+                        >
                           {c.status}
-                        </span>
+                        </motion.span>
                       </td>
-                      <td className="py-3 px-4 text-xs font-medium text-slate-400">
+                      <td className="py-4 px-6 text-xs font-medium text-slate-400">
                         {new Date(c.date).toLocaleString("en-IN", { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setViewCandidate(c)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors shadow-sm bg-white" title="View details"><Eye size={18} /></motion.button>
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleDownload(c.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-slate-50 rounded-lg transition-colors shadow-sm bg-white" title="Download resume"><Download size={18} /></motion.button>
-                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { if(window.confirm("Are you sure you want to delete this candidate?")) removeCandidate(c.id) }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg transition-colors shadow-sm bg-white" title="Delete candidate"><Trash2 size={18} /></motion.button>
+                      <td className="py-4 px-6 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                          <motion.button 
+                            whileHover={{ scale: 1.1 }} 
+                            whileTap={{ scale: 0.9 }} 
+                            onClick={() => setViewCandidate(c)} 
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white/80 rounded-xl transition-all duration-300 shadow-sm bg-white/60 backdrop-blur-sm" 
+                            title="View details"
+                          >
+                            <Eye size={18} />
+                          </motion.button>
+                          <motion.button 
+                            whileHover={{ scale: 1.1 }} 
+                            whileTap={{ scale: 0.9 }} 
+                            onClick={() => handleDownload(c.id)} 
+                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-white/80 rounded-xl transition-all duration-300 shadow-sm bg-white/60 backdrop-blur-sm" 
+                            title="Download resume"
+                          >
+                            <Download size={18} />
+                          </motion.button>
+                          <motion.button 
+                            whileHover={{ scale: 1.1 }} 
+                            whileTap={{ scale: 0.9 }} 
+                            onClick={() => { if(window.confirm("Are you sure you want to delete this candidate?")) removeCandidate(c.id) }} 
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-white/80 rounded-xl transition-all duration-300 shadow-sm bg-white/60 backdrop-blur-sm" 
+                            title="Delete candidate"
+                          >
+                            <Trash2 size={18} />
+                          </motion.button>
                         </div>
                       </td>
                     </motion.tr>
@@ -185,34 +245,49 @@ export default function CandidateTable() {
       </div>
 
       {/* View Modal */}
-      {viewCandidate && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative animate-fade-in-up">
-            <button 
-              onClick={() => setViewCandidate(null)}
-              className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-500 rounded-full transition-colors z-10"
+      <AnimatePresence>
+        {viewCandidate && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              className="bg-white/90 backdrop-blur-md rounded-2xl shadow-hover-card w-full max-w-4xl max-h-[90vh] overflow-y-auto relative border border-white/50"
             >
-              <X size={20} />
-            </button>
-            <div className="p-8">
-              <h2 className="text-2xl font-bold text-slate-800 mb-1">{viewCandidate.name}</h2>
-              <p className="text-sm font-medium text-slate-500 mb-6">{viewCandidate.role} Analysis</p>
-              
-              <div className="-mt-8">
-                <ATSResultCard 
-                  result={{
-                    ats_score: viewCandidate.ats_score,
-                    matched_skills: viewCandidate.skills,
-                    missing_skills: viewCandidate.missing_skills || [],
-                    suggestions: viewCandidate.suggestions || "No specific suggestions returned."
-                  }} 
-                />
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setViewCandidate(null)}
+                className="absolute top-4 right-4 p-3 bg-white/60 backdrop-blur-sm hover:bg-rose-100 hover:text-rose-600 text-slate-500 rounded-full transition-all duration-300 shadow-sm border border-white/50"
+              >
+                <X size={20} />
+              </motion.button>
+              <div className="p-10">
+                <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">{viewCandidate.name}</h2>
+                <p className="text-lg font-medium text-slate-600 mb-8">{viewCandidate.role} Analysis</p>
+                
+                <div className="mt-4">
+                  <ATSResultCard 
+                    result={{
+                      ats_score: viewCandidate.ats_score,
+                      matched_skills: viewCandidate.skills,
+                      missing_skills: viewCandidate.missing_skills || [],
+                      suggestions: viewCandidate.suggestions || "No specific suggestions returned."
+                    }} 
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-    </div>
+    </motion.div>
   );
 }
