@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom"
+import { useState } from "react"
+import { Routes, Route, Navigate, Outlet } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
@@ -39,15 +39,10 @@ function ProtectedRoute({ children }) {
 }
 
 function Layout() {
-  const [notifications, setNotifications] = useState([])
-
-  // Adding some initial notifications for the dropdown testing
-  useEffect(() => {
-    setNotifications([
-      { id: 1, message: "Welcome to HireSense UI!" },
-      { id: 2, message: "Your ATS score is now available for John Doe." }
-    ])
-  }, [])
+  const notifications = [
+    { id: 1, message: "Welcome to HireSense UI!" },
+    { id: 2, message: "Your ATS score is now available for John Doe." }
+  ]
 
   return (
     <div className="flex h-screen overflow-hidden bg-pastel-gradient">
