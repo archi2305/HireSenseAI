@@ -3,20 +3,25 @@ import axios from 'axios';
 import {
   LineChart, Line, BarChart, Bar,
   PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import { useDashboard } from '../context/DashboardContext';
 import { motion } from 'framer-motion';
+import LoadingSkeleton from './LoadingSkeleton';
+import EmptyState from './EmptyState';
+import Tooltip from './Tooltip';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-// Enhanced Pastel Palette with Gradients
-const COLORS = ['#818CF8', '#C084FC', '#F472B6', '#86EFAC', '#FDE047'];
-const PIE_COLORS = ['#FCA5A5', '#FCD34D', '#6EE7B7']; 
+// Enhanced color palette with gradients
+const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#06b6d4', '#10b981'];
+const PIE_COLORS = ['#6366f1', '#a855f7', '#ec4899']; 
 const GRADIENT_COLORS = {
   primary: 'url(#primaryGradient)',
   secondary: 'url(#secondaryGradient)',
-  tertiary: 'url(#tertiaryGradient)'
+  tertiary: 'url(#tertiaryGradient)',
+  area: 'url(#areaGradient)',
+  success: 'url(#successGradient)',
 }; 
 
 export default function AnalyticsCharts() {
@@ -25,10 +30,12 @@ export default function AnalyticsCharts() {
   const [skillsData, setSkillsData] = useState([]);
   const [scoresData, setScoresData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const [trendRes, skillsRes, scoresRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/analytics/trend`),
@@ -40,6 +47,7 @@ export default function AnalyticsCharts() {
         setScoresData(scoresRes.data);
       } catch (err) {
         console.error("Failed to fetch analytics data", err);
+        setError('Failed to load analytics data');
       } finally {
         setIsLoading(false);
       }
@@ -47,17 +55,31 @@ export default function AnalyticsCharts() {
     fetchData();
   }, [updateCounter]);
 
+  // Linear-inspired animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.2 }
+      transition: { 
+        staggerChildren: 0.2,
+        delayChildren: 0.1
+      }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    hidden: { opacity: 0, y: 30, scale: 0.9 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 25,
+        mass: 0.8
+      } 
+    }
   };
 
   return (
@@ -71,51 +93,82 @@ export default function AnalyticsCharts() {
       <svg width="0" height="0">
         <defs>
           <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#818CF8" />
-            <stop offset="100%" stopColor="#C084FC" />
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#a855f7" />
           </linearGradient>
           <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#F472B6" />
-            <stop offset="100%" stopColor="#86EFAC" />
+            <stop offset="0%" stopColor="#ec4899" />
+            <stop offset="100%" stopColor="#06b6d4" />
           </linearGradient>
           <linearGradient id="tertiaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FDE047" />
-            <stop offset="100%" stopColor="#FCA5A5" />
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#6366f1" />
+          </linearGradient>
+          <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.01" />
+          </linearGradient>
+          <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#06b6d4" />
           </linearGradient>
         </defs>
       </svg>
 
       <motion.div 
         variants={itemVariants}
-        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 hover:shadow-hover-card hover:bg-white/80 transition-all duration-300"
+        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 hover:shadow-card-hover hover:bg-white/80 transition-all duration-300"
       >
-        <h3 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight mb-6">Resumes Parsed (Trend)</h3>
+        <motion.h3 
+          className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-indigo to-brand-purple tracking-tight mb-6"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          Resumes Parsed (Trend)
+        </motion.h3>
         <div className="h-80">
           {isLoading ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="flex h-full items-center justify-center"
-             >
-               <div className="flex flex-col items-center gap-4">
-                 <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin"></div>
-                 <p className="text-slate-400 font-medium">Loading trend data...</p>
-               </div>
-             </motion.div>
+             <LoadingSkeleton variant="card" className="h-full" />
+          ) : error ? (
+             <EmptyState 
+               type="analytics" 
+               title="Analytics Error"
+               description="Unable to load trend data. Please try again later."
+               className="h-full"
+             />
           ) : trendData.length === 0 ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="flex h-full items-center justify-center"
-             >
-               <p className="text-slate-400 font-medium">No trend data available yet.</p>
-             </motion.div>
+             <EmptyState 
+               type="analytics" 
+               title="No trend data yet"
+               description="Start uploading resumes to see analytics trends."
+               className="h-full"
+             />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="date" tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} dy={10} />
-                <YAxis tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} dx={-10} />
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{fontSize: 12, fill: '#94a3b8'}} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  dy={10}
+                  animationDuration={1000}
+                />
+                <YAxis 
+                  tick={{fontSize: 12, fill: '#94a3b8'}} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  dx={-10}
+                  animationDuration={1000}
+                />
                 <Tooltip 
                   contentStyle={{
                     borderRadius: '16px', 
@@ -124,19 +177,18 @@ export default function AnalyticsCharts() {
                     background: 'rgba(255, 255, 255, 0.95)',
                     backdropFilter: 'blur(10px)'
                   }} 
-                  cursor={{stroke: '#E2E8F0', strokeWidth: 2, strokeDasharray: '4 4'}} 
+                  cursor={{stroke: '#e2e8f0', strokeWidth: 2, strokeDasharray: '4 4'}} 
                 />
-                <Line 
+                <Area 
                   type="monotone" 
                   dataKey="count" 
                   stroke="url(#primaryGradient)" 
-                  strokeWidth={4} 
-                  dot={{r: 6, fill: '#818CF8', strokeWidth: 0}} 
-                  activeDot={{r: 8, fill: '#C084FC', strokeWidth: 0}} 
-                  animationDuration={1500}
+                  strokeWidth={3}
+                  fill="url(#colorGradient)"
+                  animationDuration={2000}
                   animationEasing="ease-out"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
@@ -144,50 +196,67 @@ export default function AnalyticsCharts() {
 
       <motion.div 
         variants={itemVariants}
-        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 hover:shadow-hover-card hover:bg-white/80 transition-all duration-300"
+        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 hover:shadow-card-hover hover:bg-white/80 transition-all duration-300"
       >
-        <h3 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 tracking-tight mb-6">Top Skills Frequency</h3>
+        <motion.h3 
+          className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-brand-pink tracking-tight mb-6"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          Top Skills Frequency
+        </motion.h3>
         <div className="h-80">
           {isLoading ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="flex h-full items-center justify-center"
-             >
-               <div className="flex flex-col items-center gap-4">
-                 <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
-                 <p className="text-slate-400 font-medium">Loading skills data...</p>
-               </div>
-             </motion.div>
+             <LoadingSkeleton variant="card" className="h-full" />
+          ) : error ? (
+             <EmptyState 
+               type="analytics" 
+               title="Analytics Error"
+               description="Unable to load skills data. Please try again later."
+               className="h-full"
+             />
           ) : skillsData.length === 0 ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="flex h-full items-center justify-center"
-             >
-               <p className="text-slate-400 font-medium">No skills extracted yet.</p>
-             </motion.div>
+             <EmptyState 
+               type="analytics" 
+               title="No skills data yet"
+               description="Upload resumes to see skills frequency analysis."
+               className="h-full"
+             />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={skillsData} layout="vertical" margin={{top: 5, right: 30, left: 40, bottom: 5}}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#F1F5F9" />
-                <XAxis type="number" tick={{fontSize: 12, fill: '#94A3B8'}} tickLine={false} axisLine={false} />
-                <YAxis dataKey="name" type="category" tick={{fontSize: 12, fill: '#64748B'}} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  type="number" 
+                  tick={{fontSize: 12, fill: '#94a3b8'}} 
+                  tickLine={false} 
+                  axisLine={false}
+                  animationDuration={1000}
+                />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  tick={{fontSize: 12, fill: '#64748b'}} 
+                  tickLine={false} 
+                  axisLine={false}
+                  animationDuration={1000}
+                />
                 <Tooltip 
-                  cursor={{fill: '#F8FAFC'}} 
+                  cursor={{fill: '#f8fafc'}} 
                   contentStyle={{
                     borderRadius: '16px', 
                     border: 'none', 
                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)',
                     background: 'rgba(255, 255, 255, 0.95)',
                     backdropFilter: 'blur(10px)'
-                  }} 
+                  }}
                 />
                 <Bar 
                   dataKey="count" 
                   radius={[0, 12, 12, 0]} 
                   barSize={28}
-                  animationDuration={1500}
+                  animationDuration={1800}
                   animationEasing="ease-out"
                 >
                   {skillsData.map((entry, index) => (
@@ -202,29 +271,33 @@ export default function AnalyticsCharts() {
 
       <motion.div 
         variants={itemVariants}
-        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 hover:shadow-hover-card hover:bg-white/80 transition-all duration-300 lg:col-span-2"
+        className="bg-white/70 backdrop-blur-md p-8 rounded-2xl shadow-card border border-white/50 hover:shadow-card-hover hover:bg-white/80 transition-all duration-300 lg:col-span-2"
       >
-        <h3 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-blue-600 tracking-tight mb-6">ATS Score Distribution</h3>
+        <motion.h3 
+          className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-success to-info tracking-tight mb-6"
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          ATS Score Distribution
+        </motion.h3>
         <div className="h-80 flex justify-center">
           {isLoading ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="flex h-full w-full items-center justify-center"
-             >
-               <div className="flex flex-col items-center gap-4">
-                 <div className="w-12 h-12 border-4 border-green-200 border-t-green-500 rounded-full animate-spin"></div>
-                 <p className="text-slate-400 font-medium">Loading score distribution...</p>
-               </div>
-             </motion.div>
+             <LoadingSkeleton variant="card" className="h-full w-full" />
+          ) : error ? (
+             <EmptyState 
+               type="analytics" 
+               title="Analytics Error"
+               description="Unable to load score distribution. Please try again later."
+               className="h-full w-full"
+             />
           ) : scoresData.every(d => d.value === 0) ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="flex h-full w-full items-center justify-center"
-             >
-               <p className="text-slate-400 font-medium">Upload a resume to generate score distributions.</p>
-             </motion.div>
+             <EmptyState 
+               type="analytics" 
+               title="No score data yet"
+               description="Upload resumes to see ATS score distribution."
+               className="h-full w-full"
+             />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -238,14 +311,14 @@ export default function AnalyticsCharts() {
                   dataKey="value"
                   stroke="none"
                   animationBegin={800}
-                  animationDuration={1500}
+                  animationDuration={2000}
                   animationEasing="ease-out"
                 >
                   {scoresData.map((entry, index) => {
-                    let color = "#CBD5E1";
-                    if (entry.name === "80+") color = "#6EE7B7"; // Soft Mint
-                    else if (entry.name === "50-80") color = "#FCD34D"; // Soft Yellow
-                    else if (entry.name === "0-50") color = "#FCA5A5"; // Soft Red
+                    let color = "#cbd5e1";
+                    if (entry.name === "80+") color = "#10b981"; // Success
+                    else if (entry.name === "50-80") color = "#f59e0b"; // Warning
+                    else if (entry.name === "0-50") color = "#ef4444"; // Error
                     return <Cell key={`cell-${index}`} fill={color} />;
                   })}
                 </Pie>
@@ -256,7 +329,7 @@ export default function AnalyticsCharts() {
                     boxShadow: '0 12px 40px rgba(0, 0, 0, 0.08)',
                     background: 'rgba(255, 255, 255, 0.95)',
                     backdropFilter: 'blur(10px)'
-                  }} 
+                  }}
                 />
                 <Legend 
                   verticalAlign="bottom" 
@@ -264,6 +337,7 @@ export default function AnalyticsCharts() {
                   wrapperStyle={{
                     paddingTop: '20px'
                   }}
+                  animationDuration={1000}
                 />
               </PieChart>
             </ResponsiveContainer>

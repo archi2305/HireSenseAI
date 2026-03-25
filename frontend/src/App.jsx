@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
+import PageTransition from "./components/PageTransition"
+import ToastContainer from "./components/ToastContainer"
 
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
@@ -59,9 +61,14 @@ function Layout() {
         
         {/* PAGE CONTENT */}
         <main className="flex-1 overflow-y-auto p-8">
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </main>
       </div>
+      
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   )
 }
