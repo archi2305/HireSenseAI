@@ -7,184 +7,150 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function CandidateTable() {
   const { 
-    candidates, 
-    loading, 
+    candidates, loading, 
     searchTerm, setSearchTerm, 
     skillFilter, setSkillFilter, 
     minScoreFilter, setMinScoreFilter,
     removeCandidate 
   } = useDashboard();
   
-  // Sort
   const [sortField, setSortField] = useState("ats_score");
   const [sortDesc, setSortDesc] = useState(true);
-
-  // Modal State
   const [viewCandidate, setViewCandidate] = useState(null);
 
   const toggleSort = (field) => {
-    if (sortField === field) {
-      setSortDesc(!sortDesc);
-    } else {
-      setSortField(field);
-      setSortDesc(true);
-    }
-  };
-
-  const handleDownload = (id) => {
-    window.open(`${API_BASE_URL}/download/${id}`, "_blank");
+    if (sortField === field) setSortDesc(!sortDesc);
+    else { setSortField(field); setSortDesc(true); }
   };
 
   const sortedCandidates = [...(candidates || [])].sort((a, b) => {
-      let valA = a[sortField];
-      let valB = b[sortField];
+      let valA = a[sortField]; let valB = b[sortField];
       if (valA < valB) return sortDesc ? 1 : -1;
       if (valA > valB) return sortDesc ? -1 : 1;
       return 0;
   });
 
   return (
-    <div className="flex flex-col flex-1 bg-white border border-gray-200 rounded-lg shadow-sm">
+    <div className="flex flex-col w-full bg-theme-bg border border-theme-border rounded-md shadow-sm">
       
-      {/* Filters */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50 rounded-t-lg">
-        <div className="flex items-center gap-3 w-full max-w-2xl">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+      {/* Table Header Controls */}
+      <div className="flex items-center p-2 border-b border-theme-border bg-theme-sidebar/50">
+        <div className="flex items-center gap-2 w-full max-w-2xl">
+          <div className="flex items-center gap-2 px-2 py-1 bg-theme-bg border border-theme-border rounded-md focus-within:border-theme-accent transition-all duration-150 w-64">
+            <Search className="text-theme-textSecondary w-3.5 h-3.5" />
             <input 
               type="text" 
-              placeholder="Filter candidates..." 
-              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] focus:outline-none focus:border-[#a5b4fc] focus:ring-1 focus:ring-[#a5b4fc] transition-all duration-200 shadow-sm"
+              placeholder="Filter names..." 
+              className="bg-transparent text-[12px] text-theme-text w-full outline-none placeholder:text-theme-textSecondary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="relative w-48">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+          <div className="flex items-center gap-2 px-2 py-1 bg-theme-bg border border-theme-border rounded-md focus-within:border-theme-accent transition-all duration-150 w-48">
+            <Filter className="text-theme-textSecondary w-3.5 h-3.5" />
             <input 
               type="text" 
               placeholder="Skills..." 
-              className="w-full pl-8 pr-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] focus:outline-none focus:border-[#a5b4fc] focus:ring-1 focus:ring-[#a5b4fc] transition-all duration-200 shadow-sm"
+              className="bg-transparent text-[12px] text-theme-text w-full outline-none placeholder:text-theme-textSecondary"
               value={skillFilter}
               onChange={(e) => setSkillFilter(e.target.value)}
             />
           </div>
           <select 
-            className="w-32 px-3 py-1.5 bg-white border border-gray-200 rounded-md text-[13px] text-slate-600 focus:outline-none focus:border-[#a5b4fc] focus:ring-1 focus:ring-[#a5b4fc] cursor-pointer shadow-sm transition-all duration-200"
+            className="bg-theme-bg border border-theme-border text-theme-text text-[12px] rounded-md px-2 py-1 outline-none focus:border-theme-accent cursor-pointer"
             value={minScoreFilter}
             onChange={(e) => setMinScoreFilter(e.target.value)}
           >
             <option value="">Status</option>
             <option value="50">&gt; 50 Score</option>
-            <option value="70">&gt; 70 Score</option>
             <option value="80">&gt; 80 Score</option>
           </select>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table Content */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
-            <tr className="bg-white text-slate-500 text-[11px] uppercase tracking-wider font-semibold border-b border-gray-200">
-              <th className="py-3 px-5 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => toggleSort('name')}>
-                <div className="flex items-center gap-1.5">Candidate <ArrowUpDown size={12} className="text-slate-300" /></div>
+            <tr className="border-b border-theme-border">
+              <th className="py-2.5 px-4 text-[11px] font-medium text-theme-textSecondary hover:text-theme-text transition-colors cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                <div className="flex items-center gap-1.5">Candidate <ArrowUpDown size={10} className="opacity-50" /></div>
               </th>
-              <th className="py-3 px-5 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => toggleSort('role')}>
-                <div className="flex items-center gap-1.5">Role <ArrowUpDown size={12} className="text-slate-300" /></div>
+              <th className="py-2.5 px-4 text-[11px] font-medium text-theme-textSecondary hover:text-theme-text transition-colors cursor-pointer select-none" onClick={() => toggleSort('role')}>
+                <div className="flex items-center gap-1.5">Role <ArrowUpDown size={10} className="opacity-50" /></div>
               </th>
-              <th className="py-3 px-5 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => toggleSort('ats_score')}>
-                <div className="flex items-center gap-1.5">Score <ArrowUpDown size={12} className="text-slate-300" /></div>
+              <th className="py-2.5 px-4 text-[11px] font-medium text-theme-textSecondary hover:text-theme-text transition-colors cursor-pointer select-none" onClick={() => toggleSort('ats_score')}>
+                <div className="flex items-center gap-1.5">Score <ArrowUpDown size={10} className="opacity-50" /></div>
               </th>
-              <th className="py-3 px-5">Top Skills</th>
-              <th className="py-3 px-5">Feedback</th>
-              <th className="py-3 px-5 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => toggleSort('date')}>
-                <div className="flex items-center gap-1.5">Added <ArrowUpDown size={12} className="text-slate-300" /></div>
-              </th>
-              <th className="py-3 px-5 text-right"></th>
+              <th className="py-2.5 px-4 text-[11px] font-medium text-theme-textSecondary">Skills</th>
+              <th className="py-2.5 px-4 text-[11px] font-medium text-theme-textSecondary">Status</th>
+              <th className="py-2.5 px-4 text-right"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               [1, 2, 3].map(i => (
-                <tr key={i} className="border-b border-gray-100">
-                  <td colSpan="7" className="py-4 px-5">
+                <tr key={i} className="border-b border-theme-border/50">
+                  <td colSpan="6" className="py-3 px-4">
                     <div className="animate-pulse flex space-x-4">
-                      <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-                      <div className="h-4 bg-gray-100 rounded w-1/4"></div>
-                      <div className="h-4 bg-gray-100 rounded w-1/6"></div>
-                      <div className="h-4 bg-gray-100 rounded w-1/4"></div>
+                      <div className="h-3 bg-theme-border rounded w-1/4"></div>
+                      <div className="h-3 bg-theme-border rounded w-1/6"></div>
+                      <div className="h-3 bg-theme-border rounded w-1/4"></div>
                     </div>
                   </td>
                 </tr>
               ))
             ) : sortedCandidates.length === 0 ? (
               <tr>
-                <td colSpan="7" className="text-center py-16 text-slate-500">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Search className="w-8 h-8 text-slate-300" />
-                    <p className="text-[14px] font-medium">{(!searchTerm && !skillFilter && !minScoreFilter) ? "No candidates found. Upload a resume." : "No candidates matching filters."}</p>
-                  </div>
+                <td colSpan="6" className="text-center py-12 text-theme-textSecondary text-[13px] border-b-0">
+                  {(!searchTerm && !skillFilter && !minScoreFilter) ? "No candidates available." : "No matching candidates found."}
                 </td>
               </tr>
             ) : (
                 sortedCandidates.map((c) => (
                     <tr 
                       key={c.id} 
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 group"
+                      onClick={() => setViewCandidate(c)}
+                      className="border-b border-theme-border last:border-b-0 hover:bg-theme-hover transition-colors duration-150 cursor-pointer group"
                     >
-                      <td className="py-3 px-5 font-medium text-[13px] text-slate-800">{c.name}</td>
-                      <td className="py-3 px-5 text-[13px] text-slate-500">{c.role}</td>
-                      <td className="py-3 px-5">
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${c.ats_score >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : c.ats_score >= 60 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                            {c.ats_score}
-                          </span>
-                        </div>
+                      <td className="py-2.5 px-4 text-[13px] font-medium text-theme-text">{c.name}</td>
+                      <td className="py-2.5 px-4 text-[13px] text-theme-textSecondary">{c.role}</td>
+                      <td className="py-2.5 px-4">
+                        <span className={`text-[12px] font-medium ${c.ats_score >= 80 ? 'text-success' : c.ats_score >= 60 ? 'text-warning' : 'text-error'}`}>
+                          {c.ats_score}
+                        </span>
                       </td>
-                      <td className="py-3 px-5">
-                        <div className="flex items-center gap-1.5 flex-wrap max-w-[200px] overflow-hidden truncate">
+                      <td className="py-2.5 px-4">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
                           {c.skills.slice(0, 3).map((s, i) => (
-                            <span 
-                              key={i} 
-                              className="bg-white border border-gray-200 text-slate-600 text-[11px] font-medium px-1.5 py-0.5 rounded"
-                            >
+                            <span key={i} className="bg-theme-sidebar border border-theme-border text-theme-textSecondary text-[11px] px-1.5 py-0.5 rounded-sm truncate max-w-[100px]">
                               {s}
                             </span>
                           ))}
-                          {c.skills.length > 3 && <span className="text-slate-400 text-[11px] font-medium">+{c.skills.length - 3}</span>}
+                          {c.skills.length > 3 && <span className="text-theme-textSecondary text-[11px]">+{c.skills.length - 3}</span>}
                         </div>
                       </td>
-                      <td className="py-3 px-5">
-                        <span className={`text-[12px] font-medium ${c.status === 'High Match' ? 'text-emerald-600' : c.status === 'Good Match' ? 'text-amber-600' : 'text-red-500'}`}>
-                          {c.status}
-                        </span>
+                      <td className="py-2.5 px-4">
+                        <span className="text-[12px] text-theme-textSecondary">{c.status}</span>
                       </td>
-                      <td className="py-3 px-5 text-[12px] text-slate-500">
-                        {new Date(c.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric' })}
-                      </td>
-                      <td className="py-3 px-5 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <td className="py-2.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                           <button 
-                            onClick={() => setViewCandidate(c)} 
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-gray-200 rounded transition-colors" 
-                            title="View details"
+                            onClick={(e) => { e.stopPropagation(); window.open(`${API_BASE_URL}/download/${c.id}`, "_blank"); }} 
+                            className="p-1.5 text-theme-textSecondary hover:text-theme-text hover:bg-theme-border/50 rounded transition-colors" 
+                            title="Download"
                           >
-                            <Eye size={14} />
+                            <Download size={13} />
                           </button>
                           <button 
-                            onClick={() => handleDownload(c.id)} 
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-gray-200 rounded transition-colors" 
-                            title="Download resume"
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if(window.confirm("Delete candidate?")) removeCandidate(c.id);
+                            }} 
+                            className="p-1.5 text-theme-textSecondary hover:text-error hover:bg-theme-border/50 rounded transition-colors" 
+                            title="Delete"
                           >
-                            <Download size={14} />
-                          </button>
-                          <button 
-                            onClick={() => { if(window.confirm("Delete candidate?")) removeCandidate(c.id) }} 
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" 
-                            title="Delete candidate"
-                          >
-                            <Trash2 size={14} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
@@ -197,28 +163,25 @@ export default function CandidateTable() {
 
       {/* View Modal */}
       {viewCandidate && (
-        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-6 mt-16">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="fixed inset-0 bg-[#000000]/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-theme-card border border-theme-border rounded-md shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col scale-100 animate-fade-in">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-theme-border">
               <div>
-                <h3 className="text-lg font-semibold text-slate-800">{viewCandidate.name}</h3>
-                <p className="text-[13px] text-slate-500 mt-0.5">{viewCandidate.role}</p>
+                <h3 className="text-[15px] font-medium text-theme-text tracking-tight">{viewCandidate.name}</h3>
+                <p className="text-[12px] text-theme-textSecondary mt-0.5">{viewCandidate.role} — Score: {viewCandidate.ats_score}</p>
               </div>
-              <button 
-                onClick={() => setViewCandidate(null)}
-                className="p-1.5 text-slate-400 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <X size={18} />
+              <button onClick={() => setViewCandidate(null)} className="p-1.5 text-theme-textSecondary hover:text-white hover:bg-theme-hover rounded-md transition-all duration-150">
+                <X size={16} />
               </button>
             </div>
             
-            <div className="p-5 overflow-y-auto bg-gray-50/50 flex-1">
+            <div className="p-5 overflow-y-auto max-h-[70vh]">
               <ATSResultCard 
                 result={{
                   ats_score: viewCandidate.ats_score,
                   matched_skills: viewCandidate.skills,
                   missing_skills: viewCandidate.missing_skills || [],
-                  suggestions: viewCandidate.suggestions || "No specific suggestions returned."
+                  suggestions: viewCandidate.suggestions || "No specific suggestions provided."
                 }} 
               />
             </div>
