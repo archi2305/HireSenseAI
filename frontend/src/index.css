@@ -16,6 +16,16 @@
   --accent-hover-rgb: 79 70 229;
   --hover-color-rgb: 99 102 241;
   --accent-glow-rgb: 99 102 241;
+
+  /* Shorthands for pure CSS usage */
+  --bg-color: rgb(var(--bg-color-rgb));
+  --surface-color: rgb(var(--surface-color-rgb));
+  --sidebar-color: rgb(var(--sidebar-color-rgb));
+  --border-color: rgb(var(--border-color-rgb));
+  --text-color: rgb(var(--text-color-rgb));
+  --text-secondary: rgb(var(--text-secondary-rgb));
+  --accent-color: rgb(var(--accent-color-rgb));
+  --accent-glow: rgba(var(--accent-glow-rgb) / 0.15);
 }
 
 :root.dark {
@@ -26,7 +36,7 @@
   --text-color-rgb: 255 255 255;
   --text-secondary-rgb: 161 161 170;
   --accent-color-rgb: 124 58 237;
-  --accent-hover-rgb: 139 92, 246;
+  --accent-hover-rgb: 139 92 246;
   --hover-color-rgb: 255 255 255;
   --accent-glow-rgb: 124 58 237;
 }
