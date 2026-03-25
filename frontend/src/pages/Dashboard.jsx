@@ -13,6 +13,7 @@ import StatsCards from "../components/StatsCards"
 import AnalyticsCharts from "../components/AnalyticsCharts"
 import CandidateTable from "../components/CandidateTable"
 import ActivityFeed from "../components/ActivityFeed"
+import AIInsightsStrip from "../components/AIInsightsStrip"
 import axios from "axios"
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
@@ -255,8 +256,8 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* ── Insight Strip ── */}
-      <InsightCards candidates={candidates} />
+      {/* ── AI Insights Strip ── */}
+      <AIInsightsStrip />
 
       {/* ── Filter Bar ── */}
       <FilterBar
