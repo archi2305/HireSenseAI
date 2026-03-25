@@ -7,7 +7,7 @@ import { useDashboard } from "../context/DashboardContext"
 import { useTheme } from "../context/ThemeContext"
 import { motion, AnimatePresence } from "framer-motion"
 
-function Header({ notifications }) {
+function Header({ notifications, onCommandPalette }) {
   const { searchTerm, setSearchTerm } = useDashboard()
   const { theme, toggleTheme } = useTheme()
   const [bellOpen, setBellOpen] = useState(false)
@@ -50,20 +50,28 @@ function Header({ notifications }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="hidden md:flex items-center gap-2.5 px-4 py-2 rounded-full bg-theme-surface/50 border border-theme-border w-[320px] transition-all duration-300 focus-within:ring-2 focus-within:ring-theme-accent/20 focus-within:border-theme-accent focus-within:bg-theme-surface group">
-          <Search className="w-4 h-4 text-theme-textSecondary group-focus-within:text-theme-accent transition-colors" />
-          <input
-            type="text"
-            placeholder="Search matching intel..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent text-[13px] outline-none w-full text-theme-text placeholder:text-theme-textSecondary font-medium"
-          />
-          <div className="flex items-center gap-1 opacity-30 group-focus-within:opacity-100 transition-opacity">
-            <kbd className="px-1.5 py-0.5 text-[10px] font-mono border border-theme-border rounded bg-theme-bg">⌘K</kbd>
+        {/* Cmd+K Search Trigger */}
+        <button
+          onClick={onCommandPalette}
+          style={{
+            display:"flex", alignItems:"center", gap:10,
+            padding:"8px 14px", borderRadius:12,
+            background:"var(--bg)", border:"1px solid var(--border)",
+            cursor:"pointer", width:280, transition:"all .2s"
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+        >
+          <Search style={{ width:15, height:15, color:"var(--text-2)" }} />
+          <span style={{ flex:1, textAlign:"left", fontSize:13, color:"var(--text-2)", fontWeight:500 }}>
+            Search anything…
+          </span>
+          <div style={{ display:"flex", gap:3 }}>
+            <kbd style={{ padding:"2px 6px", borderRadius:5, border:"1px solid var(--border)", background:"var(--surface)", fontSize:10, fontWeight:700, fontFamily:"monospace", color:"var(--text-2)" }}>
+              ⌘K
+            </kbd>
           </div>
-        </div>
+        </button>
 
         <div className="w-px h-5 bg-theme-border/60 mx-1"></div>
 
