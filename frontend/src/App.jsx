@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useState } from "react"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
 import ToastContainer from "./components/ToastContainer"
 import PageTransition from "./components/PageTransition"
+import CommandPalette from "./components/CommandPalette"
 
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
@@ -25,56 +27,68 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-theme-bg">
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="w-12 h-12 bg-theme-accent rounded-full shadow-accent-glow"
+      <div style={{ height:"100vh", width:"100vw", display:"flex", alignItems:"center", justifyContent:"center", background:"var(--bg)" }}>
+        <motion.div
+          animate={{ scale:[1,1.2,1], opacity:[.5,1,.5] }}
+          transition={{ repeat:Infinity, duration:1.5 }}
+          style={{ width:48, height:48, background:"var(--accent)", borderRadius:"50%", boxShadow:"0 0 32px rgba(99,102,241,.4)" }}
         />
       </div>
     )
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-  
+  if (!user) return <Navigate to="/login" replace />
   return children
 }
 
 function Layout() {
   const location = useLocation()
+  const [cmdOpen, setCmdOpen] = useState(false)
+
   const notifications = [
-    { id: 1, message: "Welcome to HireSense AI!" },
-    { id: 2, message: "Engine successfully calibrated." }
+    { id:1, message:"Welcome to HireSense AI!" },
+    { id:2, message:"Engine successfully calibrated." },
   ]
 
+  // Global keyboard shortcut: "/" or Cmd+K
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "/" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+        e.preventDefault(); setCmdOpen(true)
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault(); setCmdOpen(true)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
+
   return (
-    <div className="flex h-screen w-full bg-theme-bg text-theme-text font-sans selection:bg-theme-accent selection:text-white overflow-hidden mesh-gradient relative">
-      
-      {/* Background Glows for Mixpanel Feel */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-theme-accent/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+    <div style={{ display:"flex", height:"100vh", width:"100%", background:"var(--bg)", overflow:"hidden", position:"relative" }}>
+      {/* Soft bg glows */}
+      <div style={{ position:"absolute", top:"-10%", right:"-10%", width:"40%", height:"40%", background:"rgba(99,102,241,.04)", borderRadius:"50%", filter:"blur(120px)", pointerEvents:"none" }} />
+      <div style={{ position:"absolute", bottom:"-10%", left:"-10%", width:"40%", height:"40%", background:"rgba(59,130,246,.04)", borderRadius:"50%", filter:"blur(120px)", pointerEvents:"none" }} />
 
-      <Sidebar />
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <Sidebar onCommandPalette={() => setCmdOpen(true)} />
 
-      <div className="flex-1 flex flex-col min-w-0 h-full relative z-10 overflow-hidden bg-transparent">
-        <Header notifications={notifications} />
-        
-        <main className="flex-1 overflow-y-auto w-full relative">
+      <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0, height:"100%", overflow:"hidden", position:"relative", zIndex:10 }}>
+        <Header notifications={notifications} onCommandPalette={() => setCmdOpen(true)} />
+        <main style={{ flex:1, overflowY:"auto", width:"100%" }}>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-              <Route path="analyzer" element={<PageTransition><ResumeAnalyzer /></PageTransition>} />
-              <Route path="matching" element={<PageTransition><CandidateMatching /></PageTransition>} />
-              <Route path="history" element={<PageTransition><History /></PageTransition>} />
-              <Route path="profile" element={<PageTransition><Profile /></PageTransition>} />
-              <Route path="settings" element={<PageTransition><Settings /></PageTransition>} />
+              <Route path="analyzer"  element={<PageTransition><ResumeAnalyzer /></PageTransition>} />
+              <Route path="matching"  element={<PageTransition><CandidateMatching /></PageTransition>} />
+              <Route path="history"   element={<PageTransition><History /></PageTransition>} />
+              <Route path="profile"   element={<PageTransition><Profile /></PageTransition>} />
+              <Route path="settings"  element={<PageTransition><Settings /></PageTransition>} />
             </Routes>
           </AnimatePresence>
         </main>
       </div>
-      
+
       <ToastContainer />
     </div>
   )
