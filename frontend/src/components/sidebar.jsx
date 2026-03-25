@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 import { LayoutDashboard, FileText, History, Settings, Target, User } from "lucide-react"
+import { motion, LayoutGroup } from "framer-motion"
 
 function Sidebar() {
   const location = useLocation()
@@ -25,35 +26,50 @@ function Sidebar() {
       </div>
 
       <nav className="flex-1">
-        <ul className="space-y-2">
-          {menu.map((item) => {
-            const Icon = item.icon
-            const isActive = location.pathname === item.path
+        <LayoutGroup>
+          <ul className="space-y-1.5 relative">
+            {menu.map((item) => {
+              const Icon = item.icon
+              const isActive = location.pathname === item.path
 
-            return (
-              <li key={item.name}>
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 font-medium text-sm
-                  ${isActive 
-                    ? "bg-slate-50 text-slate-900 shadow-sm border border-slate-100" 
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
-                >
-                  <Icon 
-                    size={18} 
-                    className={`${isActive ? "text-pastelBlue" : "text-slate-400"}`} 
-                  />
-                  {item.name}
-                  
+              return (
+                <li key={item.name} className="relative group">
                   {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-pastelBlue" />
+                    <motion.div
+                      layoutId="sidebar-active"
+                      className="absolute inset-0 bg-dashboardBg border border-slate-100 rounded-xl"
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    />
                   )}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+                  <Link
+                    to={item.path}
+                    className={`relative z-10 flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors duration-200 font-medium text-sm
+                    ${isActive 
+                      ? "text-slate-900" 
+                      : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    <motion.div whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}>
+                      <Icon 
+                        size={18} 
+                        className={`transition-colors duration-300 ${isActive ? "text-pastelBlue" : "text-slate-400 group-hover:text-pastelBlue"}`} 
+                      />
+                    </motion.div>
+                    {item.name}
+                    
+                    {isActive && (
+                      <motion.div 
+                        layoutId="sidebar-dot"
+                        className="ml-auto w-1.5 h-1.5 rounded-full bg-pastelBlue" 
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </LayoutGroup>
       </nav>
       
       <div className="mt-auto pt-8">
