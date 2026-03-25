@@ -1,6 +1,7 @@
-import { useState } from "react"
-import { Routes, Route, Navigate, Outlet } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
+import { AnimatePresence, motion } from "framer-motion"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
 import ToastContainer from "./components/ToastContainer"
@@ -15,13 +16,10 @@ import CandidateMatching from "./pages/CandidateMatching"
 import History from "./pages/History"
 import Settings from "./pages/Settings"
 import OAuthSuccess from "./pages/OAuthSuccess"
-import ForgotPassword from "./pages/ForgotPassword"
-import ResetPassword from "./pages/ResetPassword"
 import Profile from "./pages/Profile"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-theme-bg">
@@ -29,15 +27,43 @@ function ProtectedRoute({ children }) {
       </div>
     )
   }
-
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-  
+  if (!user) return <Navigate to="/login" replace />
   return children
 }
 
+const pageVariants = {
+  initial: { opacity: 0, y: 10, scale: 0.99 },
+  in: { opacity: 1, y: 0, scale: 1 },
+  out: { opacity: 0, y: -10, scale: 0.99 }
+}
+
+const pageTransition = {
+  type: "tween",
+  ease: "circOut",
+  duration: 0.25
+}
+
+function AnimatedOutlet() {
+  const location = useLocation()
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial="initial"
+        animate="in"
+        exit="out"
+        variants={pageVariants}
+        transition={pageTransition}
+        className="h-full w-full"
+      >
+        <Outlet />
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
 function Layout() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const notifications = [
     { id: 1, message: "Welcome to HireSense UI!" },
     { id: 2, message: "Your ATS score is now available for John Doe." }
@@ -46,20 +72,18 @@ function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-theme-bg text-theme-text font-sans selection:bg-theme-accent/30 selection:text-white">
       {/* SIDEBAR (Left) */}
-      <Sidebar />
+      <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col relative w-full h-full bg-theme-bg overflow-hidden">
-        {/* HEADER (Top) */}
+      <div className="flex-1 flex flex-col relative w-full h-full bg-theme-bg overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.5)] z-20">
         <Header notifications={notifications} />
         
         {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto w-full px-6 py-6 pb-20">
-            <Outlet />
+        <main className="flex-1 overflow-y-auto w-full px-6 py-6 pb-20 scroll-smooth">
+            <AnimatedOutlet />
         </main>
       </div>
       
-      {/* Toast Container */}
       <ToastContainer />
     </div>
   )
@@ -74,8 +98,6 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/oauth-success" element={<OAuthSuccess />} />
 
           <Route

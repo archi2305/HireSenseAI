@@ -19,7 +19,6 @@ export default {
         '2xl': ['1.5rem', { lineHeight: '2rem' }],
       },
       colors: {
-        // Linear EXACT dark theme
         theme: {
           bg: '#0d0d0d',
           sidebar: '#111111',
@@ -37,23 +36,28 @@ export default {
       },
       boxShadow: {
         'sm': '0 1px 2px 0 rgb(0 0 0 / 0.3)',
-        'DEFAULT': '0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5)',
-      },
-      backdropBlur: {
-        'md': '8px',
-      },
-      borderRadius: {
-        'md': '0.375rem',
-        'lg': '0.5rem',
+        'md': '0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5)',
+        'lg': '0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.6)',
+        'glow': '0 0 15px -3px rgba(99, 102, 241, 0.4)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.15s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-in-right': 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'shimmer': 'shimmer 2s infinite linear',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-1000px 0' },
+          '100%': { backgroundPosition: '1000px 0' },
+        }
       },
     },
   },
