@@ -18,7 +18,7 @@ export default {
         cardBg: "#FFFFFF",
       },
       backgroundImage: {
-        "dashboard-gradient": "linear-gradient(135deg, #eef2ff, #fdf2f8)",
+        "dashboard-gradient": "linear-gradient(135deg, #e0e7ff 0%, #fae8ff 50%, #f3e8ff 100%)",
       },
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.04)',

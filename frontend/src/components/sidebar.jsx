@@ -15,7 +15,7 @@ function Sidebar() {
   ]
 
   return (
-    <div className="w-64 h-full bg-white border-r border-slate-100 flex flex-col p-6 shadow-sm z-30">
+    <div className="w-64 h-full bg-white/30 backdrop-blur-2xl border-r border-white/50 flex flex-col p-6 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-30">
       <div className="mb-8 px-2 flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-mint to-pastelBlue flex items-center justify-center shadow-sm">
           <FileText className="w-4 h-4 text-slate-800" />

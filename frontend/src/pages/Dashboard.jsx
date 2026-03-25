@@ -119,11 +119,16 @@ function Dashboard() {
 
   return (
     <motion.div 
-      className="space-y-6 pb-12"
+      className="space-y-6 pb-12 relative"
       variants={containerVariants}
       initial="hidden"
       animate="show"
     >
+      
+      {/* Floating Graphic Underlays for Glass refraction */}
+      <div className="absolute top-0 right-10 w-96 h-96 bg-pastelBlue/30 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+      <div className="absolute bottom-40 left-10 w-[500px] h-[500px] bg-softPink/30 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+
       
       {/* Hidden inputs for file uploads */}
       <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
@@ -161,9 +166,12 @@ function Dashboard() {
               onClick={stat.onClick}
               whileHover={{ scale: 1.02, y: -4 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-white/70 backdrop-blur-xl p-6 rounded-[20px] shadow-sm border border-white/60 hover:shadow-glass transition-shadow duration-300 group cursor-pointer"
+              className="bg-white/30 backdrop-blur-3xl p-6 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 hover:shadow-glass hover:bg-white/40 transition-all duration-300 group cursor-pointer relative overflow-hidden"
             >
-              <div className="flex items-start justify-between mb-4">
+              {/* Optional inner shine */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
+              
+              <div className="relative z-10 flex items-start justify-between mb-4">
                 <div className={`w-12 h-12 rounded-[14px] bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-6 h-6 text-slate-800" />
                 </div>
@@ -193,8 +201,8 @@ function Dashboard() {
            <AIInsights />
            
            {/* Alerts Panel */}
-           <div className="bg-white/70 backdrop-blur-xl rounded-[20px] shadow-sm border border-white/60 p-6 flex-1 hover:shadow-soft transition-shadow duration-300">
-             <h3 className="text-lg font-bold text-slate-800 mb-5 tracking-tight">Recent Alerts</h3>
+           <div className="bg-white/30 backdrop-blur-3xl rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-6 flex-1 hover:shadow-glass hover:bg-white/40 transition-all duration-300">
+             <h3 className="text-lg font-extrabold text-slate-800 mb-5 tracking-tight">Recent Alerts</h3>
              <div className="space-y-5">
                {[
                  { msg: "High match found for Backend Role", time: "10 mins ago", color: "bg-mint" },

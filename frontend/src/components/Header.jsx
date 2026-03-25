@@ -36,11 +36,10 @@ function Header({ notifications }) {
   }
 
   // Ensure z-index is high so drop down elements stay above other layout things
-  return (
-    <header className="flex items-center justify-between px-8 py-4 bg-white/70 backdrop-blur-xl border-b border-white/60 z-40 sticky top-0 transition-shadow transition-colors duration-300">
+    <header className="flex items-center justify-between px-8 py-4 bg-transparent border-b border-white/20 z-40 sticky top-0 transition-all duration-300">
       {/* Search Bar */}
-      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200/50 flex-1 max-w-sm hover:shadow-soft focus-within:shadow-soft focus-within:ring-2 focus-within:ring-pastelBlue focus-within:border-transparent transition-all duration-300">
-        <Search className="w-4 h-4 text-slate-400" />
+      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/40 backdrop-blur-md border border-white/50 flex-1 max-w-sm hover:bg-white/60 focus-within:bg-white focus-within:shadow-glass focus-within:ring-2 focus-within:ring-pastelBlue focus-within:border-transparent transition-all duration-300">
+        <Search className="w-4 h-4 text-slate-500" />
         <input
           type="text"
           placeholder="Search resumes, skills, or candidates..."
