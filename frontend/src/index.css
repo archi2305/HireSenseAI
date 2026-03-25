@@ -90,7 +90,8 @@
 }
 
 .backdrop-premium {
-  @apply backdrop-blur-xl bg-theme-surface/70;
+  @apply backdrop-blur-xl bg-theme-surface;
+  background-color: rgba(24, 24, 27, 0.7);
 }
 
 /* Scroll Animation Classes */
