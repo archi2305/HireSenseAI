@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Search, BrainCircuit, Loader2, Star, Target } from 'lucide-react';
+import { Search, BrainCircuit, Loader2, Star, Target, Info, Sparkles, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -17,107 +18,124 @@ export default function CandidateMatching() {
     try {
       const formData = new FormData();
       formData.append("job_description", jobDescription);
-      
       const res = await axios.post(`${API_BASE_URL}/candidates/match`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       setMatches(res.data || []);
-    } catch (err) {
-      console.error("Failed to match candidates", err);
+    } catch {
+      console.error("Failed to match candidates");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] max-w-7xl mx-auto w-full pt-4">
-      <div className="flex items-center gap-2 mb-6 shrink-0">
-        <Target className="w-5 h-5 text-theme-textSecondary" />
-        <h1 className="text-xl font-semibold text-theme-text tracking-tight">Candidate Matching</h1>
+    <div className="flex flex-col h-full w-full">
+      <div className="px-6 py-4 flex items-center justify-between border-b border-theme-border bg-theme-sidebar/10 shrink-0">
+         <div className="flex items-center gap-2.5">
+            <Target className="text-theme-accent" size={18} />
+            <h1 className="text-[16px] font-bold text-theme-text tracking-tight uppercase">Intent-Based Matching</h1>
+         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">
+      <div className="flex-1 flex overflow-hidden">
         
         {/* Left: Input Panel */}
-        <div className="w-full lg:w-[400px] flex flex-col shrink-0 min-h-0 bg-theme-bg border border-theme-border rounded-md shadow-sm">
-          <div className="p-3 border-b border-theme-border bg-theme-sidebar/50">
-            <h2 className="text-[13px] font-medium text-theme-text">Job Description</h2>
-          </div>
-          
-          <form onSubmit={handleMatch} className="flex flex-col flex-1 p-4 min-h-0">
-            <textarea
-              className="w-full flex-1 border border-theme-border rounded-md px-3 py-2 text-[13px] text-theme-text bg-theme-sidebar focus:border-theme-accent focus:outline-none transition-all duration-150 resize-none min-h-[300px] placeholder:text-theme-textSecondary"
-              placeholder="Paste job description requirements to find the best matched candidates from your database..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading || !jobDescription.trim()}
-              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-theme-text text-theme-bg text-[13px] font-semibold rounded-md hover:bg-gray-200 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Search className="w-4 h-4" />}
-              Find Matches
-            </button>
-          </form>
+        <div className="w-[420px] shrink-0 border-r border-theme-border bg-theme-bg flex flex-col relative z-10 shadow-lg">
+           <div className="p-4 border-b border-theme-border">
+              <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest mb-3 block">Recruitment Requirements</label>
+              <textarea
+                className="w-full h-[400px] linear-input resize-none font-mono text-[12px] leading-relaxed p-3"
+                placeholder="Paste role description and technical mandatory requirements..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+              />
+              <button
+                onClick={handleMatch}
+                disabled={loading || !jobDescription.trim()}
+                className="mt-4 w-full linear-btn-primary py-2.5 shadow-accent-glow flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="animate-spin" size={16} /> : <BrainCircuit size={16} />}
+                Search Database
+              </button>
+           </div>
+           <div className="p-4 flex-1 bg-theme-sidebar/20 overflow-y-auto">
+              <div className="flex items-center gap-2 mb-4">
+                 <Info size={14} className="text-theme-textSecondary" />
+                 <h4 className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Optimization Strategy</h4>
+              </div>
+              <p className="text-[12px] text-theme-textSecondary leading-relaxed italic opacity-60">
+                Our engine uses semantic embeddings to find candidates whose latent skills match your intent, not just keywords.
+              </p>
+           </div>
         </div>
 
         {/* Right: Results Panel */}
-        <div className="flex-1 flex flex-col min-h-0 bg-theme-bg border border-theme-border rounded-md shadow-sm">
-          <div className="p-3 border-b border-theme-border bg-theme-sidebar/50 flex items-center justify-between">
-            <h2 className="text-[13px] font-medium text-theme-text">Top Candidates</h2>
-            <span className="text-[11px] text-theme-textSecondary px-2 py-0.5 bg-theme-card border border-theme-border rounded">
-              {matches.length} found
-            </span>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-            {matches.length === 0 && !loading && (
-              <div className="flex flex-col items-center justify-center h-full text-theme-textSecondary">
-                <BrainCircuit className="w-8 h-8 opacity-20 mb-3" />
-                <p className="text-[13px]">Paste job description to find matches</p>
-              </div>
-            )}
+        <div className="flex-1 bg-theme-bg/50 overflow-y-auto p-6 relative">
+          <div className="max-w-3xl mx-auto space-y-4">
+            <div className="flex items-center justify-between mb-6">
+               <h2 className="text-[13px] font-bold text-theme-textSecondary uppercase tracking-widest">Weighted Matches ({matches.length})</h2>
+               {matches.length > 0 && <span className="text-[10px] bg-success/10 text-success border border-success/20 px-2 py-0.5 rounded font-bold uppercase tracking-widest">Optimized Result</span>}
+            </div>
             
-            {loading && (
-              <div className="flex justify-center items-center h-full">
-                <Loader2 className="animate-spin w-6 h-6 text-theme-accent" />
-              </div>
-            )}
-            
-            {matches.map((match, idx) => (
-              <div key={match.id} className="bg-theme-sidebar p-3.5 rounded-md border border-theme-border hover:border-theme-textSecondary/30 transition-all duration-150 flex items-start gap-4 group">
-                
-                <div className="flex-shrink-0 w-12 h-12 flex flex-col items-center justify-center rounded border border-theme-border bg-theme-bg group-hover:bg-theme-hover transition-colors">
-                  <span className={`text-[15px] font-bold ${match.match_percentage >= 80 ? 'text-success' : match.match_percentage >= 60 ? 'text-warning' : 'text-error'}`}>
-                    {match.match_percentage}
-                  </span>
+            <AnimatePresence mode="popLayout">
+              {matches.length === 0 && !loading && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 0.5, scale: 1 }}
+                  className="flex flex-col items-center justify-center py-32 text-theme-textSecondary gap-4 border border-dashed border-theme-border rounded-lg"
+                >
+                  <Sparkles size={48} strokeWidth={1} />
+                  <p className="text-[14px] font-medium italic">Execute a search to surface potential hires.</p>
+                </motion.div>
+              )}
+
+              {loading && (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => <div key={i} className="h-24 bg-theme-surface border border-theme-border rounded-md animate-pulse opacity-20" />)}
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="text-[14px] font-medium text-theme-text truncate">{match.name}</h3>
-                    {idx === 0 && <Star className="w-3.5 h-3.5 text-warning fill-warning shrink-0" />}
+              )}
+
+              {matches.map((match, idx) => (
+                <motion.div 
+                  key={match.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="group relative flex bg-theme-surface border border-theme-border p-4 rounded-md hover:border-theme-accent/40 hover:bg-theme-hover transition-all duration-200 shadow-linear"
+                >
+                  <div className={`shrink-0 w-12 h-12 flex flex-col items-center justify-center rounded border border-theme-border bg-theme-bg group-hover:bg-theme-bg/50 transition-colors
+                    ${match.match_percentage >= 80 ? 'border-success/30' : 'border-theme-border'}`}>
+                    <span className={`text-[15px] font-black ${match.match_percentage >= 80 ? 'text-success' : 'text-theme-text'}`}>
+                      {match.match_percentage}
+                    </span>
+                    <span className="text-[8px] font-bold text-theme-textSecondary uppercase tracking-tighter">MATCH</span>
                   </div>
-                  <p className="text-[12px] text-theme-textSecondary mb-2">{match.role}</p>
                   
-                  <div className="flex flex-wrap gap-1.5">
-                    {match.skills.map(skill => (
-                      <span key={skill} className="bg-theme-bg border border-theme-border text-theme-textSecondary px-1.5 py-0.5 rounded text-[11px] font-medium leading-none">
-                        {skill}
-                      </span>
-                    ))}
+                  <div className="ml-4 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-[14px] font-bold text-theme-text truncate">{match.name}</h3>
+                      {idx === 0 && <Star className="w-3 h-3 text-warning fill-warning" />}
+                    </div>
+                    <p className="text-[12px] text-theme-textSecondary mb-3 font-medium">{match.role}</p>
+                    
+                    <div className="flex flex-wrap gap-1.5">
+                      {match.skills.map(skill => (
+                        <span key={skill} className="bg-theme-bg border border-theme-border text-theme-textSecondary px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-tight">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex-shrink-0 self-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                  <button className="px-3 py-1.5 bg-theme-bg text-theme-textSecondary text-[12px] font-medium rounded border border-theme-border hover:text-theme-text hover:bg-theme-hover transition-colors">
-                    View
-                  </button>
-                </div>
-              </div>
-            ))}
+                  
+                  <div className="shrink-0 flex flex-col justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                     <button className="p-2 hover:bg-theme-bg rounded-md text-theme-textSecondary hover:text-theme-text transition-colors">
+                        <User size={16} />
+                     </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       </div>

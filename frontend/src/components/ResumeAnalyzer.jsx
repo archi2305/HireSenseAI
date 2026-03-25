@@ -1,21 +1,17 @@
 import { useState } from "react"
 import axios from "axios"
 import toast from "react-hot-toast"
-import { Loader2, UploadCloud, FileType } from "lucide-react"
-import DragDropUpload from "./DragDropUpload"
+import { Loader2, UploadCloud, FileType, CheckCircle2, AlertCircle, Sparkles } from "lucide-react"
 import ATSResultCard from "./ATSResultCard"
+import { motion, AnimatePresence } from "framer-motion"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const ROLE_TEMPLATES = {
-  "Software Engineer": "We are looking for a Software Engineer with strong skills in Python, SQL, data structures, and algorithms.",
-  "Backend Developer": "We need a Backend Developer experienced with building REST APIs, databases, and frameworks.",
-  "Data Scientist": "Looking for a Data Scientist with expertise in Python, machine learning, Pandas, and data visualization.",
-  "AI Engineer": "AI Engineer role focusing on deep learning, model deployment, and MLOps.",
-  "Frontend Developer": "Frontend Developer with React, modern CSS, and component-driven UI experience.",
-  "DevOps Engineer": "DevOps Engineer with experience in CI/CD, Docker, Kubernetes, and cloud platforms.",
+  "Software Engineer": "Proficient in Python, SQL, and distributed systems. Experience with cloud infrastructure and RESTful APIs.",
+  "Frontend Developer": "Expertise in React, Tailwind CSS, and Framer Motion. Focused on high-fidelity UI/UX implementation.",
+  "Data Scientist": "Strong background in statistics, machine learning, and data visualization using Python and Pandas.",
 }
-const ROLE_OPTIONS = Object.keys(ROLE_TEMPLATES)
 
 function ResumeAnalyzer({ onAnalysisCompleted }) {
   const [file, setFile] = useState(null)
@@ -23,126 +19,126 @@ function ResumeAnalyzer({ onAnalysisCompleted }) {
   const [jobDescription, setJobDescription] = useState("")
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-
-  const handleRoleChange = (role) => {
-    setJobRole(role)
-    const template = ROLE_TEMPLATES[role]
-    if (template) setJobDescription(template)
-  }
 
   const handleAnalyze = async () => {
-    if (!file || !jobDescription) {
-      toast.error("Please add a resume file and job description.")
-      return
-    }
-
+    if (!file || !jobDescription) return toast.error("File and JD required.")
+    
+    setLoading(true)
     const formData = new FormData()
     formData.append("resume", file)
     formData.append("job_description", jobDescription)
     formData.append("job_role", jobRole)
 
     try {
-      setLoading(true)
-      const uploadToast = toast.loading("Analyzing resume...")
-      
       const res = await axios.post(`${API_BASE_URL}/analyze`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (e) => setUploadProgress(Math.round((e.loaded * 100) / e.total))
+        headers: { "Content-Type": "multipart/form-data" }
       })
-      
       setResult(res.data)
-      toast.success("Analysis complete!", { id: uploadToast })
-      onAnalysisCompleted?.({ ...res.data, job_role: jobRole, date: res.data.created_at })
-    } catch (error) {
-      toast.dismiss()
-      toast.error("Failed to analyze resume.")
+      toast.success("Analysis complete.")
+      onAnalysisCompleted?.({ ...res.data, job_role: jobRole })
+    } catch {
+      toast.error("Analysis failed.")
     } finally {
       setLoading(false)
-      setTimeout(() => setUploadProgress(0), 1000)
     }
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full pt-4">
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-xl font-semibold text-theme-text tracking-tight">Parse & Analyze</h1>
+    <div className="p-6 max-w-6xl mx-auto w-full space-y-6">
+      
+      <div className="flex items-center justify-between mb-2">
+         <div>
+            <h1 className="text-[20px] font-bold text-theme-text tracking-tight">Intelligence Parser</h1>
+            <p className="text-[13px] text-theme-textSecondary italic">Automated extraction and score weighting.</p>
+         </div>
       </div>
 
-      <div className="bg-theme-bg border border-theme-border rounded-md shadow-sm p-5 flex flex-col gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         
-        {/* Horizontal Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          
-          <div className="flex flex-col gap-4">
-            <div>
-              <label className="block text-[12px] font-medium text-theme-textSecondary mb-1.5 uppercase tracking-wider">Target Role</label>
-              <select
-                className="w-full border border-theme-border rounded-md px-3 py-2 text-[13px] bg-theme-sidebar focus:border-theme-accent focus:outline-none transition-all duration-150 text-theme-text"
-                value={jobRole}
-                onChange={(e) => handleRoleChange(e.target.value)}
-              >
-                <option value="">Select a typical role...</option>
-                {ROLE_OPTIONS.map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-[12px] font-medium text-theme-textSecondary mb-1.5 uppercase tracking-wider">Job Description</label>
-              <textarea
-                rows={6}
-                className="w-full border border-theme-border rounded-md px-3 py-2 text-[13px] bg-theme-sidebar focus:border-theme-accent focus:outline-none transition-all duration-150 resize-none text-theme-text"
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description..."
-              />
-            </div>
-          </div>
+        {/* Left: Input Config */}
+        <div className="flex-1 flex flex-col gap-5">
+           <div className="linear-card p-5 space-y-5">
+              <div className="space-y-1.5">
+                 <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Target Job Role</label>
+                 <select
+                   className="linear-input w-full"
+                   value={jobRole}
+                   onChange={(e) => {
+                     setJobRole(e.target.value)
+                     if (ROLE_TEMPLATES[e.target.value]) setJobDescription(ROLE_TEMPLATES[e.target.value])
+                   }}
+                 >
+                   <option value="">Select template...</option>
+                   {Object.keys(ROLE_TEMPLATES).map(r => <option key={r} value={r}>{r}</option>)}
+                 </select>
+              </div>
 
-          <div className="flex flex-col gap-4 h-full">
-            <label className="block text-[12px] font-medium text-theme-textSecondary mb-1.5 uppercase tracking-wider">Resume Upload</label>
-            <div className="flex-1 min-h-[160px] relative rounded-md border border-dashed border-theme-border bg-theme-sidebar/50 hover:bg-theme-sidebar transition-all duration-150 flex flex-col items-center justify-center p-6 text-center group">
+              <div className="space-y-1.5">
+                 <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Job Description / Requirements</label>
+                 <textarea
+                   rows={10}
+                   className="linear-input w-full resize-none font-mono text-[12px] leading-relaxed"
+                   placeholder="Paste core requirements here..."
+                   value={jobDescription}
+                   onChange={(e) => setJobDescription(e.target.value)}
+                 />
+              </div>
+           </div>
+        </div>
+
+        {/* Right: Upload zone */}
+        <div className="w-full lg:w-[380px] flex flex-col gap-4">
+           <div className={`linear-card p-6 h-full flex flex-col items-center justify-center border-dashed relative group overflow-hidden 
+             ${file ? 'border-theme-accent/50 bg-theme-accent/5' : 'hover:border-theme-textSecondary/40'}`}>
+              
               <input 
                 type="file" 
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
                 onChange={(e) => setFile(e.target.files?.[0])}
                 accept=".pdf,.doc,.docx" 
               />
-              <UploadCloud className="w-8 h-8 text-theme-textSecondary mb-3 group-hover:text-theme-text transition-colors duration-150" />
-              <p className="text-[13px] text-theme-text font-medium">Click or drag resume here</p>
-              <p className="text-[11px] text-theme-textSecondary mt-1">PDF, DOC, DOCX up to 10MB</p>
-              
-              {file && (
-                <div className="absolute inset-x-2 bottom-2 bg-theme-bg border border-theme-border rounded p-2 flex items-center justify-between z-20 pointer-events-none">
-                  <div className="flex items-center gap-2 truncate">
-                    <FileType className="w-4 h-4 text-theme-accent" />
-                    <span className="text-[12px] text-theme-text truncate font-medium">{file.name}</span>
-                  </div>
-                  {loading && <span className="text-[10px] text-theme-textSecondary">{uploadProgress}%</span>}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex justify-end pt-4 border-t border-theme-border">
-          <button
-            onClick={handleAnalyze}
-            disabled={loading || !file || !jobDescription}
-            className="px-4 py-1.5 bg-theme-text text-theme-bg text-[13px] font-semibold rounded-md hover:bg-gray-200 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {loading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Analyzing</> : "Analyze Document"}
-          </button>
+              <div className="flex flex-col items-center text-center">
+                 <div className={`p-4 rounded-full bg-theme-bg border border-theme-border mb-4 transition-transform duration-300 group-hover:scale-110
+                   ${file ? 'text-theme-accent border-theme-accent/30' : 'text-theme-textSecondary'}`}>
+                    {file ? <CheckCircle2 size={32} /> : <UploadCloud size={32} />}
+                 </div>
+                 <h3 className="text-[14px] font-bold text-theme-text mb-1">{file ? file.name : 'Upload Resume'}</h3>
+                 <p className="text-[11px] text-theme-textSecondary italic">{file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, DOC UP TO 10MB'}</p>
+                 
+                 {loading && (
+                   <div className="mt-6 flex flex-col items-center gap-3">
+                      <Loader2 size={24} className="animate-spin text-theme-accent" />
+                      <span className="text-[11px] font-bold text-theme-accent uppercase tracking-widest animate-pulse">Running AI Weights...</span>
+                   </div>
+                 )}
+              </div>
+
+              {!file && <div className="absolute inset-0 bg-gradient-to-t from-theme-bg/40 to-transparent pointer-events-none" />}
+           </div>
+
+           <button
+             onClick={handleAnalyze}
+             disabled={loading || !file || !jobDescription}
+             className="linear-btn-primary w-full py-2.5 shadow-accent-glow flex items-center justify-center gap-2 group"
+           >
+             <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+             Execute Intelligent Parse
+           </button>
         </div>
       </div>
 
-      {result && (
-        <div className="animate-fade-in mt-4">
-          <ATSResultCard result={result} />
-        </div>
-      )}
+      <AnimatePresence>
+        {result && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8"
+          >
+            <ATSResultCard result={result} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
