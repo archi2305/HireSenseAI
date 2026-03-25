@@ -43,60 +43,69 @@ export default function CandidateTable({ limit, hideFilters }) {
       )}
 
       {/* Table Content */}
-      <div className="w-full overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-theme-border/60">
-              <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Candidate Engine</th>
-              <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Role Index</th>
-              <th className="px-6 py-4 text-center text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">ATS Weight</th>
-              <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Classification</th>
-              <th className="px-6 py-4 text-right"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-theme-border/40">
-            {displayCandidates.map((candidate, idx) => (
-              <motion.tr
-                key={candidate.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                onClick={() => setSelectedCandidate(candidate)}
-                className="group hover:bg-theme-accent/[0.03] transition-all duration-300 cursor-pointer"
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-theme-accent/10 border border-theme-accent/20 flex items-center justify-center text-theme-accent group-hover:bg-theme-accent group-hover:text-white transition-all duration-500 shadow-sm">
-                      {candidate.name.charAt(0)}
+      <div className="w-full overflow-x-auto min-h-[300px]">
+        {displayCandidates.length > 0 ? (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-theme-border/60">
+                <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Candidate Engine</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Role Index</th>
+                <th className="px-6 py-4 text-center text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">ATS Weight</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Classification</th>
+                <th className="px-6 py-4 text-right"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-theme-border/40">
+              {displayCandidates.map((candidate, idx) => (
+                <motion.tr
+                  key={candidate.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  onClick={() => setSelectedCandidate(candidate)}
+                  className="group hover:bg-theme-accent/[0.03] transition-all duration-300 cursor-pointer"
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-theme-accent/10 border border-theme-accent/20 flex items-center justify-center text-theme-accent group-hover:bg-theme-accent group-hover:text-white transition-all duration-500 shadow-sm">
+                        {candidate.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-bold text-theme-text group-hover:text-theme-accent transition-colors">{candidate.name}</p>
+                        <p className="text-[11px] text-theme-textSecondary font-medium">{candidate.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[14px] font-bold text-theme-text group-hover:text-theme-accent transition-colors">{candidate.name}</p>
-                      <p className="text-[11px] text-theme-textSecondary font-medium">{candidate.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                   <p className="text-[13px] font-semibold text-theme-text">{candidate.role}</p>
-                   <p className="text-[11px] text-theme-textSecondary opacity-60">Verified Credentials</p>
-                </td>
-                <td className="px-6 py-4 text-center">
-                   <div className="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-theme-bg border border-theme-border group-hover:border-theme-accent/30 transition-all duration-500">
-                      <span className="text-[13px] font-black text-theme-accent">{candidate.score}%</span>
-                   </div>
-                </td>
-                <td className="px-6 py-4">
-                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-current bg-opacity-10 
-                     ${candidate.score >= 90 ? 'text-success border-success/30 bg-success' : 'text-warning border-warning/30 bg-warning'}`}>
-                     {candidate.status}
-                   </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                   <ChevronRight className="inline-block w-4 h-4 text-theme-textSecondary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                  <td className="px-6 py-4">
+                     <p className="text-[13px] font-semibold text-theme-text">{candidate.role}</p>
+                     <p className="text-[11px] text-theme-textSecondary opacity-60">Verified Credentials</p>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                     <div className="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-theme-bg border border-theme-border group-hover:border-theme-accent/30 transition-all duration-500">
+                        <span className="text-[13px] font-black text-theme-accent">{candidate.score}%</span>
+                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-current bg-opacity-10 
+                       ${candidate.score >= 90 ? 'text-success border-success/30 bg-success' : 'text-warning border-warning/30 bg-warning'}`}>
+                       {candidate.status}
+                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                     <ChevronRight className="inline-block w-4 h-4 text-theme-textSecondary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="py-12">
+            <EmptyState 
+              title="No Candidates Found" 
+              description="Your search criteria yielded no matches. Try adjusting filters or ingesting new resumes." 
+            />
+          </div>
+        )}
       </div>
 
       {/* Slide-in Detail Drawer (Mixpanel Style) */}

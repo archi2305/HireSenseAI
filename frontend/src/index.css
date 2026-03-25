@@ -5,7 +5,25 @@
 @tailwind utilities;
 
 :root {
-  /* Default Dark Mode (Mixpanel Inspired) */
+  /* Premium Mixpanel Light (Default) */
+  --bg-color: #f8f9fc;
+  --surface-color: #ffffff;
+  --sidebar-color: #ffffff;
+  --border-color: #eef1f6;
+  --text-color: #1a1d23;
+  --text-secondary: #64748b;
+  --accent-color: #6366f1; /* Indigo */
+  --accent-hover: #4f46e5;
+  --accent-glow: rgba(99, 102, 241, 0.15);
+  --hover-color: rgba(99, 102, 241, 0.04);
+  
+  /* Pastel Accents */
+  --pastel-purple: #f5f3ff;
+  --pastel-blue: #eff6ff;
+  --pastel-green: #f0fdf4;
+}
+
+:root.dark {
   --bg-color: #030303;
   --surface-color: #0f0f10;
   --sidebar-color: #080808;
@@ -18,22 +36,13 @@
   --hover-color: rgba(255, 255, 255, 0.03);
 }
 
-:root.light {
-  --bg-color: #f7f7f9;
-  --surface-color: #ffffff;
-  --sidebar-color: #ffffff;
-  --border-color: #e5e7eb;
-  --text-color: #111827;
-  --text-secondary: #6b7280;
-  --accent-color: #6366f1;
-  --accent-hover: #4f46e5;
-  --accent-glow: rgba(99, 102, 241, 0.1);
-  --hover-color: rgba(0, 0, 0, 0.02);
-}
-
 @layer base {
   body {
     @apply bg-theme-bg text-theme-text font-sans antialiased transition-colors duration-500 overflow-x-hidden;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.03) 0, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.03) 0, transparent 50%);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -44,23 +53,23 @@
 
 @layer components {
   .linear-card {
-    @apply bg-theme-surface border border-theme-border rounded-xl shadow-premium transition-all duration-300;
+    @apply bg-theme-surface border border-theme-border rounded-2xl shadow-premium overflow-hidden transition-all duration-500;
   }
 
   .shadow-premium {
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.006);
   }
 
   .linear-input {
-    @apply bg-theme-bg border border-theme-border rounded-lg px-4 py-2.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:ring-1 focus:ring-theme-accent focus:outline-none transition-all duration-200;
+    @apply bg-theme-bg border border-theme-border text-theme-text px-4 py-2.5 rounded-xl outline-none transition-all duration-300 focus:border-theme-accent focus:ring-1 focus:ring-theme-accent/20 placeholder:text-theme-textSecondary/50 font-medium;
   }
 
   .linear-btn-primary {
-    @apply px-5 py-2.5 bg-theme-accent text-white text-sm font-semibold rounded-lg hover:bg-theme-accentHover transition-all duration-300 shadow-accent-glow active:scale-95;
+    @apply bg-theme-accent text-white px-5 py-2 rounded-xl font-bold transition-all duration-300 hover:brightness-110 active:scale-95 disabled:opacity-50 shadow-accent-glow;
   }
 
   .linear-btn-secondary {
-    @apply px-5 py-2.5 bg-theme-surface border border-theme-border text-theme-text text-sm font-semibold rounded-lg hover:bg-theme-hover transition-all duration-300 shadow-sm active:scale-95;
+    @apply bg-theme-surface border border-theme-border text-theme-text px-5 py-2 rounded-xl font-bold transition-all duration-300 hover:bg-theme-hover active:scale-95;
   }
 
   /* Mixpanel Styled Highlights */
@@ -69,9 +78,6 @@
   }
 
   .mesh-gradient {
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
   }
 }
 
