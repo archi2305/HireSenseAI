@@ -1,207 +1,290 @@
-import React, { useState, useEffect } from "react"
-import { 
-  Users, Search, Filter, MoreHorizontal, Download, 
-  ExternalLink, Mail, Phone, MapPin, Calendar, 
-  ChevronRight, X, ArrowUpRight, Brain, Zap, Target
-} from "lucide-react"
-import api from "../services/api"
+import React, { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import ATSResultCard from "./ATSResultCard"
-
+import {
+  Search, Filter, Download, ChevronRight, X,
+  Mail, MapPin, Calendar, Star, Zap, Brain
+} from "lucide-react"
 import { useDashboard } from "../context/DashboardContext"
-import EmptyState from "./EmptyState"
 
-export default function CandidateTable({ limit, hideFilters }) {
-  const { candidates: contextCandidates, loading: contextLoading } = useDashboard()
-  const [selectedCandidate, setSelectedCandidate] = useState(null)
-  
-  const displayCandidates = limit ? contextCandidates.slice(0, limit) : contextCandidates
-  const loading = contextLoading && displayCandidates.length === 0
+/* ────────────────────────────────────────────
+   SLIDE-IN CANDIDATE DETAIL PANEL
+   ──────────────────────────────────────────── */
+function CandidatePanel({ candidate, onClose }) {
+  const score = candidate.score ?? candidate.ats_score ?? 0
+  const skills = candidate.skills
+    ? (Array.isArray(candidate.skills) ? candidate.skills : candidate.skills.split(",").map(s => s.trim()))
+    : []
 
   return (
-    <div className="relative w-full">
+    <AnimatePresence>
+      {candidate && (
+        <>
+          {/* Overlay */}
+          <motion.div
+            className="panel-overlay"
+            initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+            onClick={onClose}
+          />
+          {/* Panel */}
+          <motion.div
+            className="slide-panel"
+            initial={{ x:"100%" }} animate={{ x:0 }} exit={{ x:"100%" }}
+            transition={{ type:"spring", damping:28, stiffness:280 }}
+          >
+            {/* Header */}
+            <div style={{ padding:"24px 28px", borderBottom:"1px solid var(--border)", background:"var(--bg)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+                <div style={{
+                  width:48, height:48, borderRadius:14, background:"var(--accent)",
+                  color:"#fff", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:20, fontWeight:900
+                }}>
+                  {(candidate.name || "?").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p style={{ fontWeight:800, fontSize:16, color:"var(--text)", margin:0 }}>{candidate.name}</p>
+                  <p style={{ fontSize:12, color:"var(--text-2)", margin:0 }}>{candidate.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                style={{ background:"var(--bg)", border:"1px solid var(--border)", borderRadius:10, padding:8, cursor:"pointer", display:"flex" }}
+              >
+                <X size={16} style={{ color:"var(--text-2)" }} />
+              </button>
+            </div>
+
+            {/* Score ring */}
+            <div style={{ padding:"28px", textAlign:"center", borderBottom:"1px solid var(--border)" }}>
+              <div style={{ position:"relative", width:120, height:120, margin:"0 auto 16px" }}>
+                <svg viewBox="0 0 120 120" style={{ transform:"rotate(-90deg)" }}>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" strokeWidth="10" />
+                  <motion.circle
+                    cx="60" cy="60" r="50" fill="none"
+                    stroke={score >= 85 ? "#10b981" : score >= 60 ? "#f59e0b" : "#ef4444"}
+                    strokeWidth="10" strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 50}`}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 50 * (1 - score / 100) }}
+                    transition={{ duration: 1.2, ease:"easeOut" }}
+                  />
+                </svg>
+                <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+                  <span style={{ fontSize:26, fontWeight:900, color:"var(--text)" }}>{score}%</span>
+                  <span style={{ fontSize:10, color:"var(--text-2)", fontWeight:700 }}>ATS Score</span>
+                </div>
+              </div>
+              <p style={{ fontSize:12, color:"var(--text-2)" }}>
+                {score >= 85 ? "🔥 Excellent match" : score >= 60 ? "⚡ Good match" : "📝 Needs review"}
+              </p>
+            </div>
+
+            {/* Info fields */}
+            <div style={{ padding:"20px 28px" }}>
+              {[
+                { icon: Mail,     label:"Email",    value: candidate.email },
+                { icon: MapPin,   label:"Role",     value: candidate.role ?? candidate.job_role },
+                { icon: Calendar, label:"Applied",  value: candidate.created_at ? new Date(candidate.created_at).toLocaleDateString() : "N/A" },
+              ].map((field, i) => {
+                const Icon = field.icon
+                return (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid var(--border)" }}>
+                    <Icon size={14} style={{ color:"var(--accent)", flexShrink:0 }} />
+                    <div>
+                      <p style={{ fontSize:10, fontWeight:700, color:"var(--text-2)", textTransform:"uppercase", letterSpacing:".06em", margin:0 }}>{field.label}</p>
+                      <p style={{ fontSize:13, fontWeight:600, color:"var(--text)", margin:0 }}>{field.value ?? "—"}</p>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {skills.length > 0 && (
+                <div style={{ marginTop:20 }}>
+                  <p style={{ fontSize:11, fontWeight:700, color:"var(--text-2)", textTransform:"uppercase", letterSpacing:".08em", marginBottom:10 }}>Skills</p>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                    {skills.map((s, i) => (
+                      <span key={i} style={{
+                        background:"rgba(99,102,241,.1)", color:"var(--accent)",
+                        borderRadius:99, padding:"3px 10px", fontSize:11, fontWeight:700,
+                        border:"1px solid rgba(99,102,241,.2)"
+                      }}>
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {candidate.summary && (
+                <div style={{ marginTop:20 }}>
+                  <p style={{ fontSize:11, fontWeight:700, color:"var(--text-2)", textTransform:"uppercase", letterSpacing:".08em", marginBottom:8 }}>AI Summary</p>
+                  <p style={{ fontSize:13, color:"var(--text)", lineHeight:1.7, background:"var(--bg)", borderRadius:10, padding:14 }}>
+                    {candidate.summary}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/* ────────────────────────────────────────────
+   MAIN CANDIDATE TABLE
+   ──────────────────────────────────────────── */
+export default function CandidateTable({ limit, hideFilters }) {
+  const { candidates: ctx, loading } = useDashboard()
+  const [localSearch, setLocalSearch] = useState("")
+  const [selected, setSelected] = useState(null)
+
+  // Apply limit then local search for client-side filtering
+  const base = limit ? ctx.slice(0, limit) : ctx
+  const display = localSearch
+    ? base.filter(c =>
+        [c.name, c.email, c.role, c.job_role].some(f =>
+          f && f.toLowerCase().includes(localSearch.toLowerCase())
+        )
+      )
+    : base
+
+  const scoreColor = s => s >= 85 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444"
+
+  return (
+    <div style={{ position:"relative" }}>
+      {/* Local filter row */}
       {!hideFilters && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-           <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-textSecondary group-focus-within:text-theme-accent transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Filter global talent..." 
-                className="linear-input pl-10 w-full md:w-[320px] bg-theme-surface/50 border-theme-border/60 focus:bg-theme-surface" 
-              />
-           </div>
-           <div className="flex items-center gap-2">
-              <button className="linear-btn-secondary px-4 py-2 flex items-center gap-2 text-[12px]">
-                 <Filter size={14} />
-                 <span>Filters</span>
-              </button>
-              <button className="linear-btn-secondary px-4 py-2 flex items-center gap-2 text-[12px]">
-                 <Download size={14} />
-                 <span>Export</span>
-              </button>
-           </div>
+        <div style={{ display:"flex", gap:12, padding:"16px 24px", borderBottom:"1px solid var(--border)", alignItems:"center" }}>
+          <div style={{ position:"relative", flex:1 }}>
+            <Search size={14} style={{ position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", color:"var(--text-2)" }} />
+            <input
+              className="input"
+              style={{ paddingLeft:32, background:"var(--bg)", fontSize:13 }}
+              placeholder="Filter candidates…"
+              value={localSearch}
+              onChange={e => setLocalSearch(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-secondary" style={{ fontSize:12, padding:"7px 14px", whiteSpace:"nowrap" }}>
+            <Filter size={13} /> Filters
+          </button>
+          <button className="btn btn-secondary" style={{ fontSize:12, padding:"7px 14px", whiteSpace:"nowrap" }}>
+            <Download size={13} /> Export
+          </button>
         </div>
       )}
 
-      {/* Table Content */}
-      <div className="w-full overflow-x-auto min-h-[300px]">
-        {displayCandidates.length > 0 ? (
-          <table className="w-full border-collapse">
+      {/* Table */}
+      <div style={{ overflowX:"auto", minHeight:280 }}>
+        {loading && display.length === 0 ? (
+          /* Skeleton */
+          <div style={{ padding:24 }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} style={{ display:"flex", gap:16, marginBottom:16 }}>
+                <div className="skeleton" style={{ width:40, height:40, borderRadius:10, flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <div className="skeleton" style={{ width:"60%", height:14, marginBottom:6 }} />
+                  <div className="skeleton" style={{ width:"40%", height:11 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : display.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"56px 24px", color:"var(--text-2)" }}>
+            <Brain size={36} style={{ margin:"0 auto 12px", opacity:.3 }} />
+            <p style={{ fontWeight:700, fontSize:14, color:"var(--text)" }}>No candidates found</p>
+            <p style={{ fontSize:12 }}>Try adjusting your filters or uploading new resumes</p>
+          </div>
+        ) : (
+          <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
-              <tr className="border-b border-theme-border/60">
-                <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Candidate Engine</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Role Index</th>
-                <th className="px-6 py-4 text-center text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">ATS Weight</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Classification</th>
-                <th className="px-6 py-4 text-right"></th>
+              <tr style={{ borderBottom:"1px solid var(--border)" }}>
+                {["Candidate","Role","ATS Score","Status",""].map(h => (
+                  <th key={h} style={{
+                    padding:"12px 20px", textAlign: h===""?"right":"left",
+                    fontSize:10, fontWeight:800, color:"var(--text-2)",
+                    textTransform:"uppercase", letterSpacing:".1em", whiteSpace:"nowrap"
+                  }}>
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-theme-border/40">
-              {displayCandidates.map((candidate, idx) => (
-                <motion.tr
-                  key={candidate.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  onClick={() => setSelectedCandidate(candidate)}
-                  className="group hover:bg-theme-accent/[0.03] transition-all duration-300 cursor-pointer"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-theme-accent/10 border border-theme-accent/20 flex items-center justify-center text-theme-accent group-hover:bg-theme-accent group-hover:text-white transition-all duration-500 shadow-sm">
-                        {candidate.name.charAt(0)}
+            <tbody>
+              {display.map((c, idx) => {
+                const score = c.score ?? c.ats_score ?? 0
+                return (
+                  <motion.tr
+                    key={c.id ?? idx}
+                    initial={{ opacity:0, x:-8 }}
+                    animate={{ opacity:1, x:0 }}
+                    transition={{ delay: idx * 0.04 }}
+                    onClick={() => setSelected(c)}
+                    style={{ cursor:"pointer", transition:"background .15s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(99,102,241,.035)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    {/* Candidate */}
+                    <td style={{ padding:"14px 20px" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                        <div style={{
+                          width:38, height:38, borderRadius:10,
+                          background:"rgba(99,102,241,.12)", color:"var(--accent)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontWeight:900, fontSize:15
+                        }}>
+                          {(c.name||"?").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p style={{ fontWeight:700, fontSize:13, color:"var(--text)", margin:0 }}>{c.name}</p>
+                          <p style={{ fontSize:11, color:"var(--text-2)", margin:0 }}>{c.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[14px] font-bold text-theme-text group-hover:text-theme-accent transition-colors">{candidate.name}</p>
-                        <p className="text-[11px] text-theme-textSecondary font-medium">{candidate.email}</p>
+                    </td>
+                    {/* Role */}
+                    <td style={{ padding:"14px 20px" }}>
+                      <p style={{ fontSize:13, color:"var(--text)", margin:0 }}>{c.role ?? c.job_role ?? "—"}</p>
+                    </td>
+                    {/* Score */}
+                    <td style={{ padding:"14px 20px" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        <div style={{ flex:1, maxWidth:80, height:6, background:"var(--border)", borderRadius:99, overflow:"hidden" }}>
+                          <motion.div
+                            initial={{ width:0 }}
+                            animate={{ width:`${score}%` }}
+                            transition={{ delay: idx*0.04 + 0.2, duration:.6 }}
+                            style={{ height:"100%", background: scoreColor(score), borderRadius:99 }}
+                          />
+                        </div>
+                        <span style={{ fontSize:13, fontWeight:800, color: scoreColor(score) }}>{score}%</span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                     <p className="text-[13px] font-semibold text-theme-text">{candidate.role}</p>
-                     <p className="text-[11px] text-theme-textSecondary opacity-60">Verified Credentials</p>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                     <div className="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-theme-bg border border-theme-border group-hover:border-theme-accent/30 transition-all duration-500">
-                        <span className="text-[13px] font-black text-theme-accent">{candidate.score}%</span>
-                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-current bg-opacity-10 
-                       ${candidate.score >= 90 ? 'text-success border-success/30 bg-success' : 'text-warning border-warning/30 bg-warning'}`}>
-                       {candidate.status}
-                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                     <ChevronRight className="inline-block w-4 h-4 text-theme-textSecondary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                    {/* Status badge */}
+                    <td style={{ padding:"14px 20px" }}>
+                      <span style={{
+                        padding:"3px 10px", borderRadius:99, fontSize:10, fontWeight:800,
+                        border:`1px solid ${scoreColor(score)}`,
+                        color: scoreColor(score),
+                        background: `${scoreColor(score)}14`
+                      }}>
+                        {score >= 85 ? "Excellent" : score >= 60 ? "Good" : "Review"}
+                      </span>
+                    </td>
+                    {/* Arrow */}
+                    <td style={{ padding:"14px 20px", textAlign:"right" }}>
+                      <ChevronRight size={15} style={{ color:"var(--text-2)", opacity:.4 }} />
+                    </td>
+                  </motion.tr>
+                )
+              })}
             </tbody>
           </table>
-        ) : (
-          <div className="py-12">
-            <EmptyState 
-              title="No Candidates Found" 
-              description="Your search criteria yielded no matches. Try adjusting filters or ingesting new resumes." 
-            />
-          </div>
         )}
       </div>
 
-      {/* Slide-in Detail Drawer (Mixpanel Style) */}
-      <AnimatePresence>
-        {selectedCandidate && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedCandidate(null)}
-              className="fixed inset-0 bg-theme-bg/60 backdrop-blur-md z-[100] transition-all duration-500"
-            />
-            <motion.div
-              initial={{ x: "100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "100%", opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed right-0 top-0 h-full w-full max-w-[500px] bg-theme-surface/95 backdrop-blur-3xl border-l border-white/5 shadow-2xl z-[101] overflow-y-auto"
-            >
-              <div className="p-8 space-y-8 min-h-full flex flex-col relative overflow-hidden">
-                {/* Background Glows */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-theme-accent/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
-
-                <div className="flex items-center justify-between relative z-10">
-                   <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-theme-accent shadow-accent-glow flex items-center justify-center text-white text-lg font-black">
-                        {selectedCandidate.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h2 className="text-[20px] font-black text-theme-text tracking-tighter leading-tight">{selectedCandidate.name}</h2>
-                        <div className="flex items-center gap-1.5 text-[11px] text-theme-accent font-bold uppercase tracking-widest">
-                           <Zap size={10} fill="currentColor" />
-                           <span>AI Recruiter Profile</span>
-                        </div>
-                      </div>
-                   </div>
-                   <button 
-                     onClick={() => setSelectedCandidate(null)}
-                     className="p-2 rounded-full hover:bg-theme-hover border border-transparent hover:border-theme-border transition-all duration-300 active:scale-90"
-                   >
-                     <X size={20} className="text-theme-textSecondary hover:text-theme-text" />
-                   </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="p-4 rounded-2xl bg-theme-bg/50 border border-theme-border backdrop-blur-sm">
-                      <p className="text-[10px] font-black text-theme-textSecondary uppercase tracking-widest mb-1">Status Code</p>
-                      <p className="text-[13px] font-bold text-theme-text">{selectedCandidate.status}</p>
-                   </div>
-                   <div className="p-4 rounded-2xl bg-theme-accent/5 border border-theme-accent/20 backdrop-blur-sm">
-                      <p className="text-[10px] font-black text-theme-accent uppercase tracking-widest mb-1">Engine Match</p>
-                      <p className="text-[13px] font-black text-theme-accent">{selectedCandidate.score}% Efficiency</p>
-                   </div>
-                </div>
-
-                <div className="space-y-6 flex-1">
-                   <ATSResultCard compact={true} />
-                   
-                   <div className="space-y-4">
-                      <h4 className="text-[11px] font-black text-theme-text uppercase tracking-[0.2em] opacity-50 flex items-center gap-2">
-                        <Users size={12} /> Contact Intelligence
-                      </h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-theme-surface border border-theme-border group hover:border-theme-accent/30 transition-all duration-300 cursor-pointer">
-                           <Mail className="w-4 h-4 text-theme-textSecondary group-hover:text-theme-accent transition-colors" />
-                           <span className="text-[13px] font-medium text-theme-textSecondary group-hover:text-theme-text">{selectedCandidate.email}</span>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-theme-surface border border-theme-border group hover:border-theme-accent/30 transition-all duration-300 cursor-pointer">
-                           <Phone className="w-4 h-4 text-theme-textSecondary group-hover:text-theme-accent transition-colors" />
-                           <span className="text-[13px] font-medium text-theme-textSecondary group-hover:text-theme-text">{selectedCandidate.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 rounded-xl bg-theme-surface border border-theme-border group hover:border-theme-accent/30 transition-all duration-300 cursor-pointer">
-                           <MapPin className="w-4 h-4 text-theme-textSecondary group-hover:text-theme-accent transition-colors" />
-                           <span className="text-[13px] font-medium text-theme-textSecondary group-hover:text-theme-text">{selectedCandidate.location}</span>
-                        </div>
-                      </div>
-                   </div>
-                </div>
-
-                <div className="pt-8 mt-auto border-t border-theme-border flex gap-3 relative z-10 bg-theme-surface/95 backdrop-blur-xl">
-                   <button className="flex-1 linear-btn-secondary py-3 flex items-center justify-center gap-2">
-                      <Mail size={16} />
-                      <span className="text-[13px] font-bold">Initiate Comms</span>
-                   </button>
-                   <button className="flex-1 linear-btn-primary py-3 flex items-center justify-center gap-2 shadow-accent-glow">
-                      <ExternalLink size={16} />
-                      <span className="text-[13px] font-bold">Full Profile</span>
-                   </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Slide Panel */}
+      {selected && <CandidatePanel candidate={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }
