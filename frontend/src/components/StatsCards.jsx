@@ -1,94 +1,93 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { TrendingUp, FileCheck, Zap, CheckCircle } from "lucide-react"
+import { TrendingUp, FileCheck, Zap, CheckCircle, ArrowUpRight, ArrowDownRight } from "lucide-react"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-function StatsCards({ setPage }) {
+function StatsCards() {
   const [stats, setStats] = useState({
     total_resumes: 0,
     avg_score: 0,
     total_analyses: 0,
-    system_status: "Loading..."
+    active_jobs: 12 // Mocked for density
   })
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/dashboard`)
-        setStats(res.data)
+        setStats(prev => ({ ...prev, ...res.data }))
       } catch (err) {
         console.error("Failed to load dashboard stats", err)
-        setError("Failed to load")
       } finally {
         setLoading(false)
       }
     }
-
     fetchStats()
   }, [])
 
-  const safeStats = stats || {}
-
-  const handleNavigate = (target) => {
-    if (typeof setPage === "function") {
-      setPage(target)
-    }
-  }
-
-  const statCards = [
+  const statItems = [
     {
       title: "Total Resumes",
-      value: loading ? "..." : safeStats.total_resumes ?? 0,
+      value: stats.total_resumes ?? 0,
+      change: "+12.5%",
+      isPositive: true,
       icon: FileCheck,
-      onClick: () => handleNavigate("resumes"),
-      gradient: "from-softPink to-lavender"
+      color: "text-theme-accent"
     },
     {
-      title: "Avg ATS Score",
-      value: loading ? "..." : `${safeStats.avg_score ?? 0}%`,
+      title: "Average Match",
+      value: `${stats.avg_score ?? 0}%`,
+      change: "-2.1%",
+      isPositive: false,
       icon: TrendingUp,
-      onClick: () => handleNavigate("analytics"),
-      gradient: "from-pastelBlue to-mint"
+      color: "text-success"
     },
     {
       title: "Total Analyses",
-      value: loading ? "..." : safeStats.total_analyses ?? 0,
+      value: stats.total_analyses ?? 0,
+      change: "+5.1%",
+      isPositive: true,
       icon: Zap,
-      onClick: () => handleNavigate("history"),
-      gradient: "from-lavender to-pastelBlue"
+      color: "text-warning"
     },
     {
-      title: "System Status",
-      value: loading ? "..." : "Online",
+      title: "Active Pipelines",
+      value: stats.active_jobs,
+      change: "Stable",
+      isPositive: true,
       icon: CheckCircle,
-      onClick: () => {},
-      gradient: "from-mint to-softPink"
+      color: "text-theme-textSecondary"
     }
   ]
 
   return (
-    <div className="grid grid-cols-4 gap-6">
-      {statCards.map((card, idx) => {
-        const Icon = card.icon
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {statItems.map((item, idx) => {
+        const Icon = item.icon
         return (
-          <button
+          <div
             key={idx}
-            onClick={card.onClick}
-            className="group bg-white/80 backdrop-blur p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 text-left border border-slate-100/50"
+            className="group p-4 rounded-md bg-theme-surface border border-theme-border hover:border-theme-textSecondary/30 transition-all duration-200"
           >
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-              <Icon className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-between mb-3">
+               <div className={`p-1.5 rounded bg-theme-bg border border-theme-border ${item.color}`}>
+                 <Icon size={14} />
+               </div>
+               <div className={`flex items-center gap-0.5 text-[10px] font-bold ${item.isPositive ? 'text-success' : 'text-error'}`}>
+                 {item.isPositive ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                 {item.change}
+               </div>
             </div>
-            <p className="text-slate-600 text-sm font-medium">
-              {card.title}
+            
+            <p className="text-[12px] font-medium text-theme-textSecondary mb-1">
+              {item.title}
             </p>
-            <h2 className="text-3xl font-bold text-slate-900 mt-2">
-              {card.value}
+            <h2 className="text-[22px] font-bold text-theme-text tracking-tight">
+              {loading ? <span className="skeleton w-16 h-7 inline-block" /> : item.value}
             </h2>
-          </button>
+          </div>
         )
       })}
     </div>

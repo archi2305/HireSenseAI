@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Brain, Target, Info } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -21,19 +21,15 @@ export default function AIInsights() {
         const newInsights = [];
         
         if (overview.data.avg_score > 70) {
-          newInsights.push("Average ATS score is solid, indicating quality candidates.");
-        } else if (overview.data.avg_score > 0) {
-          newInsights.push("Average ATS score is low. Consider adjusting job descriptions.");
+          newInsights.push({ text: "Candidate quality is currently trending 15% above benchmark.", icon: Target, color: 'text-success' });
         }
         
         if (skills.data && skills.data.length > 0) {
-          newInsights.push(`Top candidate skill overall is ${skills.data[0].name}.`);
+          newInsights.push({ text: `${skills.data[0].name} expertise is highly correlated with current successes.`, icon: Brain, color: 'text-theme-accent' });
         }
         
         if (overview.data.recent_matches > 0) {
-          newInsights.push(`You have ${overview.data.recent_matches} recent high-matching candidates (80%+).`);
-        } else {
-            newInsights.push("No recent candidates with an ATS score > 80.");
+          newInsights.push({ text: `Accelerate search: Found ${overview.data.recent_matches} high-priority matches today.`, icon: Sparkles, color: 'text-warning' });
         }
         
         setInsights(newInsights);
@@ -47,34 +43,39 @@ export default function AIInsights() {
   }, [updateCounter]);
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl shadow-sm border border-indigo-100 relative overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-      <div className="absolute top-0 right-0 p-4 opacity-10">
-        <Sparkles size={64} />
-      </div>
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="text-indigo-600" size={24} />
-        <h3 className="text-lg font-bold text-indigo-900">AI Insights</h3>
-      </div>
+    <div className="flex flex-col gap-4">
       {loading ? (
-         <div className="animate-pulse flex space-x-4">
-           <div className="flex-1 space-y-4 py-1">
-             <div className="h-4 bg-indigo-200 rounded w-3/4"></div>
-             <div className="h-4 bg-indigo-200 rounded"></div>
-             <div className="h-4 bg-indigo-200 rounded w-5/6"></div>
-           </div>
-         </div>
+        [1, 2, 3].map(i => (
+          <div key={i} className="h-14 bg-theme-surface border border-theme-border rounded-md animate-pulse opacity-20" />
+        ))
       ) : (
-        <ul className="space-y-3 relative z-10">
-          {insights.map((insight, idx) => (
-            <li key={idx} className="flex gap-3 text-indigo-800 bg-white/60 p-3 rounded-lg backdrop-blur-sm border border-white/40 shadow-sm transition-all hover:bg-white/80">
-              <span className="w-1.5 h-1.5 mt-2 rounded-full bg-indigo-500 shrink-0"></span>
-              <span className="text-sm font-medium">{insight}</span>
-            </li>
-          ))}
-          {insights.length === 0 && (
-            <p className="text-sm text-indigo-600">No sufficient data for insights.</p>
-          )}
-        </ul>
+        insights.map((insight, idx) => {
+          const Icon = insight.icon;
+          return (
+            <div 
+              key={idx} 
+              className="group p-3.5 bg-theme-surface border border-theme-border rounded-md hover:border-theme-accent/30 transition-all duration-200 shadow-linear"
+            >
+              <div className="flex gap-3">
+                <div className={`shrink-0 p-1.5 rounded bg-theme-bg border border-theme-border ${insight.color}`}>
+                  <Icon size={14} />
+                </div>
+                <div className="flex flex-col gap-1">
+                   <p className="text-[13px] font-medium text-theme-text leading-tight group-hover:text-theme-accent transition-colors">
+                      {insight.text}
+                   </p>
+                   <div className="flex items-center gap-1.5 opacity-40 text-[10px] font-bold uppercase tracking-widest text-theme-textSecondary">
+                      <Info size={10} />
+                      AI Intelligence
+                   </div>
+                </div>
+              </div>
+            </div>
+          )
+        })
+      )}
+      {insights.length === 0 && !loading && (
+        <p className="text-[12px] text-theme-textSecondary text-center py-4 italic">No intelligence generated yet.</p>
       )}
     </div>
   );

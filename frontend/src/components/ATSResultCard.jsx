@@ -1,109 +1,70 @@
-import React from 'react';
-import SkillBadge from "./SkillBadge";
-import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
-import { Briefcase, GraduationCap, CheckCircle, AlertTriangle } from 'lucide-react';
+import { motion } from "framer-motion"
+import { CheckCircle2, AlertCircle, Lightbulb, Zap } from "lucide-react"
 
-function ATSResultCard({ result }) {
-  if (!result) return null;
-
-  const score = result.ats_score ?? 0;
-  const matched = result.matched_skills || [];
-  const missing = result.missing_skills || [];
-
-  const pathColor =
-    score >= 80 ? "#10B981" : score >= 60 ? "#F59E0B" : "#EF4444";
+function ATSResultCard({ result, compact = false }) {
+  if (!result) return null
 
   return (
-    <div className="mt-8 space-y-6 animate-fade-in">
-      <div className="grid md:grid-cols-3 gap-6">
-        
-        <div className="col-span-1 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col items-center justify-center relative overflow-hidden group hover:shadow-md transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-softPink to-pastelBlue rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
-          <h3 className="text-sm font-bold text-slate-700 mb-4 z-10 text-center uppercase tracking-wider">ATS Match Score</h3>
-          <div className="w-32 h-32 z-10">
-            <CircularProgressbar
-              value={score}
-              text={`${score}%`}
-              styles={buildStyles({
-                pathColor: pathColor,
-                textColor: '#1E293B',
-                trailColor: '#F1F5F9',
-                textSize: '22px',
-                strokeLinecap: 'round',
-                pathTransitionDuration: 1.5,
-              })}
-            />
+    <div className={`space-y-6 ${compact ? '' : 'p-6 bg-theme-surface border border-theme-border rounded-md shadow-linear'}`}>
+      {!compact && (
+        <div className="flex items-center justify-between border-b border-theme-border pb-4">
+          <h2 className="text-[18px] font-bold text-theme-text tracking-tight flex items-center gap-2">
+            <Zap className="text-warning fill-warning" size={20} />
+            Analysis Result
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] font-bold text-theme-textSecondary uppercase tracking-widest">ATS Match</span>
+            <div className={`px-2 py-1 rounded text-[16px] font-black border border-current bg-opacity-10 
+              ${result.ats_score >= 80 ? 'text-success border-success/20' : 'text-warning border-warning/20'}`}>
+              {result.ats_score}%
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-4 z-10 text-center">Based on keyword & role alignment</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-success">
+            <CheckCircle2 size={14} />
+            <h3 className="text-[12px] font-bold uppercase tracking-widest">Matched Skills</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {result.matched_skills.map((skill, index) => (
+              <span key={index} className="px-2 py-1 bg-success/5 border border-success/20 text-success text-[12px] rounded-sm font-medium">
+                {skill}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300">
-          <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Parsed Data Summary</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-            <div className="flex gap-4 items-start bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-              <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600 shadow-sm"><Briefcase size={20} /></div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700">Experience</p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{result.parsed_experience || "3+ Years relevant professional experience parsed from document."}</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 items-start bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-              <div className="bg-success/20 p-2.5 rounded-xl text-success shadow-sm"><GraduationCap size={20} /></div>
-              <div>
-                <p className="text-sm font-semibold text-slate-700">Education</p>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{result.parsed_education || "Bachelor's Degree or higher qualification detected."}</p>
-              </div>
-            </div>
-
-            <div className="sm:col-span-2 flex gap-4 items-start bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-              <div className="bg-sky-100 p-2.5 rounded-xl text-sky-600 shadow-sm"><CheckCircle size={20} /></div>
-              <div className="w-full">
-                <p className="text-sm font-semibold text-slate-700 mb-2.5">Detected Skills</p>
-                <div className="flex flex-wrap gap-2">
-                  {matched.length === 0 ? (
-                    <span className="text-xs text-slate-500">No skills detected.</span>
-                  ) : (
-                    matched.map((skill) => <SkillBadge key={skill} label={skill} type="matched" />)
-                  )}
-                </div>
-              </div>
-            </div>
-
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-error">
+            <AlertCircle size={14} />
+            <h3 className="text-[12px] font-bold uppercase tracking-widest">Missing Gaps</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {result.missing_skills.length > 0 ? result.missing_skills.map((skill, index) => (
+              <span key={index} className="px-2 py-1 bg-error/5 border border-error/20 text-error text-[12px] rounded-sm font-medium">
+                {skill}
+              </span>
+            )) : (
+              <span className="text-[12px] text-theme-textSecondary italic">No major gaps identified.</span>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 relative">
-           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-             <AlertTriangle size={18} className="text-error" /> Missing Skills
-           </h3>
-           <div className="flex flex-wrap gap-2 relative z-10">
-             {missing.length === 0 ? (
-               <p className="text-sm text-slate-600">Great match – no mandatory missing skills found.</p>
-             ) : (
-               missing.map((skill) => <SkillBadge key={skill} label={skill} type="missing" />)
-             )}
-           </div>
+      <div className="bg-theme-bg border border-theme-border p-4 rounded-md space-y-3">
+        <div className="flex items-center gap-2 text-theme-accent">
+          <Lightbulb size={16} />
+          <h3 className="text-[13px] font-bold uppercase tracking-widest">AI Suggestions</h3>
         </div>
-
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm border border-indigo-100 p-6 hover:shadow-md transition-all duration-300">
-          <h3 className="text-sm font-bold text-indigo-900 mb-3 flex items-center gap-2">
-            <CheckCircle size={18} className="text-indigo-600" /> AI Suggestions & Improvements
-          </h3>
-          <div className="bg-white/70 p-4 rounded-xl border border-white/60 backdrop-blur-sm shadow-sm">
-            <p className="text-sm text-indigo-800 leading-relaxed whitespace-pre-line">
-              {result.suggestions || "Review the missing skills and integrate them natively into your experience section context."}
-            </p>
-          </div>
-        </div>
+        <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">
+          "{result.suggestions}"
+        </p>
       </div>
-
     </div>
-  );
+  )
 }
 
-export default ATSResultCard;
+export default ATSResultCard
