@@ -52,7 +52,7 @@
   }
 
   .linear-input {
-    @apply bg-theme-bg border border-theme-border rounded-lg px-4 py-2.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:ring-1 focus:ring-theme-accent/30 focus:outline-none transition-all duration-200;
+    @apply bg-theme-bg border border-theme-border rounded-lg px-4 py-2.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:ring-1 focus:ring-theme-accent focus:outline-none transition-all duration-200;
   }
 
   .linear-btn-primary {
