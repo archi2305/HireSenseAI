@@ -9,17 +9,16 @@ export default {
     extend: {
       colors: {
         theme: {
-          // Mixpanel Dark Palette
-          bg: "var(--bg-color)",
-          surface: "var(--surface-color)",
-          sidebar: "var(--sidebar-color)",
-          border: "var(--border-color)",
-          text: "var(--text-color)",
-          textSecondary: "var(--text-secondary)",
-          accent: "var(--accent-color)",
-          accentHover: "var(--accent-hover)",
-          hover: "var(--hover-color)",
-          glow: "var(--accent-glow)",
+          bg: "rgb(var(--bg-color-rgb) / <alpha-value>)",
+          surface: "rgb(var(--surface-color-rgb) / <alpha-value>)",
+          sidebar: "rgb(var(--sidebar-color-rgb) / <alpha-value>)",
+          border: "rgb(var(--border-color-rgb) / <alpha-value>)",
+          text: "rgb(var(--text-color-rgb) / <alpha-value>)",
+          textSecondary: "rgb(var(--text-secondary-rgb) / <alpha-value>)",
+          accent: "rgb(var(--accent-color-rgb) / <alpha-value>)",
+          accentHover: "rgb(var(--accent-hover-rgb) / <alpha-value>)",
+          hover: "rgb(var(--hover-color-rgb) / <alpha-value>)",
+          glow: "rgb(var(--accent-glow-rgb) / <alpha-value>)",
         },
         success: "#10b981",
         warning: "#f59e0b",
