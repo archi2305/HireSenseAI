@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, Outlet } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
-import PageTransition from "./components/PageTransition"
 import ToastContainer from "./components/ToastContainer"
 
 import Sidebar from "./components/sidebar"
@@ -25,8 +24,8 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-dashboardBg">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pastelBlue"></div>
+      <div className="h-screen w-screen flex items-center justify-center bg-theme-bg">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-accent"></div>
       </div>
     )
   }
@@ -45,20 +44,18 @@ function Layout() {
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-slate-800 font-sans">
+    <div className="flex h-screen overflow-hidden bg-theme-bg text-theme-text font-sans selection:bg-theme-accent/30 selection:text-white">
       {/* SIDEBAR (Left) */}
       <Sidebar />
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col relative w-full h-full bg-white rounded-tl-2xl border-t border-l border-gray-200 shadow-sm overflow-hidden my-2 mr-2">
+      <div className="flex-1 flex flex-col relative w-full h-full bg-theme-bg overflow-hidden">
         {/* HEADER (Top) */}
         <Header notifications={notifications} />
         
         {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto w-full">
-          <PageTransition>
+        <main className="flex-1 overflow-y-auto w-full px-6 py-6 pb-20">
             <Outlet />
-          </PageTransition>
         </main>
       </div>
       
@@ -72,7 +69,7 @@ function App() {
   return (
     <AuthProvider>
       <DashboardProvider>
-        <Toaster position="top-right" />
+        <Toaster position="top-right" toastOptions={{ style: { background: '#18181b', color: '#fff', border: '1px solid #2a2a2a' } }} />
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Login />} />
