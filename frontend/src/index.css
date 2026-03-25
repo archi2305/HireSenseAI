@@ -5,30 +5,30 @@
 @tailwind utilities;
 
 :root {
-  /* Premium Mixpanel Light (Default) - RGB values for opacity support */
-  --bg-color-rgb: 248, 249, 252;
-  --surface-color-rgb: 255, 255, 255;
-  --sidebar-color-rgb: 255, 255, 255;
-  --border-color-rgb: 238, 241, 246;
-  --text-color-rgb: 26, 29, 35;
-  --text-secondary-rgb: 100, 116, 139;
-  --accent-color-rgb: 99, 102, 241;
-  --accent-hover-rgb: 79, 70, 229;
-  --hover-color-rgb: 99, 102, 241;
-  --accent-glow-rgb: 99, 102, 241;
+  /* Premium Mixpanel Light (Default) - RGB values for opacity support (space-separated) */
+  --bg-color-rgb: 248 249 252;
+  --surface-color-rgb: 255 255 255;
+  --sidebar-color-rgb: 255 255 255;
+  --border-color-rgb: 238 241 246;
+  --text-color-rgb: 26 29 35;
+  --text-secondary-rgb: 100 116 139;
+  --accent-color-rgb: 99 102 241;
+  --accent-hover-rgb: 79 70 229;
+  --hover-color-rgb: 99 102 241;
+  --accent-glow-rgb: 99 102 241;
 }
 
 :root.dark {
-  --bg-color-rgb: 3, 3, 3;
-  --surface-color-rgb: 15, 15, 16;
-  --sidebar-color-rgb: 8, 8, 8;
-  --border-color-rgb: 26, 26, 28;
-  --text-color-rgb: 255, 255, 255;
-  --text-secondary-rgb: 161, 161, 170;
-  --accent-color-rgb: 124, 58, 237;
-  --accent-hover-rgb: 139, 92, 246;
-  --hover-color-rgb: 255, 255, 255;
-  --accent-glow-rgb: 124, 58, 237;
+  --bg-color-rgb: 3 3 3;
+  --surface-color-rgb: 15 15 16;
+  --sidebar-color-rgb: 8 8 8;
+  --border-color-rgb: 26 26 28;
+  --text-color-rgb: 255 255 255;
+  --text-secondary-rgb: 161 161 170;
+  --accent-color-rgb: 124 58 237;
+  --accent-hover-rgb: 139 92, 246;
+  --hover-color-rgb: 255 255 255;
+  --accent-glow-rgb: 124 58 237;
 }
 
 @layer base {
