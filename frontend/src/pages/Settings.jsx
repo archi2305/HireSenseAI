@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { 
-  User, Shield, Bell, Zap, Palette, Database, Save, LogOut, Download, Trash2, Key, CheckCircle, Moon, Palette as ColorIcon
+  User, Shield, Bell, Zap, Database, Save, LogOut, Download, Trash2, Key, CheckCircle, Moon, Palette as ColorIcon, ChevronRight
 } from "lucide-react"
 import api from "../services/api"
 import { useAuth } from "../context/AuthContext"
 import toast from "react-hot-toast"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function Settings() {
   const { user, logout } = useAuth()
@@ -43,263 +44,245 @@ export default function Settings() {
 
   const saveSettings = async () => {
     setSaving(true)
-    const toastId = toast.loading("Saving settings...")
+    const toastId = toast.loading("Syncing preferences...")
     try {
       await api.put("/settings", settings)
-      toast.success("Settings saved successfully!", { id: toastId })
-    } catch { toast.error("Failed to save settings.", { id: toastId }) } finally { setSaving(false) }
+      toast.success("Preferences updated.", { id: toastId })
+    } catch { toast.error("Sync failed.", { id: toastId }) } finally { setSaving(false) }
   }
 
   const updatePassword = async (e) => {
     e.preventDefault()
-    if (passwords.new_password !== passwords.confirm_password) return toast.error("New passwords do not match.")
-    const toastId = toast.loading("Updating password...")
+    if (passwords.new_password !== passwords.confirm_password) return toast.error("Key mismatch.")
+    const toastId = toast.loading("Re-securing account...")
     try {
       await api.post("/profile/change-password", {
         current_password: passwords.current_password, new_password: passwords.new_password
       })
-      toast.success("Password updated securely!", { id: toastId })
+      toast.success("Security updated.", { id: toastId })
       setPasswords({ current_password: "", new_password: "", confirm_password: "" })
-    } catch (error) { toast.error(error.response?.data?.detail || "Failed to update password.", { id: toastId }) }
+    } catch (error) { toast.error("Update failed.", { id: toastId }) }
   }
 
   const testApiKey = async () => {
-    if (!settings.openai_api_key) return toast.error("Please enter an API key first.")
-    await api.put("/settings", { openai_api_key: settings.openai_api_key })
+    if (!settings.openai_api_key) return toast.error("Key required.")
     setTestingKey(true)
-    const toastId = toast.loading("Testing connection...")
     try {
+      await api.put("/settings", { openai_api_key: settings.openai_api_key })
       const res = await api.post("/settings/test-api-key")
       if (res.data.status === "ok") {
-        toast.success(res.data.message, { id: toastId })
+        toast.success("Intelligence Linked.")
         setKeyStatus('connected')
       } else {
-        toast.error(res.data.message, { id: toastId })
+        toast.error("Invalid Key.")
         setKeyStatus('disconnected')
       }
     } catch {
-      toast.error("API test request failed.", { id: toastId })
       setKeyStatus('disconnected')
     } finally { setTestingKey(false) }
   }
 
-  const exportData = async () => {
-    try {
-      const res = await api.get("/settings/export-data")
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.data, null, 2))
-      const downloadAnchorNode = document.createElement('a')
-      downloadAnchorNode.setAttribute("href", dataStr)
-      downloadAnchorNode.setAttribute("download", "HireSense_Data_Export.json")
-      document.body.appendChild(downloadAnchorNode)
-      downloadAnchorNode.click()
-      downloadAnchorNode.remove()
-      toast.success("Data exported successfully!")
-    } catch { toast.error("Export failed.") }
-  }
-
-  const clearHistory = async () => {
-    if(!window.confirm("Clear all historical analysis data? This is irreversible.")) return
-    try {
-      await api.delete("/settings/clear-history")
-      toast.success("History cleared completely.")
-    } catch { toast.error("Failed to clear history.") }
-  }
-
   const TABS = [
-    { id: "account", label: "Account", icon: User },
+    { id: "account", label: "My Profile", icon: User },
     { id: "security", label: "Security", icon: Shield },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "integrations", label: "Integrations", icon: Zap },
-    { id: "data", label: "Data & Privacy", icon: Database },
+    { id: "notifications", label: "Alerts", icon: Bell },
+    { id: "integrations", label: "Intelligence", icon: Zap },
+    { id: "data", label: "Inventory", icon: Database },
   ]
 
   if (loading) return null
 
   return (
-    <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-8 pt-4 w-full h-full">
+    <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-0 h-full w-full bg-theme-bg">
       
-      {/* Sidebar Tabs */}
-      <div className="w-full md:w-56 shrink-0 h-max sticky top-20">
-        <h2 className="text-[14px] font-semibold text-theme-textSecondary uppercase tracking-widest px-3 mb-4">Settings</h2>
-        <nav className="flex flex-col gap-0.5">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-150 ${
-                activeTab === tab.id 
-                  ? "bg-theme-sidebar text-theme-text shadow-sm" 
-                  : "text-theme-textSecondary hover:bg-theme-sidebar/50 hover:text-theme-text"
-              }`}
-            >
-              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-theme-text" : "text-theme-textSecondary"}`} />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      {/* Settings Navigation */}
+      <div className="w-full md:w-[240px] shrink-0 border-r border-theme-border bg-theme-sidebar/10 p-6 space-y-8 h-full">
+        <div>
+           <h2 className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-[0.2em] mb-4 opacity-50">Settings</h2>
+           <nav className="flex flex-col gap-1">
+             {TABS.map((tab) => (
+               <button
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id)}
+                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all group ${
+                   activeTab === tab.id 
+                     ? "bg-theme-surface text-theme-text shadow-linear border border-theme-border" 
+                     : "text-theme-textSecondary hover:text-theme-text hover:bg-theme-hover/50"
+                 }`}
+               >
+                 <tab.icon size={14} className={activeTab === tab.id ? "text-theme-accent" : "text-theme-textSecondary group-hover:text-theme-text"} />
+                 <span>{tab.label}</span>
+                 {activeTab === tab.id && <ChevronRight size={12} className="ml-auto opacity-30" />}
+               </button>
+             ))}
+           </nav>
+        </div>
       </div>
 
-      {/* Main Content Areas */}
-      <div className="flex-1 flex flex-col pb-20">
-        
-        {/* 1. ACCOUNT */}
-        {activeTab === "account" && (
-          <div className="space-y-6 animate-fade-in w-full max-w-2xl">
-            <div className="border-b border-theme-border pb-4">
-              <h3 className="text-[18px] font-semibold text-theme-text">Profile Settings</h3>
-              <p className="text-[13px] text-theme-textSecondary mt-1">Manage your personal information and roles.</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">Full Name</label>
-                <input type="text" name="fullname" value={settings.fullname} onChange={handleChange} className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all duration-150 text-[13px] text-theme-text" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">Email Address</label>
-                <input type="email" value={settings.email} disabled className="w-full px-3 py-1.5 bg-theme-bg/50 border border-theme-border/50 text-theme-textSecondary rounded-md cursor-not-allowed text-[13px]" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">Company</label>
-                <input type="text" name="company" value={settings.company || ""} onChange={handleChange} className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all duration-150 text-[13px] text-theme-text" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">Job Role</label>
-                <input type="text" name="job_role" value={settings.job_role || ""} onChange={handleChange} className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all duration-150 text-[13px] text-theme-text" />
-              </div>
-            </div>
-            
-            <div className="pt-4 flex">
-              <button onClick={saveSettings} disabled={saving} className="px-4 py-1.5 bg-theme-text text-theme-bg text-[13px] font-semibold rounded-md hover:bg-gray-200 transition-all duration-150 disabled:opacity-50">
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Settings Viewport */}
+      <div className="flex-1 p-8 overflow-y-auto bg-theme-bg">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+            className="max-w-xl"
+          >
+            {activeTab === "account" && (
+              <div className="space-y-8">
+                <div>
+                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">General Settings</h1>
+                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Information provided here reflects across your workspace.</p>
+                </div>
+                
+                <div className="space-y-5">
+                   <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Legal Name</label>
+                      <input type="text" name="fullname" value={settings.fullname} onChange={handleChange} className="linear-input w-full px-3 py-2 border-theme-border/60" />
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2 text-theme-textSecondary opacity-60">
+                         <label className="text-[11px] font-bold uppercase tracking-widest">Auth Identifier</label>
+                         <input type="email" value={settings.email} disabled className="linear-input w-full bg-theme-bg border-theme-border/30 cursor-not-allowed" />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Active Org</label>
+                         <input type="text" name="company" value={settings.company || ""} onChange={handleChange} className="linear-input w-full" />
+                      </div>
+                   </div>
+                </div>
 
-        {/* 2. SECURITY */}
-        {activeTab === "security" && (
-          <div className="space-y-6 animate-fade-in w-full max-w-2xl">
-            <div className="border-b border-theme-border pb-4">
-              <h3 className="text-[18px] font-semibold text-theme-text">Change Password</h3>
-              <p className="text-[13px] text-theme-textSecondary mt-1">Ensure your account stays completely secure.</p>
-            </div>
-            
-            <form onSubmit={updatePassword} className="space-y-5 max-w-sm">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">Current Password</label>
-                <input type="password" name="current_password" required value={passwords.current_password} onChange={handlePasswordChange} className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all text-[13px]" />
+                <div className="pt-4">
+                   <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-6 py-2 shadow-accent-glow">
+                      {saving ? "Syncing..." : "Update Workspace"}
+                   </button>
+                </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">New Password</label>
-                <input type="password" name="new_password" required minLength="6" value={passwords.new_password} onChange={handlePasswordChange} className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all text-[13px]" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[12px] font-medium text-theme-textSecondary uppercase tracking-wider">Confirm Password</label>
-                <input type="password" name="confirm_password" required minLength="6" value={passwords.confirm_password} onChange={handlePasswordChange} className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all text-[13px]" />
-              </div>
-              <button type="submit" className="px-4 py-1.5 bg-theme-sidebar border border-theme-border text-theme-text text-[13px] font-semibold rounded-md hover:bg-theme-hover transition-all">
-                Update Password
-              </button>
-            </form>
-          </div>
-        )}
+            )}
 
-        {/* 3. NOTIFICATIONS */}
-        {activeTab === "notifications" && (
-          <div className="space-y-6 animate-fade-in w-full max-w-2xl">
-            <div className="border-b border-theme-border pb-4">
-              <h3 className="text-[18px] font-semibold text-theme-text">Notifications</h3>
-              <p className="text-[13px] text-theme-textSecondary mt-1">Control email routing and activity alerts.</p>
-            </div>
-
-            <div className="flex flex-col gap-0 border border-theme-border rounded-md overflow-hidden">
-              {[
-                { name: "email_alerts", title: "Email Notifications", desc: "Receive alerts regarding pipeline activity." },
-                { name: "resume_match_alerts", title: "Resume Match Alerts", desc: "Instant updates when match goes over 80%." },
-                { name: "weekly_reports", title: "Weekly Reports", desc: "A curated compilation of recruitment metrics." }
-              ].map((item, i, arr) => (
-                <div key={item.name} className={`flex items-center justify-between p-4 bg-theme-bg ${i !== arr.length-1 ? 'border-b border-theme-border' : ''}`}>
-                  <div>
-                    <p className="text-[13px] font-medium text-theme-text">{item.title}</p>
-                    <p className="text-[12px] text-theme-textSecondary mt-0.5">{item.desc}</p>
+            {activeTab === "security" && (
+              <div className="space-y-8">
+                <div>
+                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Access Protocol</h1>
+                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Rotation of access keys keeps your candidate database secure.</p>
+                </div>
+                
+                <form onSubmit={updatePassword} className="space-y-5">
+                  <div className="space-y-2">
+                     <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Current Key</label>
+                     <input type="password" name="current_password" required value={passwords.current_password} onChange={handlePasswordChange} className="linear-input w-full" />
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" name={item.name} checked={settings[item.name]} onChange={handleChange} />
-                    <div className="w-9 h-5 bg-theme-sidebar border border-theme-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-theme-textSecondary peer-checked:after:bg-theme-text after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-theme-accent peer-checked:border-theme-accent"></div>
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            <button onClick={saveSettings} disabled={saving} className="px-4 py-1.5 bg-theme-text text-theme-bg text-[13px] font-semibold rounded-md hover:bg-gray-200 transition-all duration-150 disabled:opacity-50">
-              Save Preferences
-            </button>
-          </div>
-        )}
-
-        {/* 4. INTEGRATIONS */}
-        {activeTab === "integrations" && (
-          <div className="space-y-6 animate-fade-in w-full max-w-2xl">
-            <div className="border-b border-theme-border pb-4">
-              <h3 className="text-[18px] font-semibold text-theme-text">Integrations</h3>
-              <p className="text-[13px] text-theme-textSecondary mt-1">Configure foundational AI models and API keys.</p>
-            </div>
-
-            <div className="p-5 border border-theme-border bg-theme-sidebar/30 rounded-md">
-              <h4 className="text-[14px] font-medium text-theme-text mb-1 flex items-center gap-2">
-                OpenAI Provider
-                {keyStatus === 'connected' && <span className="px-1.5 py-0.5 bg-success/10 text-success text-[10px] rounded border border-success/20 uppercase">Active</span>}
-              </h4>
-              <p className="text-[12px] text-theme-textSecondary mb-4">A valid API Key is required for deep analysis functions.</p>
-              
-              <div className="flex gap-2 w-full max-w-sm">
-                <input 
-                  type="password" name="openai_api_key" 
-                  value={settings.openai_api_key} onChange={handleChange} 
-                  placeholder="sk-..."
-                  className="w-full px-3 py-1.5 bg-theme-sidebar border border-theme-border rounded-md focus:border-theme-accent focus:outline-none transition-all text-[13px] text-theme-text placeholder:text-theme-border"
-                />
-                <button onClick={testApiKey} disabled={testingKey} className="shrink-0 px-3 py-1.5 bg-theme-sidebar border border-theme-border text-theme-text text-[13px] font-semibold rounded-md hover:bg-theme-hover transition-all">
-                  Test Key
-                </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">New Protocol</label>
+                       <input type="password" name="new_password" required minLength="6" value={passwords.new_password} onChange={handlePasswordChange} className="linear-input w-full" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Verify New</label>
+                       <input type="password" name="confirm_password" required minLength="6" value={passwords.confirm_password} onChange={handlePasswordChange} className="linear-input w-full" />
+                    </div>
+                  </div>
+                  <button type="submit" className="linear-btn-secondary px-6 py-2">
+                    Rotate Password
+                  </button>
+                </form>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* 5. DATA */}
-        {activeTab === "data" && (
-          <div className="space-y-6 animate-fade-in w-full max-w-2xl">
-            <div className="border-b border-theme-border pb-4">
-              <h3 className="text-[18px] font-semibold text-theme-text">Privacy & Export</h3>
-              <p className="text-[13px] text-theme-textSecondary mt-1">Control your data layer and hard deletions.</p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="p-4 border border-theme-border rounded-md flex items-center justify-between">
+            {activeTab === "notifications" && (
+              <div className="space-y-8">
                 <div>
-                  <h4 className="text-[13px] font-medium text-theme-text">Download JSON Export</h4>
-                  <p className="text-[12px] text-theme-textSecondary mt-0.5">Generate a complete breakdown of parsed analytics.</p>
+                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Event Routing</h1>
+                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Configure automated alerts for pipeline velocity.</p>
                 </div>
-                <button onClick={exportData} className="shrink-0 px-3 py-1.5 bg-theme-sidebar border border-theme-border text-theme-text text-[13px] font-semibold rounded-md hover:bg-theme-hover transition-all">
-                  Export
-                </button>
-              </div>
-              
-              <div className="p-4 border border-error/30 bg-error/5 rounded-md flex items-center justify-between">
-                <div>
-                  <h4 className="text-[13px] font-medium text-theme-text">Wipe Analysis History</h4>
-                  <p className="text-[12px] text-theme-textSecondary mt-0.5">Irreversibly destroy all saved PDFs and matching models.</p>
-                </div>
-                <button onClick={clearHistory} className="shrink-0 px-3 py-1.5 bg-error border border-error text-white text-[13px] font-semibold rounded-md hover:bg-red-600 transition-all">
-                  Erase Data
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
+                <div className="space-y-px rounded-md border border-theme-border overflow-hidden divide-y divide-theme-border">
+                  {[
+                    { name: "email_alerts", title: "Real-time Alerts", desc: "Push notifications for new match discoveries." },
+                    { name: "resume_match_alerts", title: "Priority Thresholds", desc: "Trigger alerts when candidate exceeds 85% match." },
+                    { name: "weekly_reports", title: "Analytics Summary", desc: "Consolidated performance digest every Monday." }
+                  ].map((item) => (
+                    <div key={item.name} className="flex items-center justify-between p-4 bg-theme-surface/30">
+                      <div>
+                        <p className="text-[13px] font-bold text-theme-text mb-0.5">{item.title}</p>
+                        <p className="text-[11px] text-theme-textSecondary font-medium opacity-60 italic">{item.desc}</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" name={item.name} checked={settings[item.name]} onChange={handleChange} />
+                        <div className="w-8 h-4 bg-theme-sidebar border border-theme-border rounded-full peer peer-checked:bg-theme-accent peer-checked:border-theme-accent after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-theme-textSecondary/50 peer-checked:after:bg-white peer-checked:after:translate-x-4 after:rounded-full after:h-3 after:w-3 after:transition-all"></div>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+
+                <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-6 py-2 shadow-accent-glow">
+                  Save Logic
+                </button>
+              </div>
+            )}
+
+            {activeTab === "integrations" && (
+              <div className="space-y-8">
+                <div>
+                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Intelligence Core</h1>
+                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Manage the LLM identifiers that power your scoring engine.</p>
+                </div>
+
+                <div className="p-6 bg-theme-surface border border-theme-border rounded-md shadow-linear relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5">
+                     <Zap size={64} />
+                  </div>
+                  <h4 className="text-[14px] font-bold text-theme-text mb-1 flex items-center gap-2">
+                    OpenAI Integration
+                    {keyStatus === 'connected' && <span className="px-1.5 py-0.5 bg-success/10 text-success text-[10px] rounded border border-success/20 uppercase font-black">Linked</span>}
+                  </h4>
+                  <p className="text-[12px] text-theme-textSecondary mb-6 font-medium italic opacity-70">Requires model gpt-4 or gpt-3.5 access.</p>
+                  
+                  <div className="flex gap-2">
+                    <input 
+                      type="password" name="openai_api_key" 
+                      value={settings.openai_api_key} onChange={handleChange} 
+                      placeholder="sk-..."
+                      className="linear-input flex-1 px-3 py-2 font-mono"
+                    />
+                    <button onClick={testApiKey} disabled={testingKey} className="linear-btn-secondary px-4 py-2 shrink-0">
+                      {testingKey ? "Linking..." : "Test Link"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "data" && (
+              <div className="space-y-8">
+                <div>
+                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Inventory Management</h1>
+                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Export your dataset or perform hard-state removals.</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-4 border border-theme-border rounded-md hover:bg-theme-sidebar/20 transition-colors flex items-center justify-between cursor-pointer group">
+                    <div>
+                      <h4 className="text-[13px] font-bold text-theme-text">Dataset Export (.json)</h4>
+                      <p className="text-[11px] text-theme-textSecondary font-medium opacity-60">Generate a comprehensive dump of all matched candidates.</p>
+                    </div>
+                    <Download size={16} className="text-theme-textSecondary group-hover:text-theme-text transition-colors" />
+                  </div>
+                  
+                  <div className="p-4 border border-error/20 bg-error/5 rounded-md hover:border-error/40 transition-all flex items-center justify-between cursor-pointer group">
+                    <div>
+                      <h4 className="text-[13px] font-bold text-error">Clear Historical Cache</h4>
+                      <p className="text-[11px] text-error/60 font-medium">Permanently destroy all parsing results and weighted models.</p>
+                    </div>
+                    <Trash2 size={16} className="text-error/40 group-hover:text-error transition-colors" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   )
