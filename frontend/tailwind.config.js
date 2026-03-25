@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
       colors: {
         mint: "#A8E6CF",
         pastelBlue: "#BDE0FE",
@@ -15,7 +18,11 @@ export default {
         cardBg: "#FFFFFF",
       },
       backgroundImage: {
-        "dashboard-gradient": "linear-gradient(to bottom right, #F8FAFC, #EEF7FF, #FDF4FF)",
+        "dashboard-gradient": "linear-gradient(135deg, #eef2ff, #fdf2f8)",
+      },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.04)',
+        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
       },
     },
   },
