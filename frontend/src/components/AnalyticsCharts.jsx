@@ -39,8 +39,8 @@ export default function AnalyticsCharts() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Resumes Parsed (Trend)</h3>
+      <div className="bg-white/70 backdrop-blur-xl p-6 rounded-[24px] shadow-sm border border-white/60 hover:shadow-glass transition-shadow duration-300">
+        <h3 className="text-lg font-extrabold text-slate-800 tracking-tight mb-5">Resumes Parsed (Trend)</h3>
         <div className="h-64">
           {trendData.length === 0 ? (
              <div className="flex h-full items-center justify-center">
@@ -60,8 +60,8 @@ export default function AnalyticsCharts() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Top Skills Frequency</h3>
+      <div className="bg-white/70 backdrop-blur-xl p-6 rounded-[24px] shadow-sm border border-white/60 hover:shadow-glass transition-shadow duration-300">
+        <h3 className="text-lg font-extrabold text-slate-800 tracking-tight mb-5">Top Skills Frequency</h3>
         <div className="h-64">
           {skillsData.length === 0 ? (
              <div className="flex h-full items-center justify-center">
@@ -85,8 +85,8 @@ export default function AnalyticsCharts() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2 hover:shadow-md transition-shadow duration-300">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">ATS Score Distribution</h3>
+      <div className="bg-white/70 backdrop-blur-xl p-6 rounded-[24px] shadow-sm border border-white/60 lg:col-span-2 hover:shadow-glass transition-shadow duration-300">
+        <h3 className="text-lg font-extrabold text-slate-800 tracking-tight mb-5">ATS Score Distribution</h3>
         <div className="h-64 flex justify-center">
           {scoresData.every(d => d.value === 0) ? (
              <div className="flex h-full w-full items-center justify-center">
