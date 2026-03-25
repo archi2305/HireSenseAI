@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react"
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence } from "framer-motion"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
 import ToastContainer from "./components/ToastContainer"
+import PageTransition from "./components/PageTransition"
 
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
@@ -16,10 +16,13 @@ import CandidateMatching from "./pages/CandidateMatching"
 import History from "./pages/History"
 import Settings from "./pages/Settings"
 import OAuthSuccess from "./pages/OAuthSuccess"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 import Profile from "./pages/Profile"
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
+
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-theme-bg">
@@ -27,60 +30,39 @@ function ProtectedRoute({ children }) {
       </div>
     )
   }
-  if (!user) return <Navigate to="/login" replace />
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  
   return children
 }
 
-const pageVariants = {
-  initial: { opacity: 0, y: 10, scale: 0.99 },
-  in: { opacity: 1, y: 0, scale: 1 },
-  out: { opacity: 0, y: -10, scale: 0.99 }
-}
-
-const pageTransition = {
-  type: "tween",
-  ease: "circOut",
-  duration: 0.25
-}
-
-function AnimatedOutlet() {
-  const location = useLocation()
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
-        transition={pageTransition}
-        className="h-full w-full"
-      >
-        <Outlet />
-      </motion.div>
-    </AnimatePresence>
-  )
-}
-
 function Layout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const location = useLocation()
   const notifications = [
-    { id: 1, message: "Welcome to HireSense UI!" },
-    { id: 2, message: "Your ATS score is now available for John Doe." }
+    { id: 1, message: "Welcome to HireSense AI!" },
+    { id: 2, message: "Analysis for John Doe is complete." }
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden bg-theme-bg text-theme-text font-sans selection:bg-theme-accent/30 selection:text-white">
-      {/* SIDEBAR (Left) */}
-      <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+    <div className="flex h-screen w-full bg-theme-bg text-theme-text font-sans selection:bg-theme-accent/30 overflow-hidden">
+      <Sidebar />
 
-      {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col relative w-full h-full bg-theme-bg overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.5)] z-20">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden bg-theme-bg">
         <Header notifications={notifications} />
         
-        {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto w-full px-6 py-6 pb-20 scroll-smooth">
-            <AnimatedOutlet />
+        <main className="flex-1 overflow-y-auto w-full">
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+              <Route path="analyzer" element={<PageTransition><ResumeAnalyzer /></PageTransition>} />
+              <Route path="matching" element={<PageTransition><CandidateMatching /></PageTransition>} />
+              <Route path="history" element={<PageTransition><History /></PageTransition>} />
+              <Route path="profile" element={<PageTransition><Profile /></PageTransition>} />
+              <Route path="settings" element={<PageTransition><Settings /></PageTransition>} />
+            </Routes>
+          </AnimatePresence>
         </main>
       </div>
       
@@ -93,27 +75,34 @@ function App() {
   return (
     <AuthProvider>
       <DashboardProvider>
-        <Toaster position="top-right" toastOptions={{ style: { background: '#18181b', color: '#fff', border: '1px solid #2a2a2a' } }} />
+        <Toaster 
+          position="bottom-right" 
+          toastOptions={{ 
+            style: { 
+              background: '#18181b', 
+              color: '#fff', 
+              border: '1px solid #2a2a2a',
+              fontSize: '13px',
+              borderRadius: '6px'
+            } 
+          }} 
+        />
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/oauth-success" element={<OAuthSuccess />} />
 
           <Route
+            path="/*"
             element={
               <ProtectedRoute>
                 <Layout />
               </ProtectedRoute>
             }
-          >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/analyzer" element={<ResumeAnalyzer />} />
-            <Route path="/matching" element={<CandidateMatching />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
+          />
         </Routes>
       </DashboardProvider>
     </AuthProvider>

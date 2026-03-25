@@ -4,38 +4,77 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: "Inter", sans-serif;
-  background-color: #0d0d0d;
-  color: #ffffff;
+@layer base {
+  body {
+    @apply bg-theme-bg text-theme-text font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  * {
+    @apply border-theme-border;
+  }
 }
 
-/* Base resets for a native app feel */
-* {
-  box-sizing: border-box;
+@layer components {
+  .linear-card {
+    @apply bg-theme-surface border border-theme-border rounded-md shadow-linear transition-all duration-200;
+  }
+
+  .linear-input {
+    @apply bg-theme-bg border border-theme-border rounded-md px-3 py-1.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:outline-none transition-all duration-200;
+  }
+
+  .linear-btn-primary {
+    @apply px-4 py-1.5 bg-theme-accent text-white text-sm font-medium rounded-md hover:bg-theme-accentHover transition-all duration-200 shadow-sm active:scale-95;
+  }
+
+  .linear-btn-secondary {
+    @apply px-4 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-sm font-medium rounded-md hover:bg-theme-hover transition-all duration-200 shadow-sm active:scale-95;
+  }
 }
 
-input, textarea, select {
-  background-color: transparent;
-  color: #ffffff;
-}
-
-::selection {
-  background: rgba(99, 102, 241, 0.3);
-}
-
-/* Smooth scrollbar for dark theme */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #2a2a2a;
-  border-radius: 4px;
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
+}
+
+/* Global Transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+
+/* Glass effect for panels */
+.glass-panel {
+  @apply bg-theme-bg/80 backdrop-blur-md border border-theme-border shadow-linear-lg;
+}
+
+/* Skeleton animation */
+.skeleton {
+  @apply bg-theme-border rounded-md animate-pulse;
 }
