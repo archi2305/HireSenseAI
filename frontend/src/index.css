@@ -6,6 +6,36 @@
 
 body {
   font-family: "Inter", sans-serif;
-  background-color: #f8fafc;
-  color: #334155;
+  background-color: #0d0d0d;
+  color: #ffffff;
+}
+
+/* Base resets for a native app feel */
+* {
+  box-sizing: border-box;
+}
+
+input, textarea, select {
+  background-color: transparent;
+  color: #ffffff;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+/* Smooth scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
 }
