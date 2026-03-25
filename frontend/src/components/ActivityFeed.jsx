@@ -12,9 +12,13 @@ const MOCK_ACTIVITY = [
 
 export default function ActivityFeed() {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[12px] font-bold text-theme-textSecondary uppercase tracking-widest">Recent Activity</h3>
+    <div className="flex flex-col h-full font-sans">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+           <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+           <h3 className="text-[11px] font-black text-theme-text uppercase tracking-[0.2em] leading-none">Live Neural Stream</h3>
+        </div>
+        <span className="text-[9px] font-black text-theme-accent uppercase tracking-widest bg-theme-accent/10 px-2 py-0.5 rounded-full">Real-time</span>
       </div>
       
       <div className="space-y-4">
