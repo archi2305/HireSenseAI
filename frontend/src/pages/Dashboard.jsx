@@ -8,6 +8,8 @@ import SectionReveal from "../components/SectionReveal"
 import { Sparkles, ArrowRight, Zap, Target } from "lucide-react"
 
 export default function Dashboard() {
+  const navigate = useNavigate()
+
   return (
     <div className="p-8 max-w-[1600px] mx-auto w-full space-y-12 min-h-full font-sans">
       
@@ -30,11 +32,17 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3 relative z-10 shrink-0">
-             <button className="linear-btn-secondary px-5 py-2.5 flex items-center gap-2.5 group">
+             <button 
+               onClick={() => navigate("/history")}
+               className="linear-btn-secondary px-5 py-2.5 flex items-center gap-2.5 group cursor-pointer"
+             >
                 <span className="text-[13px] font-bold">Audit Logs</span>
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
              </button>
-             <button className="linear-btn-primary px-6 py-2.5 shadow-accent-glow flex items-center gap-2.5 group">
+             <button 
+               onClick={() => navigate("/resume-analyzer")}
+               className="linear-btn-primary px-6 py-2.5 shadow-accent-glow flex items-center gap-2.5 group cursor-pointer"
+             >
                 <Zap size={15} fill="white" />
                 <span className="text-[13px] font-bold">New Extraction</span>
              </button>
