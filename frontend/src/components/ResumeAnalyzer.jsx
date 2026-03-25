@@ -1,146 +1,180 @@
-import { useState } from "react"
-import axios from "axios"
+import React, { useState } from "react"
+import { Upload, FileText, CheckCircle, Target, Zap, ArrowRight, Brain, Search, Sparkles } from "lucide-react"
+import api from "../services/api"
 import toast from "react-hot-toast"
-import { Loader2, UploadCloud, FileType, CheckCircle2, AlertCircle, Sparkles } from "lucide-react"
 import ATSResultCard from "./ATSResultCard"
 import { motion, AnimatePresence } from "framer-motion"
+import SectionReveal from "./SectionReveal"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-
-const ROLE_TEMPLATES = {
-  "Software Engineer": "Proficient in Python, SQL, and distributed systems. Experience with cloud infrastructure and RESTful APIs.",
-  "Frontend Developer": "Expertise in React, Tailwind CSS, and Framer Motion. Focused on high-fidelity UI/UX implementation.",
-  "Data Scientist": "Strong background in statistics, machine learning, and data visualization using Python and Pandas.",
-}
-
-function ResumeAnalyzer({ onAnalysisCompleted }) {
+export default function ResumeAnalyzer() {
   const [file, setFile] = useState(null)
-  const [jobRole, setJobRole] = useState("")
   const [jobDescription, setJobDescription] = useState("")
-  const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
 
-  const handleAnalyze = async () => {
-    if (!file || !jobDescription) return toast.error("File and JD required.")
-    
+  const handleUpload = async (e) => {
+    e.preventDefault()
+    if (!file || !jobDescription) return toast.error("Intelligence required.")
+
     setLoading(true)
     const formData = new FormData()
     formData.append("resume", file)
     formData.append("job_description", jobDescription)
-    formData.append("job_role", jobRole)
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/analyze`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      })
+      const res = await api.post("/analyze-resume", formData)
       setResult(res.data)
-      toast.success("Analysis complete.")
-      onAnalysisCompleted?.({ ...res.data, job_role: jobRole })
+      toast.success("Analysis synchronized.")
     } catch {
-      toast.error("Analysis failed.")
+      toast.error("Cloud synchronization failed.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto w-full space-y-6">
+    <div className="p-8 max-w-[1400px] mx-auto w-full space-y-12 font-sans overflow-x-hidden">
       
-      <div className="flex items-center justify-between mb-2">
-         <div>
-            <h1 className="text-[20px] font-bold text-theme-text tracking-tight">Intelligence Parser</h1>
-            <p className="text-[13px] text-theme-textSecondary italic">Automated extraction and score weighting.</p>
-         </div>
-      </div>
+      <SectionReveal direction="down">
+        <div className="flex flex-col gap-2 mb-8">
+           <div className="flex items-center gap-2 text-theme-accent font-black text-[11px] uppercase tracking-[0.2em]">
+              <Brain size={14} />
+              <span>Matching Engine</span>
+           </div>
+           <h1 className="text-[32px] font-black text-theme-text tracking-tighter leading-none">
+             Intel <span className="text-theme-accent">Parser</span>
+           </h1>
+           <p className="text-[14px] text-theme-textSecondary max-w-xl font-medium leading-relaxed">
+             Recursive extraction of semantic candidate profiles against deep vector job descriptions.
+           </p>
+        </div>
+      </SectionReveal>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         
-        {/* Left: Input Config */}
-        <div className="flex-1 flex flex-col gap-5">
-           <div className="linear-card p-5 space-y-5">
-              <div className="space-y-1.5">
-                 <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Target Job Role</label>
-                 <select
-                   className="linear-input w-full"
-                   value={jobRole}
-                   onChange={(e) => {
-                     setJobRole(e.target.value)
-                     if (ROLE_TEMPLATES[e.target.value]) setJobDescription(ROLE_TEMPLATES[e.target.value])
-                   }}
-                 >
-                   <option value="">Select template...</option>
-                   {Object.keys(ROLE_TEMPLATES).map(r => <option key={r} value={r}>{r}</option>)}
-                 </select>
-              </div>
+        {/* Input Panel */}
+        <SectionReveal direction="right" delay={0.2} className="h-full">
+          <div className="linear-card p-8 h-full flex flex-col relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-theme-accent/5 blur-3xl -mr-16 -mt-16 pointer-events-none group-hover:bg-theme-accent/10 transition-all duration-700" />
+            
+            <div className="space-y-6 relative z-10 flex-1">
+               <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                     <Target size={16} className="text-theme-accent" />
+                     <h3 className="text-[13px] font-black text-theme-text uppercase tracking-widest">Protocol Framework</h3>
+                  </div>
+                  <textarea 
+                    placeholder="Paste job description or core requirements here..."
+                    className="linear-input w-full min-h-[350px] resize-none bg-theme-bg/50 focus:bg-theme-surface"
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                  />
+               </div>
 
-              <div className="space-y-1.5">
-                 <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Job Description / Requirements</label>
-                 <textarea
-                   rows={10}
-                   className="linear-input w-full resize-none font-mono text-[12px] leading-relaxed"
-                   placeholder="Paste core requirements here..."
-                   value={jobDescription}
-                   onChange={(e) => setJobDescription(e.target.value)}
-                 />
-              </div>
-           </div>
-        </div>
+               <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                     <Upload size={16} className="text-theme-accent" />
+                     <h3 className="text-[13px] font-black text-theme-text uppercase tracking-widest">Candidate Payload</h3>
+                  </div>
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed border-theme-border/60 rounded-2xl p-8 bg-theme-bg/20 hover:bg-theme-accent/[0.03] hover:border-theme-accent/30 transition-all duration-500 cursor-pointer group/upload">
+                    <input type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
+                    <div className="w-12 h-12 rounded-xl bg-theme-surface border border-theme-border flex items-center justify-center text-theme-textSecondary group-hover/upload:text-theme-accent group-hover/upload:shadow-accent-glow transition-all duration-500 mb-4">
+                       <FileText size={24} />
+                    </div>
+                    <p className="text-[13px] font-bold text-theme-text mb-1">{file ? file.name : "Inject Candidate CV"}</p>
+                    <p className="text-[11px] text-theme-textSecondary font-medium opacity-60 italic">.pdf, .docx (Max 10MB)</p>
+                  </label>
+               </div>
+            </div>
 
-        {/* Right: Upload zone */}
-        <div className="w-full lg:w-[380px] flex flex-col gap-4">
-           <div className={`linear-card p-6 h-full flex flex-col items-center justify-center border-dashed relative group overflow-hidden 
-             ${file ? 'border-theme-accent/50 bg-theme-accent/5' : 'hover:border-theme-textSecondary/40'}`}>
-              
-              <input 
-                type="file" 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                onChange={(e) => setFile(e.target.files?.[0])}
-                accept=".pdf,.doc,.docx" 
-              />
-
-              <div className="flex flex-col items-center text-center">
-                 <div className={`p-4 rounded-full bg-theme-bg border border-theme-border mb-4 transition-transform duration-300 group-hover:scale-110
-                   ${file ? 'text-theme-accent border-theme-accent/30' : 'text-theme-textSecondary'}`}>
-                    {file ? <CheckCircle2 size={32} /> : <UploadCloud size={32} />}
-                 </div>
-                 <h3 className="text-[14px] font-bold text-theme-text mb-1">{file ? file.name : 'Upload Resume'}</h3>
-                 <p className="text-[11px] text-theme-textSecondary italic">{file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, DOC UP TO 10MB'}</p>
-                 
-                 {loading && (
-                   <div className="mt-6 flex flex-col items-center gap-3">
-                      <Loader2 size={24} className="animate-spin text-theme-accent" />
-                      <span className="text-[11px] font-bold text-theme-accent uppercase tracking-widest animate-pulse">Running AI Weights...</span>
-                   </div>
+            <div className="pt-8">
+               <button 
+                onClick={handleUpload}
+                disabled={loading}
+                className="linear-btn-primary w-full py-4 flex items-center justify-center gap-3 shadow-accent-glow relative overflow-hidden"
+               >
+                 {loading ? (
+                   <>
+                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                     <span className="text-[14px] font-black">Decrypting Payload...</span>
+                   </>
+                 ) : (
+                   <>
+                     <Zap size={16} fill="white" />
+                     <span className="text-[14px] font-black">Initialize Analysis Pipeline</span>
+                     <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                   </>
                  )}
-              </div>
+               </button>
+            </div>
+          </div>
+        </SectionReveal>
 
-              {!file && <div className="absolute inset-0 bg-gradient-to-t from-theme-bg/40 to-transparent pointer-events-none" />}
-           </div>
+        {/* Results Panel */}
+        <SectionReveal direction="left" delay={0.4} className="h-full">
+          <div className="linear-card p-8 h-full bg-theme-sidebar/20 relative overflow-hidden border-theme-accent/5">
+             <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Brain size={128} />
+             </div>
+             
+             <div className="relative z-10 h-full flex flex-col">
+                <div className="flex items-center justify-between mb-8">
+                   <div className="flex items-center gap-2.5">
+                      <Sparkles size={16} className="text-theme-accent" />
+                      <h3 className="text-[13px] font-black text-theme-text uppercase tracking-widest">Real-time Extraction</h3>
+                   </div>
+                   {result && (
+                      <div className="px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 animate-fade-in">
+                        <CheckCircle size={12} />
+                        Sync Verified
+                      </div>
+                   )}
+                </div>
 
-           <button
-             onClick={handleAnalyze}
-             disabled={loading || !file || !jobDescription}
-             className="linear-btn-primary w-full py-2.5 shadow-accent-glow flex items-center justify-center gap-2 group"
-           >
-             <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
-             Execute Intelligent Parse
-           </button>
-        </div>
+                <div className="flex-1 flex flex-col justify-center">
+                   <AnimatePresence mode="wait">
+                      {loading ? (
+                        <motion.div 
+                          key="loading"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className="space-y-6"
+                        >
+                           {[1,2,3,4,5].map(i => (
+                             <div key={i} className="space-y-2">
+                                <div className="h-3 bg-theme-surface rounded-full w-24 animate-pulse" />
+                                <div className="h-2 bg-theme-surface/50 rounded-full w-full animate-pulse" />
+                             </div>
+                           ))}
+                        </motion.div>
+                      ) : result ? (
+                        <motion.div 
+                          key="result"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="h-full"
+                        >
+                           <ATSResultCard result={result} />
+                        </motion.div>
+                      ) : (
+                        <motion.div 
+                          key="empty"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="text-center space-y-4 py-20 opacity-30"
+                        >
+                           <Search size={48} className="mx-auto" />
+                           <p className="text-[13px] font-bold tracking-widest uppercase">Awaiting Intel Injection</p>
+                        </motion.div>
+                      )}
+                   </AnimatePresence>
+                </div>
+             </div>
+          </div>
+        </SectionReveal>
+
       </div>
-
-      <AnimatePresence>
-        {result && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8"
-          >
-            <ATSResultCard result={result} />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
-
-export default ResumeAnalyzer

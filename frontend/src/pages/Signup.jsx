@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Mail, Lock, User, BrainCircuit } from "lucide-react";
+import { Loader2, Mail, Lock, User, BrainCircuit, Zap, Sparkles, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 import InputField from "../components/InputField";
 import SocialButton from "../components/SocialButton";
+import SectionReveal from "../components/SectionReveal";
 
 function Signup() {
   const { signup } = useAuth();
@@ -84,161 +86,133 @@ function Signup() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-y-auto bg-slate-50 font-sans">
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-y-auto bg-theme-bg font-sans transition-colors duration-500">
       
-      {/* Dynamic Pastel Gradient Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-softPink/30 via-pink-50 to-pastelBlue/20 z-0"></div>
+      {/* Premium Mixpanel Background */}
+      <div className="fixed inset-0 mesh-gradient opacity-60"></div>
       
-      {/* Floating Blurred Orbs */}
-      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] max-w-[500px] max-h-[500px] rounded-full bg-softPink/40 blur-[80px] sm:blur-[100px] animation-float z-0"></div>
-      <div className="fixed bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] max-w-[600px] max-h-[600px] rounded-full bg-pastelBlue/40 blur-[90px] sm:blur-[120px] animation-float z-0" style={{ animationDelay: '2s' }}></div>
-      <div className="fixed top-[20%] right-[30%] w-[35vw] h-[35vw] max-w-[400px] max-h-[400px] rounded-full bg-mint/30 blur-[70px] sm:blur-[100px] animation-float z-0" style={{ animationDelay: '4s' }}></div>
+      {/* Floating Background Effects */}
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-theme-accent/5 blur-[120px] animate-pulse-glow"></div>
+      <div className="fixed bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-blue-500/5 blur-[120px] animate-pulse-glow" style={{ animationDelay: '2s' }}></div>
 
-      {/* Main Content Container - Add minimal margin for scroll padding */}
-      <div className="w-full max-w-[420px] relative z-10 flex flex-col items-center my-8">
-        
-        {/* Modern AI Logo */}
-        <div className="flex flex-col items-center justify-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-mint via-pastelBlue to-softPink p-[2px] shadow-xl shadow-softPink/20 mb-4 transform hover:scale-105 transition-transform duration-300">
-             <div className="w-full h-full bg-white/95 backdrop-blur-xl rounded-[14px] flex items-center justify-center">
-               <BrainCircuit className="w-7 h-7 text-slate-800" />
-             </div>
-          </div>
-          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
-            HireSkillAI
-          </h1>
-        </div>
-
-        {/* Auth Glass Card */}
-        <div className="w-full bg-white/70 backdrop-blur-2xl rounded-[32px] shadow-[0_8px_40px_rgb(0,0,0,0.06)] border border-white/60 p-8 sm:p-10">
+      <SectionReveal direction="down">
+        <div className="w-full max-w-[440px] relative z-10 flex flex-col items-center my-8">
           
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2">Create Account</h2>
-            <p className="text-slate-500 text-sm font-medium">Join us and start analyzing resumes.</p>
-          </div>
-
-          {/* Equal Width Social Sign Up */}
-          <div className="flex gap-3 mb-6">
-            <div className="flex-1">
-              <SocialButton icon={GoogleIcon} text="Google" provider="Google" onClick={() => handleSocialSignup('Google')} disabled={loading} />
+          <div className="flex flex-col items-center justify-center mb-10 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-theme-accent flex items-center justify-center text-white shadow-accent-glow transform hover:scale-105 transition-all duration-500 group relative overflow-hidden">
+               <Zap size={28} fill="white" className="relative z-10" />
+               <motion.div 
+                  animate={{ x: ['100%', '-100%'] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                  className="absolute inset-0 bg-white/20 skew-x-12"
+               />
             </div>
-            <div className="flex-1">
-              <SocialButton icon={GithubIcon} text="GitHub" provider="GitHub" onClick={() => handleSocialSignup('GitHub')} disabled={loading} />
+            <h1 className="mt-4 text-[24px] font-black text-theme-text tracking-tighter leading-none italic uppercase">
+              HireSense <span className="text-theme-accent">AI</span>
+            </h1>
+            <div className="mt-2 flex items-center gap-2">
+               <div className="w-1.5 h-1.5 rounded-full bg-theme-accent animate-pulse" />
+               <span className="text-[10px] text-theme-textSecondary font-black uppercase tracking-[0.2em]">Recruitment Source Protocol</span>
             </div>
           </div>
 
-          <div className="mb-6 flex items-center gap-4">
-            <div className="flex-1 h-px bg-slate-200"></div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Or</span>
-            <div className="flex-1 h-px bg-slate-200"></div>
+          <div className="w-full linear-card p-10 backdrop-premium border-theme-accent/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-tr from-theme-accent/5 via-transparent to-transparent pointer-events-none" />
+            
+            <div className="text-center mb-8 relative z-10">
+              <h2 className="text-[24px] font-black text-theme-text tracking-tight mb-1">Create Source</h2>
+              <p className="text-theme-textSecondary text-[13px] font-medium italic opacity-70">Register your organizational framework.</p>
+            </div>
+
+            <div className="flex gap-3 mb-8 relative z-10">
+              <div className="flex-1">
+                <SocialButton icon={GoogleIcon} text="Google" provider="Google" onClick={() => handleSocialSignup('Google')} disabled={loading} className="!bg-theme-bg !border-theme-border hover:!border-theme-accent/30 !text-theme-text" />
+              </div>
+              <div className="flex-1">
+                <SocialButton icon={GithubIcon} text="GitHub" provider="GitHub" onClick={() => handleSocialSignup('GitHub')} disabled={loading} className="!bg-theme-bg !border-theme-border hover:!border-theme-accent/30 !text-theme-text" />
+              </div>
+            </div>
+
+            <div className="mb-8 flex items-center gap-4 opacity-30 relative z-10">
+              <div className="flex-1 h-px bg-theme-border"></div>
+              <span className="text-[10px] font-black text-theme-text uppercase tracking-widest">Or</span>
+              <div className="flex-1 h-px bg-theme-border"></div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+              <InputField
+                label="Full Protocol Name"
+                type="text"
+                name="fullname"
+                icon={User}
+                value={formData.fullname}
+                onChange={handleChange}
+                error={errors.fullname}
+                className="!linear-input !bg-theme-bg"
+              />
+
+              <InputField
+                label="Email Identifier"
+                type="email"
+                name="email"
+                icon={Mail}
+                value={formData.email}
+                onChange={handleChange}
+                error={errors.email}
+                className="!linear-input !bg-theme-bg"
+              />
+
+              <InputField
+                label="Access Key"
+                type="password"
+                name="password"
+                icon={Lock}
+                value={formData.password}
+                onChange={handleChange}
+                error={errors.password}
+                className="!linear-input !bg-theme-bg"
+              />
+
+              <InputField
+                label="Verify Key"
+                type="password"
+                name="confirmPassword"
+                icon={Lock}
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={errors.confirmPassword}
+                className="!linear-input !bg-theme-bg"
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="linear-btn-primary w-full py-4 mt-4 shadow-accent-glow flex items-center justify-center gap-3 group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                {loading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span className="text-[14px] font-black uppercase tracking-widest">Deploying...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    <span className="text-[14px] font-black uppercase tracking-widest">Initialize Node</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="text-center text-[12px] font-medium text-theme-textSecondary mt-10 relative z-10">
+              Already have credentials?{" "}
+              <Link to="/login" className="font-black text-theme-accent hover:underline uppercase tracking-widest ml-1">
+                Access Protocol
+              </Link>
+            </p>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <InputField
-              label="Full Name"
-              type="text"
-              name="fullname"
-              icon={User}
-              value={formData.fullname}
-              onChange={handleChange}
-              error={errors.fullname}
-              success={formData.fullname && !errors.fullname}
-              disabled={loading}
-            />
-
-            <InputField
-              label="Email Address"
-              type="email"
-              name="email"
-              icon={Mail}
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              success={formData.email && !errors.email}
-              disabled={loading}
-            />
-
-            <InputField
-              label="Password"
-              type="password"
-              name="password"
-              icon={Lock}
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              success={formData.password.length >= 6 && !errors.password}
-              disabled={loading}
-            />
-
-            <InputField
-              label="Confirm Password"
-              type="password"
-              name="confirmPassword"
-              icon={Lock}
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
-              success={formData.confirmPassword && formData.password === formData.confirmPassword && !errors.confirmPassword}
-              disabled={loading}
-            />
-
-            <button
-              type="submit"
-              disabled={loading}
-              className={`
-                w-full mt-4 flex items-center justify-center py-3.5 rounded-2xl text-sm font-bold text-white
-                bg-gradient-to-r from-softPink via-lavender to-pastelBlue background-animate
-                shadow-lg shadow-pink-500/20 hover:shadow-xl hover:shadow-pink-500/30 
-                hover:-translate-y-0.5 transition-all duration-300
-                focus:outline-none focus:ring-4 focus:ring-softPink/30
-                disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 
-                relative overflow-hidden group
-              `}
-              style={{ backgroundSize: '200% auto' }}
-            >
-              {/* Shine effect */}
-              <div className="absolute inset-0 w-1/4 h-full bg-white/30 transform skew-x-12 -translate-x-full group-hover:animate-[shine_1.5s_ease-in-out]"></div>
-              
-              {loading ? (
-                <>
-                  <Loader2 size={18} className="animate-spin mr-2" />
-                  Creating Account...
-                </>
-              ) : (
-                "Create Account"
-              )}
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-slate-500 mt-8 font-medium">
-            Already have an account?{" "}
-            <Link to="/login" className="font-bold text-softPink hover:text-pink-500 transition-colors">
-              Log in
-            </Link>
-          </p>
         </div>
-      </div>
-      
-      <style>{`
-        @keyframes shine {
-          100% { transform: translateX(400%) skewX(12deg); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-15px) scale(1.02); }
-        }
-        @keyframes gradientX {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animation-float {
-          animation: float 8s ease-in-out infinite;
-        }
-        .background-animate:hover {
-          animation: gradientX 3s ease infinite;
-        }
-      `}</style>
+      </SectionReveal>
     </div>
   );
 }

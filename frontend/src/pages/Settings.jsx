@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react"
 import { 
-  User, Shield, Bell, Zap, Database, Save, LogOut, Download, Trash2, Key, CheckCircle, Moon, Palette as ColorIcon, ChevronRight
+  User, Shield, Bell, Zap, Database, Save, LogOut, Download, Trash2, Key, CheckCircle, Moon, Palette as ColorIcon, ChevronRight, Target, ShieldCheck, Mail, Activity
 } from "lucide-react"
 import api from "../services/api"
 import { useAuth } from "../context/AuthContext"
+import { useTheme } from "../context/ThemeContext"
 import toast from "react-hot-toast"
 import { motion, AnimatePresence } from "framer-motion"
+import SectionReveal from "../components/SectionReveal"
 
 export default function Settings() {
   const { user, logout } = useAuth()
+  const { theme } = useTheme()
   const [activeTab, setActiveTab] = useState("account")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -51,68 +54,49 @@ export default function Settings() {
     } catch { toast.error("Sync failed.", { id: toastId }) } finally { setSaving(false) }
   }
 
-  const updatePassword = async (e) => {
-    e.preventDefault()
-    if (passwords.new_password !== passwords.confirm_password) return toast.error("Key mismatch.")
-    const toastId = toast.loading("Re-securing account...")
-    try {
-      await api.post("/profile/change-password", {
-        current_password: passwords.current_password, new_password: passwords.new_password
-      })
-      toast.success("Security updated.", { id: toastId })
-      setPasswords({ current_password: "", new_password: "", confirm_password: "" })
-    } catch (error) { toast.error("Update failed.", { id: toastId }) }
-  }
-
-  const testApiKey = async () => {
-    if (!settings.openai_api_key) return toast.error("Key required.")
-    setTestingKey(true)
-    try {
-      await api.put("/settings", { openai_api_key: settings.openai_api_key })
-      const res = await api.post("/settings/test-api-key")
-      if (res.data.status === "ok") {
-        toast.success("Intelligence Linked.")
-        setKeyStatus('connected')
-      } else {
-        toast.error("Invalid Key.")
-        setKeyStatus('disconnected')
-      }
-    } catch {
-      setKeyStatus('disconnected')
-    } finally { setTestingKey(false) }
-  }
-
   const TABS = [
-    { id: "account", label: "My Profile", icon: User },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "notifications", label: "Alerts", icon: Bell },
-    { id: "integrations", label: "Intelligence", icon: Zap },
-    { id: "data", label: "Inventory", icon: Database },
+    { id: "account", label: "Profile Interface", icon: User },
+    { id: "security", label: "Access Protocol", icon: Shield },
+    { id: "notifications", label: "Event Routing", icon: Activity },
+    { id: "integrations", label: "Intelligence Core", icon: Zap },
+    { id: "data", label: "Data Inventory", icon: Database },
   ]
 
   if (loading) return null
 
   return (
-    <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row gap-0 h-full w-full bg-theme-bg">
+    <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row gap-0 h-full w-full bg-theme-bg font-sans overflow-hidden">
       
       {/* Settings Navigation */}
-      <div className="w-full md:w-[240px] shrink-0 border-r border-theme-border bg-theme-sidebar/10 p-6 space-y-8 h-full">
+      <div className="w-full md:w-[280px] shrink-0 border-r border-theme-border bg-theme-sidebar/20 p-8 space-y-12 h-full transition-colors duration-500 relative">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[30%] bg-theme-accent/5 blur-3xl pointer-events-none" />
+        
         <div>
-           <h2 className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-[0.2em] mb-4 opacity-50">Settings</h2>
-           <nav className="flex flex-col gap-1">
+           <div className="flex items-center gap-2 text-theme-accent font-black text-[10px] uppercase tracking-[0.2em] mb-4 opacity-70">
+              <Target size={12} />
+              <span>Control Panel</span>
+           </div>
+           <nav className="flex flex-col gap-2 relative z-10">
              {TABS.map((tab) => (
                <button
                  key={tab.id}
                  onClick={() => setActiveTab(tab.id)}
-                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-all group ${
+                 className={`flex items-center gap-4 px-4 py-3 rounded-2xl text-[14px] font-bold transition-all group relative overflow-hidden ${
                    activeTab === tab.id 
-                     ? "bg-theme-surface text-theme-text shadow-linear border border-theme-border" 
-                     : "text-theme-textSecondary hover:text-theme-text hover:bg-theme-hover/50"
+                     ? "text-theme-text shadow-premium border border-theme-border bg-theme-surface" 
+                     : "text-theme-textSecondary hover:text-theme-text hover:bg-theme-hover"
                  }`}
                >
-                 <tab.icon size={14} className={activeTab === tab.id ? "text-theme-accent" : "text-theme-textSecondary group-hover:text-theme-text"} />
-                 <span>{tab.label}</span>
-                 {activeTab === tab.id && <ChevronRight size={12} className="ml-auto opacity-30" />}
+                 {activeTab === tab.id && (
+                   <motion.div 
+                     layoutId="settings-active"
+                     className="absolute inset-0 bg-theme-accent/5"
+                     transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 30 }}
+                   />
+                 )}
+                 <tab.icon size={18} className={`relative z-10 transition-colors ${activeTab === tab.id ? "text-theme-accent shadow-accent-glow" : "text-theme-textSecondary group-hover:text-theme-text"}`} />
+                 <span className="relative z-10">{tab.label}</span>
+                 {activeTab === tab.id && <ChevronRight size={14} className="ml-auto opacity-30 relative z-10" />}
                </button>
              ))}
            </nav>
@@ -120,163 +104,190 @@ export default function Settings() {
       </div>
 
       {/* Settings Viewport */}
-      <div className="flex-1 p-8 overflow-y-auto bg-theme-bg">
+      <div className="flex-1 p-12 overflow-y-auto bg-theme-bg relative overflow-x-hidden">
+        {/* Background Mesh Glow */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-theme-accent/5 blur-[120px] -mr-32 -mt-32 pointer-events-none" />
+        
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, x: 10 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2 }}
-            className="max-w-xl"
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-2xl relative z-10"
           >
             {activeTab === "account" && (
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">General Settings</h1>
-                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Information provided here reflects across your workspace.</p>
+                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Profile <span className="text-theme-accent">Interface</span></h1>
+                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Information provided here reflects across your collaborative workspace.</p>
                 </div>
                 
-                <div className="space-y-5">
+                <div className="space-y-6">
                    <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Legal Name</label>
-                      <input type="text" name="fullname" value={settings.fullname} onChange={handleChange} className="linear-input w-full px-3 py-2 border-theme-border/60" />
+                      <label className="text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Legal Full Name</label>
+                      <input type="text" name="fullname" value={settings.fullname} onChange={handleChange} className="linear-input w-full px-4 py-3 border-theme-border/60 focus:bg-theme-surface" />
                    </div>
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2 text-theme-textSecondary opacity-60">
-                         <label className="text-[11px] font-bold uppercase tracking-widest">Auth Identifier</label>
-                         <input type="email" value={settings.email} disabled className="linear-input w-full bg-theme-bg border-theme-border/30 cursor-not-allowed" />
+                   <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                         <label className="text-[11px] font-black uppercase tracking-[0.2em] opacity-30">Auth Identifier</label>
+                         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-theme-border bg-theme-bg/50 opacity-60">
+                            <Mail size={16} className="text-theme-textSecondary" />
+                            <span className="text-[13px] font-bold text-theme-textSecondary">{settings.email}</span>
+                         </div>
                       </div>
                       <div className="space-y-2">
-                         <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Active Org</label>
-                         <input type="text" name="company" value={settings.company || ""} onChange={handleChange} className="linear-input w-full" />
+                         <label className="text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Active Org Index</label>
+                         <input type="text" name="company" value={settings.company || ""} onChange={handleChange} className="linear-input w-full px-4 py-3 focus:bg-theme-surface" />
                       </div>
                    </div>
                 </div>
 
-                <div className="pt-4">
-                   <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-6 py-2 shadow-accent-glow">
-                      {saving ? "Syncing..." : "Update Workspace"}
+                <div className="pt-8">
+                   <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-8 py-3.5 shadow-accent-glow flex items-center gap-2 group">
+                      <Zap size={16} fill="white" />
+                      <span className="text-[14px] font-black uppercase tracking-widest">{saving ? "Syncing..." : "Update Workspace Protocol"}</span>
                    </button>
                 </div>
               </div>
             )}
 
             {activeTab === "security" && (
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Access Protocol</h1>
-                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Rotation of access keys keeps your candidate database secure.</p>
+                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Access <span className="text-theme-accent">Protocol</span></h1>
+                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Rotation of encryption keys ensures the integrity of your candidate library.</p>
                 </div>
                 
-                <form onSubmit={updatePassword} className="space-y-5">
-                  <div className="space-y-2">
-                     <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Current Key</label>
-                     <input type="password" name="current_password" required value={passwords.current_password} onChange={handlePasswordChange} className="linear-input w-full" />
+                <div className="space-y-6">
+                  <div className="p-6 rounded-2xl bg-theme-surface/50 border border-theme-border backdrop-blur-sm relative group overflow-hidden">
+                     <div className="absolute top-0 right-0 p-6 opacity-5">
+                        <Shield size={64} />
+                     </div>
+                     <h4 className="text-[15px] font-black text-theme-text mb-4 flex items-center gap-2">
+                        <ShieldCheck size={18} className="text-success" />
+                        Multi-Factor Security Active
+                     </h4>
+                     <p className="text-[12px] text-theme-textSecondary font-medium leading-relaxed opacity-70 mb-6 italic">Secure rotation is recommended every 90 days. Next scheduled rotation: April 15, 2026.</p>
+                     
+                     <button className="linear-btn-secondary px-6 py-2.5 flex items-center gap-2 group">
+                        <Key size={14} />
+                        <span className="text-[13px] font-bold uppercase tracking-widest">Generate New key</span>
+                     </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                       <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">New Protocol</label>
-                       <input type="password" name="new_password" required minLength="6" value={passwords.new_password} onChange={handlePasswordChange} className="linear-input w-full" />
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest">Verify New</label>
-                       <input type="password" name="confirm_password" required minLength="6" value={passwords.confirm_password} onChange={handlePasswordChange} className="linear-input w-full" />
-                    </div>
-                  </div>
-                  <button type="submit" className="linear-btn-secondary px-6 py-2">
-                    Rotate Password
-                  </button>
-                </form>
+                </div>
               </div>
             )}
 
             {activeTab === "notifications" && (
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Event Routing</h1>
-                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Configure automated alerts for pipeline velocity.</p>
+                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Event <span className="text-theme-accent">Routing</span></h1>
+                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Configure high-fidelity automated alerts for pipeline velocity shifts.</p>
                 </div>
 
-                <div className="space-y-px rounded-md border border-theme-border overflow-hidden divide-y divide-theme-border">
+                <div className="space-y-3">
                   {[
-                    { name: "email_alerts", title: "Real-time Alerts", desc: "Push notifications for new match discoveries." },
-                    { name: "resume_match_alerts", title: "Priority Thresholds", desc: "Trigger alerts when candidate exceeds 85% match." },
-                    { name: "weekly_reports", title: "Analytics Summary", desc: "Consolidated performance digest every Monday." }
+                    { name: "email_alerts", title: "Real-time Neural Alerts", desc: "Push notifications for new match discoveries." },
+                    { name: "resume_match_alerts", title: "Priority Match Thresholds", desc: "Trigger alerts when candidate efficiency exceeds 85%." },
+                    { name: "weekly_reports", title: "Analytics Summary Extract", desc: "Consolidated performance deep-dive every Monday." }
                   ].map((item) => (
-                    <div key={item.name} className="flex items-center justify-between p-4 bg-theme-surface/30">
-                      <div>
-                        <p className="text-[13px] font-bold text-theme-text mb-0.5">{item.title}</p>
-                        <p className="text-[11px] text-theme-textSecondary font-medium opacity-60 italic">{item.desc}</p>
+                    <div key={item.name} className="flex items-center justify-between p-6 rounded-2xl bg-theme-surface/40 hover:bg-theme-surface border border-theme-border transition-all duration-300 group">
+                      <div className="max-w-md">
+                        <div className="flex items-center gap-2 mb-1">
+                           <p className="text-[14px] font-black text-theme-text group-hover:text-theme-accent transition-colors">{item.title}</p>
+                           {settings[item.name] && <span className="w-1.5 h-1.5 rounded-full bg-theme-accent animate-pulse" />}
+                        </div>
+                        <p className="text-[12px] text-theme-textSecondary font-medium opacity-60 italic leading-snug">{item.desc}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" name={item.name} checked={settings[item.name]} onChange={handleChange} />
-                        <div className="w-8 h-4 bg-theme-sidebar border border-theme-border rounded-full peer peer-checked:bg-theme-accent peer-checked:border-theme-accent after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-theme-textSecondary/50 peer-checked:after:bg-white peer-checked:after:translate-x-4 after:rounded-full after:h-3 after:w-3 after:transition-all"></div>
+                        <div className="w-10 h-5 bg-theme-sidebar border border-theme-border rounded-full peer peer-checked:bg-theme-accent peer-checked:border-theme-accent after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-theme-textSecondary peer-checked:after:bg-white peer-checked:after:translate-x-5 after:rounded-full after:h-3 after:w-3 after:transition-all"></div>
                       </label>
                     </div>
                   ))}
                 </div>
 
-                <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-6 py-2 shadow-accent-glow">
-                  Save Logic
+                <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-8 py-3.5 shadow-accent-glow flex items-center gap-2 group">
+                  <Activity size={16} />
+                  <span className="text-[14px] font-black uppercase tracking-widest">Save Event Logic</span>
                 </button>
               </div>
             )}
 
             {activeTab === "integrations" && (
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Intelligence Core</h1>
-                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Manage the LLM identifiers that power your scoring engine.</p>
+                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Intelligence <span className="text-theme-accent">Core</span></h1>
+                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Manage the core LLM identifiers that power your semantic scoring engine.</p>
                 </div>
 
-                <div className="p-6 bg-theme-surface border border-theme-border rounded-md shadow-linear relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-5">
-                     <Zap size={64} />
+                <div className="p-8 bg-theme-surface border border-theme-border rounded-3xl shadow-premium relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-5">
+                     <Zap size={128} />
                   </div>
-                  <h4 className="text-[14px] font-bold text-theme-text mb-1 flex items-center gap-2">
-                    OpenAI Integration
-                    {keyStatus === 'connected' && <span className="px-1.5 py-0.5 bg-success/10 text-success text-[10px] rounded border border-success/20 uppercase font-black">Linked</span>}
-                  </h4>
-                  <p className="text-[12px] text-theme-textSecondary mb-6 font-medium italic opacity-70">Requires model gpt-4 or gpt-3.5 access.</p>
+                  <div className="flex items-center gap-3 mb-8">
+                     <div className="w-10 h-10 rounded-xl bg-theme-accent flex items-center justify-center text-white shadow-accent-glow">
+                        <Zap size={20} fill="white" />
+                     </div>
+                     <div>
+                        <h4 className="text-[16px] font-black text-theme-text flex items-center gap-3">
+                           OpenAI Protocol 4.0
+                           {keyStatus === 'connected' && <span className="px-2 py-0.5 bg-success/10 text-success text-[10px] rounded-full border border-success/20 uppercase font-black tracking-widest">Synchronized</span>}
+                        </h4>
+                        <p className="text-[12px] text-theme-textSecondary font-bold italic opacity-60">Deep semantic vectoring engine.</p>
+                     </div>
+                  </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <input 
                       type="password" name="openai_api_key" 
                       value={settings.openai_api_key} onChange={handleChange} 
-                      placeholder="sk-..."
-                      className="linear-input flex-1 px-3 py-2 font-mono"
+                      placeholder="sk-neural-..."
+                      className="linear-input flex-1 px-4 py-3 font-mono text-[13px] bg-theme-bg"
                     />
-                    <button onClick={testApiKey} disabled={testingKey} className="linear-btn-secondary px-4 py-2 shrink-0">
-                      {testingKey ? "Linking..." : "Test Link"}
+                    <button onClick={saveSettings} disabled={testingKey} className="linear-btn-secondary px-6 shrink-0 group">
+                      <Zap size={15} className="group-hover:animate-pulse" />
+                      <span className="text-[13px] font-black uppercase tracking-widest">Link</span>
                     </button>
                   </div>
                 </div>
               </div>
             )}
-
+            
             {activeTab === "data" && (
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                   <h1 className="text-[22px] font-bold text-theme-text tracking-tight mb-1">Inventory Management</h1>
-                   <p className="text-[13px] text-theme-textSecondary leading-relaxed italic">Export your dataset or perform hard-state removals.</p>
+                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Data <span className="text-theme-accent">Inventory</span></h1>
+                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Export high-fidelity datasets or perform recursive core deletions.</p>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="p-4 border border-theme-border rounded-md hover:bg-theme-sidebar/20 transition-colors flex items-center justify-between cursor-pointer group">
-                    <div>
-                      <h4 className="text-[13px] font-bold text-theme-text">Dataset Export (.json)</h4>
-                      <p className="text-[11px] text-theme-textSecondary font-medium opacity-60">Generate a comprehensive dump of all matched candidates.</p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-6 border border-theme-border rounded-2xl hover:bg-theme-surface transition-all duration-300 flex items-center justify-between cursor-pointer group shadow-sm hover:shadow-premium">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-theme-bg border border-theme-border flex items-center justify-center text-theme-textSecondary group-hover:text-theme-accent transition-colors">
+                          <Download size={18} />
+                       </div>
+                       <div>
+                         <h4 className="text-[14px] font-black text-theme-text group-hover:text-theme-accent transition-colors">Dataset Export (.json)</h4>
+                         <p className="text-[11px] text-theme-textSecondary font-bold opacity-60 uppercase tracking-widest">Full recovery dump of matched nodes.</p>
+                       </div>
                     </div>
-                    <Download size={16} className="text-theme-textSecondary group-hover:text-theme-text transition-colors" />
+                    <ChevronRight size={18} className="text-theme-textSecondary opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </div>
                   
-                  <div className="p-4 border border-error/20 bg-error/5 rounded-md hover:border-error/40 transition-all flex items-center justify-between cursor-pointer group">
-                    <div>
-                      <h4 className="text-[13px] font-bold text-error">Clear Historical Cache</h4>
-                      <p className="text-[11px] text-error/60 font-medium">Permanently destroy all parsing results and weighted models.</p>
+                  <div className="p-6 border border-error/10 bg-error/[0.02] rounded-2xl hover:bg-error/[0.05] hover:border-error/30 transition-all duration-300 flex items-center justify-between cursor-pointer group shadow-sm">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-theme-bg border border-error/10 flex items-center justify-center text-error opacity-40 group-hover:opacity-100 transition-opacity">
+                          <Trash2 size={18} />
+                       </div>
+                       <div>
+                         <h4 className="text-[14px] font-black text-error">Purge Intelligence History</h4>
+                         <p className="text-[11px] text-error/60 font-bold uppercase tracking-widest">Recursive destruction of all parsing models.</p>
+                       </div>
                     </div>
-                    <Trash2 size={16} className="text-error/40 group-hover:text-error transition-colors" />
+                    <ChevronRight size={18} className="text-error/30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               </div>

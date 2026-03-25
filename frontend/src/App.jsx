@@ -1,6 +1,6 @@
-import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom"
+import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
 import ToastContainer from "./components/ToastContainer"
@@ -26,7 +26,11 @@ function ProtectedRoute({ children }) {
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-theme-bg">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-accent"></div>
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="w-12 h-12 bg-theme-accent rounded-full shadow-accent-glow"
+        />
       </div>
     )
   }
@@ -42,17 +46,22 @@ function Layout() {
   const location = useLocation()
   const notifications = [
     { id: 1, message: "Welcome to HireSense AI!" },
-    { id: 2, message: "Analysis for John Doe is complete." }
+    { id: 2, message: "Engine successfully calibrated." }
   ]
 
   return (
-    <div className="flex h-screen w-full bg-theme-bg text-theme-text font-sans selection:bg-theme-accent/30 overflow-hidden">
+    <div className="flex h-screen w-full bg-theme-bg text-theme-text font-sans selection:bg-theme-accent selection:text-white overflow-hidden mesh-gradient relative">
+      
+      {/* Background Glows for Mixpanel Feel */}
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-theme-accent/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+
       <Sidebar />
 
-      <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden bg-theme-bg">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative z-10 overflow-hidden bg-transparent">
         <Header notifications={notifications} />
         
-        <main className="flex-1 overflow-y-auto w-full">
+        <main className="flex-1 overflow-y-auto w-full relative">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
@@ -78,13 +87,8 @@ function App() {
         <Toaster 
           position="bottom-right" 
           toastOptions={{ 
-            style: { 
-              background: '#18181b', 
-              color: '#fff', 
-              border: '1px solid #2a2a2a',
-              fontSize: '13px',
-              borderRadius: '6px'
-            } 
+            className: 'floating-layer backdrop-premium !border-theme-border !text-theme-text !bg-theme-surface/80',
+            duration: 4000
           }} 
         />
         <Routes>

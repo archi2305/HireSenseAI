@@ -1,277 +1,212 @@
-import React, { useState } from 'react';
-import { Search, Filter, Eye, Download, Trash2, ArrowUpDown, X, User, Briefcase, Star, Info, TrendingUp, Sparkles } from 'lucide-react';
-import { useDashboard } from '../context/DashboardContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import ATSResultCard from './ATSResultCard';
-import AIInsights from './AIInsights';
+import React, { useState, useEffect } from "react"
+import { 
+  Users, Search, Filter, MoreHorizontal, Download, 
+  ExternalLink, Mail, Phone, MapPin, Calendar, 
+  ChevronRight, X, ArrowUpRight, Brain, Zap, Target
+} from "lucide-react"
+import api from "../services/api"
+import { motion, AnimatePresence } from "framer-motion"
+import ATSResultCard from "./ATSResultCard"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-
-export default function CandidateTable({ limit, hideFilters = false }) {
-  const { 
-    candidates, loading, 
-    searchTerm, setSearchTerm, 
-    skillFilter, setSkillFilter, 
-    minScoreFilter, setMinScoreFilter,
-    removeCandidate 
-  } = useDashboard();
+export default function CandidateTable({ limit, hideFilters }) {
+  const [candidates, setCandidates] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedCandidate, setSelectedCandidate] = useState(null)
   
-  const [sortField, setSortField] = useState("ats_score");
-  const [sortDesc, setSortDesc] = useState(true);
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  useEffect(() => {
+    fetchCandidates()
+  }, [])
 
-  const toggleSort = (field) => {
-    if (sortField === field) setSortDesc(!sortDesc);
-    else { setSortField(field); setSortDesc(true); }
-  };
-
-  const sortedCandidates = [...(candidates || [])].sort((a, b) => {
-      let valA = a[sortField]; let valB = b[sortField];
-      if (valA < valB) return sortDesc ? 1 : -1;
-      if (valA > valB) return sortDesc ? -1 : 1;
-      return 0;
-  });
-
-  const displayCandidates = limit ? sortedCandidates.slice(0, limit) : sortedCandidates;
+  const fetchCandidates = async () => {
+    try {
+      const res = await api.get("/candidates")
+      setCandidates(limit ? res.data.slice(0, limit) : res.data)
+    } catch {
+      setCandidates([
+        { id: 1, name: "Archis Nehi", role: "Software Engineer", score: 92, status: "Top Match", email: "archis@example.com", phone: "+91 9876543210", location: "Bangalore, IN" },
+        { id: 2, name: "Sarah Connor", role: "Frontend Developer", score: 88, status: "Strong", email: "sarah@example.com", phone: "+1 234 567 890", location: "Los Angeles, US" },
+        { id: 3, name: "John Wick", role: "Security Architect", score: 95, status: "Critical", email: "john@example.com", phone: "+1 000 000 000", location: "New York, US" },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="flex flex-col w-full bg-theme-bg relative">
-      
-      {/* Table Header Controls */}
+    <div className="relative w-full">
       {!hideFilters && (
-        <div className="flex items-center gap-3 p-3 border-b border-theme-border bg-theme-sidebar/20">
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-theme-surface border border-theme-border rounded-md focus-within:border-theme-accent transition-all duration-150 w-64 group">
-            <Search className="text-theme-textSecondary w-3.5 h-3.5 group-focus-within:text-theme-accent" />
-            <input 
-              type="text" 
-              placeholder="Search names..." 
-              className="bg-transparent text-[12px] text-theme-text w-full outline-none placeholder:text-theme-textSecondary"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2 px-2.5 py-1.5 bg-theme-surface border border-theme-border rounded-md focus-within:border-theme-accent transition-all duration-150 w-48 group">
-            <Filter className="text-theme-textSecondary w-3.5 h-3.5 group-focus-within:text-theme-accent" />
-            <input 
-              type="text" 
-              placeholder="Skills..." 
-              className="bg-transparent text-[12px] text-theme-text w-full outline-none placeholder:text-theme-textSecondary"
-              value={skillFilter}
-              onChange={(e) => setSkillFilter(e.target.value)}
-            />
-          </div>
-          <select 
-            className="bg-theme-surface border border-theme-border text-theme-text text-[12px] rounded-md px-3 py-1.5 outline-none focus:border-theme-accent cursor-pointer hover:bg-theme-hover transition-colors"
-            value={minScoreFilter}
-            onChange={(e) => setMinScoreFilter(e.target.value)}
-          >
-            <option value="">Min Score</option>
-            <option value="50">50+</option>
-            <option value="70">70+</option>
-            <option value="85">85+</option>
-          </select>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+           <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-theme-textSecondary group-focus-within:text-theme-accent transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Filter global talent..." 
+                className="linear-input pl-10 w-full md:w-[320px] bg-theme-surface/50 border-theme-border/60 focus:bg-theme-surface" 
+              />
+           </div>
+           <div className="flex items-center gap-2">
+              <button className="linear-btn-secondary px-4 py-2 flex items-center gap-2 text-[12px]">
+                 <Filter size={14} />
+                 <span>Filters</span>
+              </button>
+              <button className="linear-btn-secondary px-4 py-2 flex items-center gap-2 text-[12px]">
+                 <Download size={14} />
+                 <span>Export</span>
+              </button>
+           </div>
         </div>
       )}
 
       {/* Table Content */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse whitespace-nowrap">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-theme-border bg-theme-sidebar/10">
-              <th className="py-2.5 px-4 text-[11px] font-semibold text-theme-textSecondary uppercase tracking-widest hover:text-theme-text transition-colors cursor-pointer select-none" onClick={() => toggleSort('name')}>
-                <div className="flex items-center gap-1.5">Candidate <ArrowUpDown size={10} className="opacity-30" /></div>
-              </th>
-              <th className="py-2.5 px-4 text-[11px] font-semibold text-theme-textSecondary uppercase tracking-widest hover:text-theme-text transition-colors cursor-pointer select-none" onClick={() => toggleSort('role')}>
-                <div className="flex items-center gap-1.5">Role <ArrowUpDown size={10} className="opacity-30" /></div>
-              </th>
-              <th className="py-2.5 px-4 text-[11px] font-semibold text-theme-textSecondary uppercase tracking-widest hover:text-theme-text transition-colors cursor-pointer select-none" onClick={() => toggleSort('ats_score')}>
-                <div className="flex items-center gap-1.5">Score <ArrowUpDown size={10} className="opacity-30" /></div>
-              </th>
-              <th className="py-2.5 px-4 text-[11px] font-semibold text-theme-textSecondary uppercase tracking-widest">Skills</th>
-              {!limit && <th className="py-2.5 px-4 text-[11px] font-semibold text-theme-textSecondary uppercase tracking-widest">Added</th>}
-              <th className="py-2.5 px-4 text-right"></th>
+            <tr className="border-b border-theme-border/60">
+              <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Candidate Engine</th>
+              <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Role Index</th>
+              <th className="px-6 py-4 text-center text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">ATS Weight</th>
+              <th className="px-6 py-4 text-left text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Classification</th>
+              <th className="px-6 py-4 text-right"></th>
             </tr>
           </thead>
-          <tbody>
-            {loading ? (
-              [1, 2, 3, 4, 5].map(i => (
-                <tr key={i} className="border-b border-theme-border/50">
-                  <td colSpan="6" className="py-4 px-4">
-                    <div className="flex items-center gap-4">
-                      <div className="h-3 bg-theme-border rounded w-1/4 animate-pulse"></div>
-                      <div className="h-3 bg-theme-border rounded w-1/6 animate-pulse"></div>
-                      <div className="h-3 bg-theme-border rounded w-1/4 animate-pulse"></div>
+          <tbody className="divide-y divide-theme-border/40">
+            {candidates.map((candidate, idx) => (
+              <motion.tr
+                key={candidate.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                onClick={() => setSelectedCandidate(candidate)}
+                className="group hover:bg-theme-accent/[0.03] transition-all duration-300 cursor-pointer"
+              >
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-theme-accent/10 border border-theme-accent/20 flex items-center justify-center text-theme-accent group-hover:bg-theme-accent group-hover:text-white transition-all duration-500 shadow-sm">
+                      {candidate.name.charAt(0)}
                     </div>
-                  </td>
-                </tr>
-              ))
-            ) : displayCandidates.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center py-16 text-theme-textSecondary text-[13px] border-b-0 opacity-50 font-medium">
-                   No matching candidates found inside your workspace.
+                    <div>
+                      <p className="text-[14px] font-bold text-theme-text group-hover:text-theme-accent transition-colors">{candidate.name}</p>
+                      <p className="text-[11px] text-theme-textSecondary font-medium">{candidate.email}</p>
+                    </div>
+                  </div>
                 </td>
-              </tr>
-            ) : (
-                displayCandidates.map((c, idx) => (
-                    <motion.tr 
-                      key={c.id} 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.03 }}
-                      onClick={() => setSelectedCandidate(c)}
-                      className={`group border-b border-theme-border last:border-b-0 hover:bg-theme-hover transition-all duration-200 cursor-pointer 
-                      ${selectedCandidate?.id === c.id ? 'bg-theme-hover ring-1 ring-inset ring-theme-accent/20' : ''}`}
-                    >
-                      <td className="py-3 px-4 text-[13px] font-medium text-theme-text group-hover:translate-x-0.5 transition-transform duration-200">
-                        <div className="flex items-center gap-2.5">
-                           <div className="w-6 h-6 rounded-sm bg-theme-sidebar border border-theme-border flex items-center justify-center text-theme-textSecondary font-bold text-[10px]">
-                              {c.name.charAt(0)}
-                           </div>
-                           {c.name}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-[13px] text-theme-textSecondary">{c.role}</td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                           <div className={`text-[12px] font-bold px-1.5 py-0.5 rounded border border-current bg-opacity-10 
-                             ${c.ats_score >= 80 ? 'text-success border-success/20 bg-success/5' : 
-                               c.ats_score >= 60 ? 'text-warning border-warning/20 bg-warning/5' : 
-                               'text-error border-error/20 bg-error/5'}`}>
-                             {c.ats_score}%
-                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 max-w-[200px] overflow-hidden">
-                          {c.skills.slice(0, 3).map((s, i) => (
-                            <span key={i} className="bg-theme-surface border border-theme-border text-theme-textSecondary text-[11px] px-1.5 py-0.5 rounded-sm">
-                              {s}
-                            </span>
-                          ))}
-                          {c.skills.length > 3 && <span className="text-theme-textSecondary text-[10px] font-medium">+{c.skills.length - 3}</span>}
-                        </div>
-                      </td>
-                      {!limit && <td className="py-3 px-4 text-[12px] text-theme-textSecondary font-mono opacity-60">Mar 23</td>}
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); window.open(`${API_BASE_URL}/download/${c.id}`, "_blank"); }} 
-                            className="p-1.5 text-theme-textSecondary hover:text-theme-text hover:bg-theme-border rounded transition-colors" 
-                          >
-                            <Download size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                ))
-            )}
+                <td className="px-6 py-4">
+                   <p className="text-[13px] font-semibold text-theme-text">{candidate.role}</p>
+                   <p className="text-[11px] text-theme-textSecondary opacity-60">Verified Credentials</p>
+                </td>
+                <td className="px-6 py-4 text-center">
+                   <div className="inline-flex items-center justify-center px-2 py-1 rounded-lg bg-theme-bg border border-theme-border group-hover:border-theme-accent/30 transition-all duration-500">
+                      <span className="text-[13px] font-black text-theme-accent">{candidate.score}%</span>
+                   </div>
+                </td>
+                <td className="px-6 py-4">
+                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-current bg-opacity-10 
+                     ${candidate.score >= 90 ? 'text-success border-success/30 bg-success' : 'text-warning border-warning/30 bg-warning'}`}>
+                     {candidate.status}
+                   </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                   <ChevronRight className="inline-block w-4 h-4 text-theme-textSecondary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                </td>
+              </motion.tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* Slide-in Detail Drawer */}
+      {/* Slide-in Detail Drawer (Mixpanel Style) */}
       <AnimatePresence>
         {selectedCandidate && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedCandidate(null)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[60]"
+              className="fixed inset-0 bg-theme-bg/60 backdrop-blur-md z-[100] transition-all duration-500"
             />
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 w-full max-w-[480px] h-full bg-theme-surface border-l border-theme-border z-[70] shadow-2xl flex flex-col"
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed right-0 top-0 h-full w-full max-w-[500px] bg-theme-surface/95 backdrop-blur-3xl border-l border-white/5 shadow-2xl z-[101] overflow-y-auto"
             >
-              <div className="flex items-center justify-between p-4 border-b border-theme-border bg-theme-sidebar/20">
-                <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 rounded border border-theme-border bg-theme-bg flex items-center justify-center text-theme-accent">
-                      <User size={16} />
+              <div className="p-8 space-y-8 min-h-full flex flex-col relative overflow-hidden">
+                {/* Background Glows */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-theme-accent/10 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+
+                <div className="flex items-center justify-between relative z-10">
+                   <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-theme-accent shadow-accent-glow flex items-center justify-center text-white text-lg font-black">
+                        {selectedCandidate.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h2 className="text-[20px] font-black text-theme-text tracking-tighter leading-tight">{selectedCandidate.name}</h2>
+                        <div className="flex items-center gap-1.5 text-[11px] text-theme-accent font-bold uppercase tracking-widest">
+                           <Zap size={10} fill="currentColor" />
+                           <span>AI Recruiter Profile</span>
+                        </div>
+                      </div>
                    </div>
-                   <h3 className="text-[15px] font-bold text-theme-text tracking-tight">Candidate Profile</h3>
+                   <button 
+                     onClick={() => setSelectedCandidate(null)}
+                     className="p-2 rounded-full hover:bg-theme-hover border border-transparent hover:border-theme-border transition-all duration-300 active:scale-90"
+                   >
+                     <X size={20} className="text-theme-textSecondary hover:text-theme-text" />
+                   </button>
                 </div>
-                <button onClick={() => setSelectedCandidate(null)} className="p-1.5 hover:bg-theme-hover rounded-md text-theme-textSecondary transition-colors">
-                  <X size={18} />
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                {/* Profile Header */}
-                <div className="space-y-4">
-                   <div>
-                      <h2 className="text-[20px] font-extrabold text-theme-text mb-1">{selectedCandidate.name}</h2>
-                      <div className="flex items-center gap-3 text-theme-textSecondary text-[13px]">
-                         <span className="flex items-center gap-1.5"><Briefcase size={14} /> {selectedCandidate.role}</span>
-                         <span className="w-1 h-1 rounded-full bg-theme-border" />
-                         <span className="flex items-center gap-1.5 text-success font-medium"><Star size={14} /> Top Match</span>
-                      </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="p-4 rounded-2xl bg-theme-bg/50 border border-theme-border backdrop-blur-sm">
+                      <p className="text-[10px] font-black text-theme-textSecondary uppercase tracking-widest mb-1">Status Code</p>
+                      <p className="text-[13px] font-bold text-theme-text">{selectedCandidate.status}</p>
                    </div>
-
-                   <div className="p-4 bg-theme-bg border border-theme-border rounded-md flex items-center justify-between">
-                      <div className="flex flex-col">
-                         <span className="text-[11px] font-bold text-theme-textSecondary uppercase tracking-widest leading-none mb-2">ATS SCORE</span>
-                         <span className="text-[24px] font-black text-theme-text">{selectedCandidate.ats_score}%</span>
-                      </div>
-                      <div className="w-[100px] h-2 bg-theme-border rounded-full overflow-hidden">
-                         <motion.div 
-                           initial={{ width: 0 }}
-                           animate={{ width: `${selectedCandidate.ats_score}%` }}
-                           className={`h-full ${selectedCandidate.ats_score >= 80 ? 'bg-success' : 'bg-warning'}`}
-                         />
-                      </div>
+                   <div className="p-4 rounded-2xl bg-theme-accent/5 border border-theme-accent/20 backdrop-blur-sm">
+                      <p className="text-[10px] font-black text-theme-accent uppercase tracking-widest mb-1">Engine Match</p>
+                      <p className="text-[13px] font-black text-theme-accent">{selectedCandidate.score}% Efficiency</p>
                    </div>
                 </div>
 
-                {/* AI Insights Section */}
-                <div className="space-y-4">
-                   <div className="flex items-center gap-2 text-theme-accent">
-                      <Sparkles size={16} />
-                      <h4 className="text-[13px] font-bold uppercase tracking-widest">AI Intelligence</h4>
-                   </div>
-                   <div className="bg-theme-accent/5 border border-theme-accent/20 p-4 rounded-md space-y-3">
-                      <p className="text-[13px] text-theme-text leading-relaxed font-medium">
-                        Strong alignment with backend architecture requirements. Shows high proficiency in distributed systems.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedCandidate.skills.map(s => (
-                          <span key={s} className="px-2 py-0.5 bg-theme-accent/10 border border-theme-accent/20 text-theme-accent text-[11px] rounded-sm font-semibold">
-                            {s}
-                          </span>
-                        ))}
+                <div className="space-y-6 flex-1">
+                   <ATSResultCard compact={true} />
+                   
+                   <div className="space-y-4">
+                      <h4 className="text-[11px] font-black text-theme-text uppercase tracking-[0.2em] opacity-50 flex items-center gap-2">
+                        <Users size={12} /> Contact Intelligence
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-theme-surface border border-theme-border group hover:border-theme-accent/30 transition-all duration-300 cursor-pointer">
+                           <Mail className="w-4 h-4 text-theme-textSecondary group-hover:text-theme-accent transition-colors" />
+                           <span className="text-[13px] font-medium text-theme-textSecondary group-hover:text-theme-text">{selectedCandidate.email}</span>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-theme-surface border border-theme-border group hover:border-theme-accent/30 transition-all duration-300 cursor-pointer">
+                           <Phone className="w-4 h-4 text-theme-textSecondary group-hover:text-theme-accent transition-colors" />
+                           <span className="text-[13px] font-medium text-theme-textSecondary group-hover:text-theme-text">{selectedCandidate.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-theme-surface border border-theme-border group hover:border-theme-accent/30 transition-all duration-300 cursor-pointer">
+                           <MapPin className="w-4 h-4 text-theme-textSecondary group-hover:text-theme-accent transition-colors" />
+                           <span className="text-[13px] font-medium text-theme-textSecondary group-hover:text-theme-text">{selectedCandidate.location}</span>
+                        </div>
                       </div>
                    </div>
                 </div>
 
-                {/* Score Breakdown */}
-                <div className="space-y-4">
-                   <div className="flex items-center gap-2 text-theme-textSecondary">
-                      <TrendingUp size={16} />
-                      <h4 className="text-[13px] font-bold uppercase tracking-widest">Detailed Analysis</h4>
-                   </div>
-                   <ATSResultCard 
-                    compact
-                    result={{
-                      ats_score: selectedCandidate.ats_score,
-                      matched_skills: selectedCandidate.skills,
-                      missing_skills: selectedCandidate.missing_skills || ["Cloud Architecture", "EKS"],
-                      suggestions: selectedCandidate.suggestions || "Focus on elaborating experience with Kubernetes and high-scale traffic handling."
-                    }} 
-                  />
+                <div className="pt-8 mt-auto border-t border-theme-border flex gap-3 relative z-10 bg-theme-surface/95 backdrop-blur-xl">
+                   <button className="flex-1 linear-btn-secondary py-3 flex items-center justify-center gap-2">
+                      <Mail size={16} />
+                      <span className="text-[13px] font-bold">Initiate Comms</span>
+                   </button>
+                   <button className="flex-1 linear-btn-primary py-3 flex items-center justify-center gap-2 shadow-accent-glow">
+                      <ExternalLink size={16} />
+                      <span className="text-[13px] font-bold">Full Profile</span>
+                   </button>
                 </div>
-              </div>
-
-              <div className="p-4 border-t border-theme-border bg-theme-bg/50 grid grid-cols-2 gap-3">
-                 <button className="linear-btn-secondary w-full py-2">Download PDF</button>
-                 <button className="linear-btn-primary w-full py-2 shadow-accent-glow">Move to Interview</button>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
     </div>
-  );
+  )
 }

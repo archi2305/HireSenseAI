@@ -1,12 +1,39 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Default Dark Mode (Mixpanel Inspired) */
+  --bg-color: #030303;
+  --surface-color: #0f0f10;
+  --sidebar-color: #080808;
+  --border-color: #1a1a1c;
+  --text-color: #ffffff;
+  --text-secondary: #a1a1aa;
+  --accent-color: #7c3aed;
+  --accent-hover: #8b5cf6;
+  --accent-glow: rgba(124, 58, 237, 0.2);
+  --hover-color: rgba(255, 255, 255, 0.03);
+}
+
+:root.light {
+  --bg-color: #f7f7f9;
+  --surface-color: #ffffff;
+  --sidebar-color: #ffffff;
+  --border-color: #e5e7eb;
+  --text-color: #111827;
+  --text-secondary: #6b7280;
+  --accent-color: #6366f1;
+  --accent-hover: #4f46e5;
+  --accent-glow: rgba(99, 102, 241, 0.1);
+  --hover-color: rgba(0, 0, 0, 0.02);
+}
+
 @layer base {
   body {
-    @apply bg-theme-bg text-theme-text font-sans antialiased;
+    @apply bg-theme-bg text-theme-text font-sans antialiased transition-colors duration-500 overflow-x-hidden;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -17,64 +44,65 @@
 
 @layer components {
   .linear-card {
-    @apply bg-theme-surface border border-theme-border rounded-md shadow-linear transition-all duration-200;
+    @apply bg-theme-surface border border-theme-border rounded-xl shadow-premium transition-all duration-300;
   }
 
   .linear-input {
-    @apply bg-theme-bg border border-theme-border rounded-md px-3 py-1.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:outline-none transition-all duration-200;
+    @apply bg-theme-bg border border-theme-border rounded-lg px-4 py-2.5 text-sm text-theme-text placeholder:text-theme-textSecondary focus:border-theme-accent focus:ring-1 focus:ring-theme-accent/30 focus:outline-none transition-all duration-200;
   }
 
   .linear-btn-primary {
-    @apply px-4 py-1.5 bg-theme-accent text-white text-sm font-medium rounded-md hover:bg-theme-accentHover transition-all duration-200 shadow-sm active:scale-95;
+    @apply px-5 py-2.5 bg-theme-accent text-white text-sm font-semibold rounded-lg hover:bg-theme-accentHover transition-all duration-300 shadow-accent-glow active:scale-95;
   }
 
   .linear-btn-secondary {
-    @apply px-4 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-sm font-medium rounded-md hover:bg-theme-hover transition-all duration-200 shadow-sm active:scale-95;
+    @apply px-5 py-2.5 bg-theme-surface border border-theme-border text-theme-text text-sm font-semibold rounded-lg hover:bg-theme-hover transition-all duration-300 shadow-sm active:scale-95;
+  }
+
+  /* Mixpanel Styled Highlights */
+  .glow-text {
+    text-shadow: 0 0 15px var(--accent-glow);
+  }
+
+  .mesh-gradient {
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
   }
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: var(--border-color);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* Layered Depth Classes */
+.floating-layer {
+  @apply shadow-float transform-gpu;
 }
 
-/* Global Transitions */
-.page-transition-enter {
-  opacity: 0;
-  transform: translateY(4px);
+.backdrop-premium {
+  @apply backdrop-blur-xl bg-theme-surface/70;
 }
-.page-transition-enter-active {
+
+/* Scroll Animation Classes */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.visible {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
-}
-.page-transition-exit {
-  opacity: 1;
-  transform: translateY(0);
-}
-.page-transition-exit-active {
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity 200ms ease-in, transform 200ms ease-in;
 }
 
-/* Glass effect for panels */
-.glass-panel {
-  @apply bg-theme-bg/80 backdrop-blur-md border border-theme-border shadow-linear-lg;
-}
-
-/* Skeleton animation */
-.skeleton {
-  @apply bg-theme-border rounded-md animate-pulse;
+/* Premium Selection */
+::selection {
+  background: var(--accent-color);
+  color: white;
 }
