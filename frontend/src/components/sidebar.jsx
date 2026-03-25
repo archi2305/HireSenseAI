@@ -1,8 +1,6 @@
-import React, { useState, useRef, useEffect } from "react"
+import React from "react"
 import { LayoutDashboard, FileText, History, Settings, Target, User } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
-import { motion, LayoutGroup } from "framer-motion"
-import Tooltip from "./Tooltip"
 
 function Sidebar() {
   const location = useLocation()
@@ -16,155 +14,55 @@ function Sidebar() {
     { name: "Settings", path: "/settings", icon: Settings }
   ]
 
-  // Linear-inspired animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, x: -30 },
-    show: {
-      opacity: 1,
-      x: 0,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20, scale: 0.9 },
-    show: { 
-      opacity: 1, 
-      x: 0, 
-      scale: 1,
-      transition: { 
-        type: "spring", 
-        stiffness: 400, 
-        damping: 25,
-        mass: 0.8
-      } 
-    }
-  }
-
-  const logoVariants = {
-    hidden: { opacity: 0, scale: 0.8, rotate: -10 },
-    show: { 
-      opacity: 1, 
-      scale: 1, 
-      rotate: 0,
-      transition: { 
-        type: "spring", 
-        stiffness: 500, 
-        damping: 20
-      } 
-    }
-  }
-
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="w-72 h-full bg-white/70 backdrop-blur-md border-r border-white/50 flex flex-col p-6 shadow-glass z-30"
-    >
-      <motion.div 
-        variants={logoVariants}
-        className="mb-12 px-3 flex items-center gap-4"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <motion.div 
-          className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center shadow-card"
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
-        >
-          <FileText className="w-6 h-6 text-white" />
-        </motion.div>
-        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-indigo to-brand-purple tracking-tight">
+    <div className="w-[240px] h-full bg-[#f8fafc] flex flex-col p-4 z-30 transition-all duration-200">
+      <div className="mb-8 px-3 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-[#a5b4fc] flex items-center justify-center shadow-sm">
+          <FileText className="w-5 h-5 text-white" />
+        </div>
+        <h2 className="text-lg font-semibold text-slate-800 tracking-tight">
           HireSense
         </h2>
-      </motion.div>
+      </div>
 
-      <nav className="flex-1">
-        <LayoutGroup>
-          <ul className="space-y-3 relative">
-            {menu.map((item, index) => {
-              const Icon = item.icon
-              const isActive = location.pathname === item.path
+      <nav className="flex-1 mt-2">
+        <ul className="space-y-1">
+          {menu.map((item) => {
+            const Icon = item.icon
+            const isActive = location.pathname === item.path
 
-              return (
-                <motion.li 
-                  key={item.name} 
-                  variants={itemVariants}
-                  className="relative group"
-                  layout
+            return (
+              <li key={item.name}>
+                <Link
+                  to={item.path}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-[13px] font-medium
+                  ${isActive 
+                    ? "bg-white text-slate-900 shadow-sm border border-gray-200" 
+                    : "text-slate-500 hover:text-slate-900 hover:bg-gray-100 border border-transparent"
+                  }`}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebar-active"
-                      className="absolute inset-0 bg-gradient-to-r from-pastel-indigo to-pastel-purple border border-brand-indigo/20 rounded-2xl shadow-sm"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <Tooltip content={item.name}>
-                    <Link
-                      to={item.path}
-                      className={`relative z-10 flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium text-sm
-                      ${isActive 
-                        ? "text-brand-indigo" 
-                        : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
-                      }`}
-                    >
-                      <motion.div 
-                        whileHover={{ scale: 1.15, rotate: 5 }} 
-                        whileTap={{ scale: 0.9 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 20 }}
-                      >
-                        <Icon 
-                          size={20} 
-                          className={`transition-colors duration-300 ${isActive ? "text-brand-indigo" : "text-slate-400 group-hover:text-brand-indigo"}`} 
-                        />
-                      </motion.div>
-                      <span className="font-medium tracking-tight">{item.name}</span>
-                      
-                      {isActive && (
-                        <motion.div 
-                          layoutId="sidebar-dot"
-                          className="ml-auto w-2.5 h-2.5 rounded-full bg-gradient-to-r from-brand-indigo to-brand-purple shadow-sm" 
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                    </Link>
-                  </Tooltip>
-                </motion.li>
-              )
-            })}
-          </ul>
-        </LayoutGroup>
+                  <Icon 
+                    size={16} 
+                    className={`transition-colors duration-200 ${isActive ? "text-[#a5b4fc]" : "text-slate-400"}`} 
+                  />
+                  <span>{item.name}</span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       </nav>
       
-      <motion.div 
-        variants={itemVariants}
-        className="mt-auto pt-12"
-      >
-        <div className="p-6 bg-gradient-to-br from-pastel-indigo/50 to-pastel-purple/50 rounded-2xl border border-brand-indigo/20 text-center hover:shadow-card transition-all duration-300">
-          <motion.div 
-            className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center shadow-card"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ type: "spring", stiffness: 400, damping: 15 }}
-          >
-            <Target className="w-6 h-6 text-white" />
-          </motion.div>
-          <p className="text-sm font-semibold text-slate-700 mb-2 tracking-tight">Upgrade to Pro</p>
-          <p className="text-xs text-slate-500 mb-4 leading-relaxed">Get unlimited resume parsing and advanced analytics</p>
-          <motion.button 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-3 bg-gradient-to-r from-brand-indigo to-brand-purple text-white rounded-xl text-sm font-semibold shadow-card hover:shadow-card-hover transition-all duration-300"
-          >
+      <div className="mt-auto pt-6 px-1">
+        <div className="p-4 bg-white rounded-lg border border-gray-200 text-center shadow-sm transition-all duration-200 hover:border-[#a5b4fc]">
+          <p className="text-[13px] font-semibold text-slate-800 mb-1">Upgrade</p>
+          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">Unlimited resume parsing.</p>
+          <button className="w-full py-2 bg-[#f8fafc] text-slate-700 hover:bg-white hover:text-slate-900 border border-gray-200 rounded-md text-[12px] font-medium transition-all duration-200">
             View Plans
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
 

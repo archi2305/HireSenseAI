@@ -4,8 +4,8 @@ function SkillBadge({ label, type = "matched" }) {
 
   const styles =
     type === "missing"
-      ? "bg-softPink/20 text-rose-600 hover:bg-softPink/40"
-      : "bg-mint/20 text-emerald-700 hover:bg-mint/40"
+      ? "bg-brand-pink/20 text-error hover:bg-brand-pink/40"
+      : "bg-success/20 text-success-700 hover:bg-success/40"
 
   return (
     <span className={`${base} ${styles}`}>

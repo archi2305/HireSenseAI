@@ -45,17 +45,17 @@ function Layout() {
   ]
 
   return (
-    <div className="flex h-screen overflow-hidden bg-pastel-gradient">
+    <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-slate-800 font-sans">
       {/* SIDEBAR (Left) */}
       <Sidebar />
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col relative w-full h-full">
+      <div className="flex-1 flex flex-col relative w-full h-full bg-white rounded-tl-2xl border-t border-l border-gray-200 shadow-sm overflow-hidden my-2 mr-2">
         {/* HEADER (Top) */}
         <Header notifications={notifications} />
         
         {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto w-full">
           <PageTransition>
             <Outlet />
           </PageTransition>

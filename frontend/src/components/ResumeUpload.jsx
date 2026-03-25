@@ -97,11 +97,11 @@ function ResumeUpload({ setResult = () => {} }) {
             onDrop={handleDrop}
             className={`border-2 border-dashed p-12 rounded-2xl text-center transition-all duration-300 ${
               isDragging
-                ? "border-softPink bg-softPink/10"
-                : "border-slate-300 hover:border-lavender"
+                ? "border-brand-pink bg-brand-pink/10"
+                : "border-slate-300 hover:border-brand-purple"
             }`}
           >
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-softPink to-lavender flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-pink to-brand-purple flex items-center justify-center mx-auto mb-4">
               <Upload className="w-8 h-8 text-white" />
             </div>
 

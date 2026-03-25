@@ -51,7 +51,7 @@ function ATSResultCard({ result }) {
             </div>
 
             <div className="flex gap-4 items-start bg-slate-50 p-4 rounded-xl border border-slate-100/50">
-              <div className="bg-emerald-100 p-2.5 rounded-xl text-emerald-600 shadow-sm"><GraduationCap size={20} /></div>
+              <div className="bg-success/20 p-2.5 rounded-xl text-success shadow-sm"><GraduationCap size={20} /></div>
               <div>
                 <p className="text-sm font-semibold text-slate-700">Education</p>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">{result.parsed_education || "Bachelor's Degree or higher qualification detected."}</p>
@@ -79,7 +79,7 @@ function ATSResultCard({ result }) {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 relative">
            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-             <AlertTriangle size={18} className="text-rose-500" /> Missing Skills
+             <AlertTriangle size={18} className="text-error" /> Missing Skills
            </h3>
            <div className="flex flex-wrap gap-2 relative z-10">
              {missing.length === 0 ? (
