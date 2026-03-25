@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import ATSResultCard from "./ATSResultCard"
 
 import { useDashboard } from "../context/DashboardContext"
+import EmptyState from "./EmptyState"
 
 export default function CandidateTable({ limit, hideFilters }) {
   const { candidates: contextCandidates, loading: contextLoading } = useDashboard()

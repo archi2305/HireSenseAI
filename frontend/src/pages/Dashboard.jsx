@@ -1,12 +1,5 @@
-import React from "react"
-import { motion } from "framer-motion"
-import StatsCards from "../components/StatsCards"
-import AnalyticsCharts from "../components/AnalyticsCharts"
-import CandidateTable from "../components/CandidateTable"
-import ActivityFeed from "../components/ActivityFeed"
-import FilterBar from "../components/FilterBar"
-import InsightCards from "../components/InsightCards"
-import QuickActionPanel from "../components/QuickActionPanel"
+import { useNavigate } from "react-router-dom"
+import SectionReveal from "../components/SectionReveal"
 import { Sparkles, ArrowRight, Zap, Target, Search, Filter as FilterIcon, MoreHorizontal } from "lucide-react"
 
 export default function Dashboard() {
