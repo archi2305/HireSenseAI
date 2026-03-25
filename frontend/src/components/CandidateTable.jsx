@@ -8,29 +8,14 @@ import api from "../services/api"
 import { motion, AnimatePresence } from "framer-motion"
 import ATSResultCard from "./ATSResultCard"
 
+import { useDashboard } from "../context/DashboardContext"
+
 export default function CandidateTable({ limit, hideFilters }) {
-  const [candidates, setCandidates] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { candidates: contextCandidates, loading: contextLoading } = useDashboard()
   const [selectedCandidate, setSelectedCandidate] = useState(null)
   
-  useEffect(() => {
-    fetchCandidates()
-  }, [])
-
-  const fetchCandidates = async () => {
-    try {
-      const res = await api.get("/candidates")
-      setCandidates(limit ? res.data.slice(0, limit) : res.data)
-    } catch {
-      setCandidates([
-        { id: 1, name: "Archis Nehi", role: "Software Engineer", score: 92, status: "Top Match", email: "archis@example.com", phone: "+91 9876543210", location: "Bangalore, IN" },
-        { id: 2, name: "Sarah Connor", role: "Frontend Developer", score: 88, status: "Strong", email: "sarah@example.com", phone: "+1 234 567 890", location: "Los Angeles, US" },
-        { id: 3, name: "John Wick", role: "Security Architect", score: 95, status: "Critical", email: "john@example.com", phone: "+1 000 000 000", location: "New York, US" },
-      ])
-    } finally {
-      setLoading(false)
-    }
-  }
+  const displayCandidates = limit ? contextCandidates.slice(0, limit) : contextCandidates
+  const loading = contextLoading && displayCandidates.length === 0
 
   return (
     <div className="relative w-full">
@@ -70,7 +55,7 @@ export default function CandidateTable({ limit, hideFilters }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-theme-border/40">
-            {candidates.map((candidate, idx) => (
+            {displayCandidates.map((candidate, idx) => (
               <motion.tr
                 key={candidate.id}
                 initial={{ opacity: 0, x: -10 }}
