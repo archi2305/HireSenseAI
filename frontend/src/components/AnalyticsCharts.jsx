@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   LineChart, Line, BarChart, Bar,
   PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
+  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import { useDashboard } from '../context/DashboardContext';
 import { motion } from 'framer-motion';
@@ -169,7 +169,7 @@ export default function AnalyticsCharts() {
                   dx={-10}
                   animationDuration={1000}
                 />
-                <Tooltip 
+                <RechartsTooltip 
                   contentStyle={{
                     borderRadius: '16px', 
                     border: 'none', 
@@ -242,7 +242,7 @@ export default function AnalyticsCharts() {
                   axisLine={false}
                   animationDuration={1000}
                 />
-                <Tooltip 
+                <RechartsTooltip 
                   cursor={{fill: '#f8fafc'}} 
                   contentStyle={{
                     borderRadius: '16px', 
@@ -322,7 +322,7 @@ export default function AnalyticsCharts() {
                     return <Cell key={`cell-${index}`} fill={color} />;
                   })}
                 </Pie>
-                <Tooltip 
+                <RechartsTooltip 
                   contentStyle={{
                     borderRadius: '16px', 
                     border: 'none', 
