@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter, Eye, Download, Trash2, ArrowUpDown, X } from 'lucide-react';
 import { useDashboard } from '../context/DashboardContext';
 import ATSResultCard from './ATSResultCard';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -44,7 +45,7 @@ export default function CandidateTable() {
   });
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col mt-6">
+    <div className="bg-white/70 backdrop-blur-xl p-6 rounded-[24px] shadow-sm border border-white/60 flex flex-col mt-6 hover:shadow-soft transition-shadow duration-300">
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h3 className="text-lg font-bold text-slate-800">Candidate Pipeline</h3>
@@ -106,7 +107,14 @@ export default function CandidateTable() {
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <motion.tbody
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: { opacity: 0 },
+              show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+            }}
+          >
             {loading ? (
               [1, 2, 3].map(i => (
                 <tr key={i} className="border-b border-slate-100">
@@ -131,44 +139,48 @@ export default function CandidateTable() {
               </tr>
             ) : (
                 sortedCandidates.map((c) => (
-                    <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group">
-                      <td className="py-3 px-4 font-medium text-slate-800">{c.name}</td>
-                      <td className="py-3 px-4 text-slate-600">{c.role}</td>
+                    <motion.tr 
+                      key={c.id} 
+                      variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                      className="border-b border-slate-100/50 hover:bg-white/50 transition-colors group"
+                    >
+                      <td className="py-3 px-4 font-semibold text-slate-800">{c.name}</td>
+                      <td className="py-3 px-4 text-slate-500 font-medium">{c.role}</td>
                       <td className="py-3 px-4">
                         <div className="flex flex-col items-start gap-1">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold shadow-sm border ${c.ats_score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : c.ats_score >= 60 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold shadow-sm border ${c.ats_score >= 80 ? 'bg-mint/40 border-mint text-emerald-800' : c.ats_score >= 60 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-softPink/40 border-softPink text-rose-800'}`}>
                             {c.ats_score}% Match
                           </span>
-                          <span className="text-[10px] text-slate-500 font-medium">({c.skills.length} skills matched)</span>
+                          <span className="text-[10px] text-slate-400 font-medium">({c.skills.length} skills matched)</span>
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap gap-1">
                           {c.skills.slice(0, 3).map((s, i) => (
-                            <span key={i} className="bg-slate-100 border border-slate-200 text-slate-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md">{s}</span>
+                            <span key={i} className="bg-slate-50 border border-slate-100/50 text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md shadow-sm">{s}</span>
                           ))}
-                          {c.skills.length > 3 && <span className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-md">+{c.skills.length - 3}</span>}
+                          {c.skills.length > 3 && <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md">+{c.skills.length - 3}</span>}
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-[11px] uppercase tracking-wide font-bold rounded-md ${c.status === 'High Match' ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : c.status === 'Good Match' ? 'bg-amber-50 border border-amber-100 text-amber-700' : 'bg-rose-50 border border-rose-100 text-rose-700'}`}>
+                        <span className={`px-2 py-1 flex w-max text-[10px] uppercase tracking-wide font-extrabold rounded-md shadow-sm ${c.status === 'High Match' ? 'bg-mint text-emerald-900 border border-mint/50' : c.status === 'Good Match' ? 'bg-amber-100 border border-amber-200 text-amber-800' : 'bg-softPink border border-softPink/50 text-rose-900'}`}>
                           {c.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-xs font-medium text-slate-500">
+                      <td className="py-3 px-4 text-xs font-medium text-slate-400">
                         {new Date(c.date).toLocaleString("en-IN", { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setViewCandidate(c)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View details"><Eye size={18} /></button>
-                          <button onClick={() => handleDownload(c.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Download resume"><Download size={18} /></button>
-                          <button onClick={() => { if(window.confirm("Are you sure you want to delete this candidate?")) removeCandidate(c.id) }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete candidate"><Trash2 size={18} /></button>
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setViewCandidate(c)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-colors shadow-sm bg-white" title="View details"><Eye size={18} /></motion.button>
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => handleDownload(c.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-slate-50 rounded-lg transition-colors shadow-sm bg-white" title="Download resume"><Download size={18} /></motion.button>
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => { if(window.confirm("Are you sure you want to delete this candidate?")) removeCandidate(c.id) }} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg transition-colors shadow-sm bg-white" title="Delete candidate"><Trash2 size={18} /></motion.button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                 ))
             )}
-          </tbody>
+          </motion.tbody>
         </table>
       </div>
 
