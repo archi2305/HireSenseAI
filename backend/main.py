@@ -58,23 +58,10 @@ app.add_middleware(
     secret_key=os.environ.get("SESSION_SECRET", "super-secret-default")
 )
 
-# Dynamic CORS Setup for Vercel + Localhost Dual Config
-frontend_url = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
-origins = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "http://127.0.0.1:5174",
-    "http://localhost:5174",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-]
-if frontend_url:
-    origins.append(frontend_url)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -150,6 +137,11 @@ async def upload_resume(
         shutil.copyfileobj(uploaded_file.file, buffer)
 
     max_size_bytes = 10 * 1024 * 1024
+    file_size = os.path.getsize(file_path)
+    print(
+        f"[upload] file debug: exists={os.path.exists(file_path)} "
+        f"name={uploaded_file.filename} size={file_size}"
+    )
     if os.path.getsize(file_path) > max_size_bytes:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -187,6 +179,7 @@ async def upload_resume(
         db.refresh(db_analysis)
 
         return {
+            "message": "success",
             "id": db_analysis.id,
             "ats_score": db_analysis.ats_score,
             "matched_skills": db_analysis.matched_skills,

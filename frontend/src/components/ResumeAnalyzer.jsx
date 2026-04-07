@@ -1,23 +1,23 @@
 import React, { useState } from "react"
 import { Upload, FileText, CheckCircle, Target, Zap, ArrowRight, Brain, Search, Sparkles } from "lucide-react"
-import api from "../services/api"
 import toast from "react-hot-toast"
 import ATSResultCard from "./ATSResultCard"
 import { motion, AnimatePresence } from "framer-motion"
 import SectionReveal from "./SectionReveal"
 
 export default function ResumeAnalyzer() {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
   const [file, setFile] = useState(null)
   const [jobDescription, setJobDescription] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
   const getUploadErrorMessage = (error) => {
-    const status = error?.response?.status
-    const detail = error?.response?.data?.detail
+    const status = error?.status
+    const detail = error?.data?.detail
     const code = typeof detail === "object" ? detail?.code : undefined
 
-    if (!error?.response) return "Server error"
+    if (!error) return "Server error"
     if (code === "NO_FILE_SELECTED") return "No file selected"
     if (code === "INVALID_FILE_FORMAT" || status === 415) return "Unsupported file type"
     if (code === "FILE_UPLOAD_FAILED" || status === 422) {
@@ -41,23 +41,36 @@ export default function ResumeAnalyzer() {
     setLoading(true)
     const formData = new FormData()
     formData.append("file", file)
-    formData.append("resume", file)
     formData.append("role", "Not specified")
     formData.append("job_description", jobDescription)
-    formData.append("job_role", "Not specified")
+    console.log("[upload] API URL:", `${API_URL}/api/analyze`)
+    for (const [key, value] of formData.entries()) {
+      const debugValue =
+        value instanceof File
+          ? `${value.name} (${value.type || "unknown-type"}, ${value.size} bytes)`
+          : value
+      console.log(`[upload] FormData ${key}:`, debugValue)
+    }
 
     try {
-      const res = await api.post("/analyze", formData, {
-        timeout: 90000,
+      const response = await fetch(`${API_URL}/api/analyze`, {
+        method: "POST",
+        body: formData,
       })
-      console.log("[upload] analyze response:", res.data)
-      setResult(res.data)
-      if (res.data?.warning) {
-        toast.error(res.data.warning)
+      const data = await response.json().catch(() => ({}))
+      console.log("[upload] analyze response status:", response.status)
+      console.log("[upload] analyze response body:", data)
+      if (!response.ok) {
+        throw { status: response.status, data }
+      }
+
+      setResult(data)
+      if (data?.warning) {
+        toast.error(data.warning)
       }
       toast.success("Analysis synchronized.")
     } catch (error) {
-      console.error("[upload] analyze error:", error?.response?.data || error)
+      console.error("[upload] analyze error:", error?.data || error)
       toast.error(getUploadErrorMessage(error))
     } finally {
       setLoading(false)
