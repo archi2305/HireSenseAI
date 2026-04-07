@@ -105,13 +105,28 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 @app.post("/api/analyze")
 @app.post("/api/analyze-resume")
 async def upload_resume(
-    resume: UploadFile = File(...),
+    file: UploadFile = File(None),
+    resume: UploadFile = File(None),
+    role: str = Form(""),
     job_description: str = Form(""),
     job_role: str = Form(""),
     db: Session = Depends(get_db)
 ):
+    uploaded_file = file or resume
+    effective_role = role or job_role or "Not specified"
+    print(
+        f"[upload] analyze request received: filename={getattr(uploaded_file, 'filename', None)} "
+        f"role={effective_role}"
+    )
+
+    if uploaded_file is None:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "NO_FILE_SELECTED", "message": "No file selected."},
+        )
+
     allowed_extensions = {".pdf", ".docx"}
-    file_ext = os.path.splitext((resume.filename or "").lower())[1]
+    file_ext = os.path.splitext((uploaded_file.filename or "").lower())[1]
     if file_ext not in allowed_extensions:
         raise HTTPException(
             status_code=400,
@@ -121,21 +136,30 @@ async def upload_resume(
             },
         )
 
-    if not resume.filename:
+    if not uploaded_file.filename:
         raise HTTPException(
             status_code=400,
-            detail={"code": "FILE_UPLOAD_FAILED", "message": "File upload failed."},
+            detail={"code": "NO_FILE_SELECTED", "message": "No file selected."},
         )
 
-    file_ext = os.path.splitext(resume.filename)[1]
+    file_ext = os.path.splitext(uploaded_file.filename)[1]
     unique_filename = f"{uuid.uuid4().hex}{file_ext}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
     
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(resume.file, buffer)
+        shutil.copyfileobj(uploaded_file.file, buffer)
+
+    max_size_bytes = 10 * 1024 * 1024
+    if os.path.getsize(file_path) > max_size_bytes:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "FILE_TOO_LARGE", "message": "File exceeds 10MB limit."},
+        )
         
     try:
-        resume_text = extract_text_from_file(file_path, resume.filename)
+        resume_text = extract_text_from_file(file_path, uploaded_file.filename)
         parsing_warning = None
         if not resume_text.strip():
             # Some valid PDFs (image/scanned/exported variants) may not yield text extraction.
@@ -149,8 +173,8 @@ async def upload_resume(
         suggestions = generate_suggestions(resume_text, jd, missing_skills)
 
         db_analysis = ResumeAnalysis(
-            resume_name=resume.filename or "uploaded_resume",
-            job_role=job_role or "Not specified",
+            resume_name=uploaded_file.filename or "uploaded_resume",
+            job_role=effective_role,
             ats_score=ats_score,
             matched_skills=matched_skills,
             missing_skills=missing_skills,
@@ -176,7 +200,8 @@ async def upload_resume(
         if os.path.exists(file_path):
             os.remove(file_path)
         raise
-    except Exception:
+    except Exception as e:
+        print(f"[upload] analyze failed: {e}")
         if os.path.exists(file_path):
             os.remove(file_path)
         raise HTTPException(

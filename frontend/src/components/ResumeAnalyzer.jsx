@@ -17,39 +17,47 @@ export default function ResumeAnalyzer() {
     const detail = error?.response?.data?.detail
     const code = typeof detail === "object" ? detail?.code : undefined
 
-    if (!error?.response) return "Server not responding"
-    if (code === "INVALID_FILE_FORMAT" || status === 415) return "Invalid file format"
-    if (code === "FILE_UPLOAD_FAILED" || status === 400 || status === 422) {
+    if (!error?.response) return "Server error"
+    if (code === "NO_FILE_SELECTED") return "No file selected"
+    if (code === "INVALID_FILE_FORMAT" || status === 415) return "Unsupported file type"
+    if (code === "FILE_UPLOAD_FAILED" || status === 422) {
       return "File upload failed"
     }
-    if (status >= 500 || code === "SERVER_ERROR") return "Server not responding"
+    if (status >= 500 || code === "SERVER_ERROR") return "Server error"
     return "File upload failed"
   }
 
   const handleUpload = async (e) => {
     e.preventDefault()
-    if (!file || !jobDescription) return toast.error("Intelligence required.")
+    if (!file) return toast.error("No file selected")
+    if (!jobDescription) return toast.error("Intelligence required.")
     const fileName = (file.name || "").toLowerCase()
     const isPdf = fileName.endsWith(".pdf")
     const isDocx = fileName.endsWith(".docx")
     if (!isPdf && !isDocx) {
-      return toast.error("Invalid file format")
+      return toast.error("Unsupported file type")
     }
 
     setLoading(true)
     const formData = new FormData()
+    formData.append("file", file)
     formData.append("resume", file)
+    formData.append("role", "Not specified")
     formData.append("job_description", jobDescription)
     formData.append("job_role", "Not specified")
 
     try {
-      const res = await api.post("/analyze-resume", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await api.post("/analyze", formData, {
         timeout: 90000,
       })
+      console.log("[upload] analyze response:", res.data)
       setResult(res.data)
+      if (res.data?.warning) {
+        toast.error(res.data.warning)
+      }
       toast.success("Analysis synchronized.")
     } catch (error) {
+      console.error("[upload] analyze error:", error?.response?.data || error)
       toast.error(getUploadErrorMessage(error))
     } finally {
       setLoading(false)
