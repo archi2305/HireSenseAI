@@ -10,7 +10,8 @@ const InputField = ({
   icon: Icon,
   error,
   success,
-  disabled
+  disabled,
+  className = "",
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -57,6 +58,7 @@ const InputField = ({
             peer
             ${Icon ? "pl-11" : ""}
             ${stateClasses}
+            ${className}
           `}
           placeholder=" "
         />

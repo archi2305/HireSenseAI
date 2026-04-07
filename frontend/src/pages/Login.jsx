@@ -114,10 +114,24 @@ function Login() {
 
             <div className="flex gap-3 mb-8 relative z-10">
               <div className="flex-1">
-                <SocialButton icon={GoogleIcon} text="Google" provider="Google" onClick={() => handleSocialLogin('Google')} disabled={loading} />
+                <SocialButton
+                  icon={GoogleIcon}
+                  text="Google"
+                  provider="Google"
+                  onClick={() => handleSocialLogin("Google")}
+                  disabled={loading}
+                  className="!rounded-2xl !border-white/70 !bg-white/75 !text-slate-700 hover:!bg-white hover:!shadow-md hover:!border-indigo-200"
+                />
               </div>
               <div className="flex-1">
-                <SocialButton icon={GithubIcon} text="GitHub" provider="GitHub" onClick={() => handleSocialLogin('GitHub')} disabled={loading} />
+                <SocialButton
+                  icon={GithubIcon}
+                  text="GitHub"
+                  provider="GitHub"
+                  onClick={() => handleSocialLogin("GitHub")}
+                  disabled={loading}
+                  className="!rounded-2xl !border-white/70 !bg-white/75 !text-slate-700 hover:!bg-white hover:!shadow-md hover:!border-indigo-200"
+                />
               </div>
             </div>
 
@@ -137,6 +151,7 @@ function Login() {
                   value={formData.email}
                   onChange={handleChange}
                   error={errors.email}
+                  className="!rounded-2xl !border-white/70 !bg-white/80 focus:!ring-indigo-200/60 focus:!border-indigo-300"
                 />
 
                 <InputField
@@ -147,6 +162,7 @@ function Login() {
                   value={formData.password}
                   onChange={handleChange}
                   error={errors.password}
+                  className="!rounded-2xl !border-white/70 !bg-white/80 focus:!ring-indigo-200/60 focus:!border-indigo-300"
                 />
               </div>
 

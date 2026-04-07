@@ -1,6 +1,6 @@
 import React from "react";
 
-const SocialButton = ({ icon: Icon, provider, text, onClick, disabled }) => {
+const SocialButton = ({ icon: Icon, provider, text, onClick, disabled, className = "" }) => {
   return (
     <button
       type="button"
@@ -13,6 +13,7 @@ const SocialButton = ({ icon: Icon, provider, text, onClick, disabled }) => {
         hover:border-pastelBlue/60 hover:bg-slate-50 hover:shadow hover:-translate-y-0.5
         focus:outline-none focus:ring-4 focus:ring-pastelBlue/20
         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm
+        ${className}
       `}
     >
       <Icon className="w-5 h-5 text-slate-700" />
