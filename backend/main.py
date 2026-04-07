@@ -136,13 +136,12 @@ async def upload_resume(
         
     try:
         resume_text = extract_text_from_file(file_path, resume.filename)
+        parsing_warning = None
         if not resume_text.strip():
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "code": "FILE_UPLOAD_FAILED",
-                    "message": "File upload failed. Could not read resume content.",
-                },
+            # Some valid PDFs (image/scanned/exported variants) may not yield text extraction.
+            # Continue analysis with empty text instead of failing upload.
+            parsing_warning = (
+                "Resume text could not be extracted fully. Results may be less accurate."
             )
         jd = job_description or "Provide a comprehensive matching score based on standard industry skills."
         
@@ -170,6 +169,7 @@ async def upload_resume(
             "missing_skills": db_analysis.missing_skills,
             "suggestions": db_analysis.suggestions,
             "created_at": db_analysis.created_at,
+            "warning": parsing_warning,
         }
 
     except HTTPException:
