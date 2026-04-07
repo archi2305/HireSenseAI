@@ -49,7 +49,51 @@ export const AuthProvider = ({ children }) => {
       });
       return true;
     } catch (error) {
-      console.error("Dev login failed", error);
+      console.error("Dev login failed, trying fallback flow", error);
+      const status = error?.response?.status;
+      const demoEmail = "demo@hiresense.local";
+      const demoPassword = "demo123456";
+
+      // Backward-compatible fallback for older backends without /auth/dev-login
+      if (status === 404) {
+        try {
+          await api.post("/auth/signup", {
+            fullname: "Demo User",
+            email: demoEmail,
+            password: demoPassword,
+          });
+        } catch (signupError) {
+          const detail = signupError?.response?.data?.detail;
+          // Ignore "already registered" and proceed to login
+          if (
+            !(signupError?.response?.status === 400 && detail === "Email already registered")
+          ) {
+            console.error("Demo fallback signup failed", signupError);
+          }
+        }
+
+        try {
+          const loginResponse = await api.post("/auth/login", {
+            email: demoEmail,
+            password: demoPassword,
+          });
+          const { access_token } = loginResponse.data;
+          localStorage.setItem("token", access_token);
+          localStorage.setItem("isAuthenticated", "true");
+          await checkUser();
+          toast.success("Signed in as demo user", {
+            style: {
+              background: "#f0fdf4",
+              color: "#166534",
+              border: "1px solid #bbf7d0",
+            },
+          });
+          return true;
+        } catch (fallbackLoginError) {
+          console.error("Demo fallback login failed", fallbackLoginError);
+        }
+      }
+
       toast.error(error.response?.data?.detail || "Demo login failed", {
         style: {
           background: "#fef2f2",
