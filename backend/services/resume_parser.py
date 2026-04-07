@@ -1,4 +1,5 @@
 import pdfplumber
+from PyPDF2 import PdfReader
 from docx import Document
 
 def extract_text_from_pdf(file_source):
@@ -11,6 +12,20 @@ def extract_text_from_pdf(file_source):
                     text += page_text + "\n"
     except Exception as e:
         print(f"PDF parsing error:", e)
+
+    # Fallback parser for PDFs that pdfplumber cannot read reliably.
+    if text.strip():
+        return text
+
+    try:
+        reader = PdfReader(file_source)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    except Exception as e:
+        print("PyPDF2 fallback parsing error:", e)
+
     return text
 
 

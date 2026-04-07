@@ -135,8 +135,7 @@ async def upload_resume(
         shutil.copyfileobj(resume.file, buffer)
         
     try:
-        resume.file.seek(0)
-        resume_text = extract_text_from_file(resume.file, resume.filename)
+        resume_text = extract_text_from_file(file_path, resume.filename)
         if not resume_text.strip():
             raise HTTPException(
                 status_code=422,
