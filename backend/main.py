@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from services.skill_matcher import calculate_ats_score
 from services.suggestion_engine import generate_suggestions
-from services.resume_parser import extract_text_from_pdf
+from services.resume_parser import extract_text_from_pdf, extract_text_from_file
 
 import shutil
 import uuid
@@ -65,6 +65,8 @@ origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5174",
     "http://localhost:5174",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
 ]
 if frontend_url:
     origins.append(frontend_url)
@@ -98,13 +100,33 @@ UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/analyze")
+@app.post("/analyze-resume")
 @app.post("/upload-resume")
+@app.post("/api/analyze")
+@app.post("/api/analyze-resume")
 async def upload_resume(
     resume: UploadFile = File(...),
     job_description: str = Form(""),
     job_role: str = Form(""),
     db: Session = Depends(get_db)
 ):
+    allowed_extensions = {".pdf", ".docx"}
+    file_ext = os.path.splitext((resume.filename or "").lower())[1]
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "INVALID_FILE_FORMAT",
+                "message": "Invalid file format. Please upload PDF or DOCX.",
+            },
+        )
+
+    if not resume.filename:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "FILE_UPLOAD_FAILED", "message": "File upload failed."},
+        )
+
     file_ext = os.path.splitext(resume.filename)[1]
     unique_filename = f"{uuid.uuid4().hex}{file_ext}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
@@ -114,7 +136,15 @@ async def upload_resume(
         
     try:
         resume.file.seek(0)
-        resume_text = extract_text_from_pdf(resume.file)
+        resume_text = extract_text_from_file(resume.file, resume.filename)
+        if not resume_text.strip():
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "FILE_UPLOAD_FAILED",
+                    "message": "File upload failed. Could not read resume content.",
+                },
+            )
         jd = job_description or "Provide a comprehensive matching score based on standard industry skills."
         
         ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
@@ -143,10 +173,17 @@ async def upload_resume(
             "created_at": db_analysis.created_at,
         }
 
-    except Exception as e:
+    except HTTPException:
         if os.path.exists(file_path):
             os.remove(file_path)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise
+    except Exception:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(
+            status_code=500,
+            detail={"code": "SERVER_ERROR", "message": "Server not responding."},
+        )
 
 
 @app.post("/bulk-upload")

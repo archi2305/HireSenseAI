@@ -30,6 +30,7 @@ PyJWT==2.12.1
 PyPDF2==3.0.1
 pypdfium2==5.6.0
 python-dotenv==1.2.2
+python-docx==1.2.0
 python-multipart==0.0.22
 scikit-learn==1.8.0
 scipy==1.17.1
