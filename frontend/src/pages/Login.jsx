@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Mail, Lock, BrainCircuit, Zap, Sparkles, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 
 import InputField from "../components/InputField";
@@ -78,119 +78,111 @@ function Login() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-theme-bg font-sans transition-colors duration-500">
-      
-      {/* Premium Mixpanel Background */}
-      <div className="absolute inset-0 mesh-gradient opacity-60"></div>
-      
-      {/* Floating Background Effects */}
-      <div className="absolute top-[-10%] left-[-5%] w-[40vw] h-[40vw] rounded-full bg-theme-accent/5 blur-[120px] animate-pulse-glow"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[45vw] h-[45vw] rounded-full bg-blue-500/5 blur-[120px] animate-pulse-glow" style={{ animationDelay: '2s' }}></div>
+    <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-gradient-to-br from-[#f4ecff] via-[#edf4ff] to-[#e6f6ff] font-sans">
+      <div className="pointer-events-none absolute -top-28 -left-16 h-72 w-72 rounded-full bg-[#d7c7ff]/45 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-12 h-80 w-80 rounded-full bg-[#9ed5ff]/40 blur-3xl" />
 
       <SectionReveal direction="down">
-        <div className="w-full max-w-[440px] relative z-10 flex flex-col items-center">
-          
-          <div className="flex flex-col items-center justify-center mb-10">
-            <div className="w-16 h-16 rounded-2xl bg-theme-accent flex items-center justify-center text-white shadow-accent-glow transform hover:scale-105 transition-all duration-500 group relative overflow-hidden">
-               <Zap size={28} fill="white" className="relative z-10" />
-               <motion.div 
-                  animate={{ x: ['100%', '-100%'] }}
-                  transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                  className="absolute inset-0 bg-white/20 skew-x-12"
-               />
+        <div className="w-full max-w-[460px] relative z-10 flex flex-col items-center">
+          <div className="flex flex-col items-center justify-center mb-8">
+            <div className="w-14 h-14 rounded-2xl bg-white/75 border border-white/80 flex items-center justify-center text-indigo-500 shadow-[0_12px_30px_rgba(90,95,180,.16)]">
+              <Sparkles size={22} />
             </div>
-            <h1 className="mt-4 text-[24px] font-black text-theme-text tracking-tighter leading-none italic uppercase">
-              HireSense <span className="text-theme-accent">AI</span>
+            <h1 className="mt-4 text-[30px] font-extrabold text-slate-900 tracking-tight leading-none">
+              HireSense{" "}
+              <span className="bg-gradient-to-r from-violet-600 to-sky-500 bg-clip-text text-transparent">
+                AI
+              </span>
             </h1>
-            <div className="mt-2 flex items-center gap-2">
-               <div className="w-1.5 h-1.5 rounded-full bg-theme-accent animate-pulse" />
-               <span className="text-[10px] text-theme-textSecondary font-black uppercase tracking-[0.2em]">Intelligence Protocol 4.0</span>
+            <div className="mt-2 flex items-center gap-2 text-slate-500">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                Interview-ready workspace
+              </span>
             </div>
           </div>
 
-          <div className="w-full linear-card p-10 backdrop-premium border-theme-accent/10 relative overflow-hidden">
-            {/* Background shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-theme-accent/5 via-transparent to-transparent pointer-events-none" />
-            
+          <div className="w-full p-8 md:p-10 rounded-3xl border border-white/55 bg-white/55 backdrop-blur-xl shadow-[0_30px_90px_rgba(99,102,241,.18)] relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-tr from-violet-200/20 via-white/5 to-sky-200/20 pointer-events-none" />
+
             <div className="text-center mb-8 relative z-10">
-              <h2 className="text-[24px] font-black text-theme-text tracking-tight mb-1">Welcome Back</h2>
-              <p className="text-theme-textSecondary text-[13px] font-medium italic opacity-70">Initialize recruitment synchronization.</p>
+              <h2 className="text-[30px] font-bold text-slate-900 tracking-tight mb-1">Welcome back</h2>
+              <p className="text-slate-600 text-[14px] font-medium">
+                Sign in to continue hiring with intelligence.
+              </p>
             </div>
 
             <div className="flex gap-3 mb-8 relative z-10">
               <div className="flex-1">
-                <SocialButton icon={GoogleIcon} text="Google" provider="Google" onClick={() => handleSocialLogin('Google')} disabled={loading} className="!bg-theme-bg !border-theme-border hover:!border-theme-accent/30 !text-theme-text" />
+                <SocialButton icon={GoogleIcon} text="Google" provider="Google" onClick={() => handleSocialLogin('Google')} disabled={loading} />
               </div>
               <div className="flex-1">
-                <SocialButton icon={GithubIcon} text="GitHub" provider="GitHub" onClick={() => handleSocialLogin('GitHub')} disabled={loading} className="!bg-theme-bg !border-theme-border hover:!border-theme-accent/30 !text-theme-text" />
+                <SocialButton icon={GithubIcon} text="GitHub" provider="GitHub" onClick={() => handleSocialLogin('GitHub')} disabled={loading} />
               </div>
             </div>
 
-            <div className="mb-8 flex items-center gap-4 opacity-30 relative z-10">
-              <div className="flex-1 h-px bg-theme-border"></div>
-              <span className="text-[10px] font-black text-theme-text uppercase tracking-widest">Or</span>
-              <div className="flex-1 h-px bg-theme-border"></div>
+            <div className="mb-8 flex items-center gap-4 relative z-10">
+              <div className="flex-1 h-px bg-slate-200/70"></div>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.16em]">or</span>
+              <div className="flex-1 h-px bg-slate-200/70"></div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
               <div className="space-y-4">
                 <InputField
-                  label="Email Identifier"
+                  label="Email address"
                   type="email"
                   name="email"
                   icon={Mail}
                   value={formData.email}
                   onChange={handleChange}
                   error={errors.email}
-                  className="!linear-input !bg-theme-bg"
                 />
 
                 <InputField
-                  label="Security Key"
+                  label="Password"
                   type="password"
                   name="password"
                   icon={Lock}
                   value={formData.password}
                   onChange={handleChange}
                   error={errors.password}
-                  className="!linear-input !bg-theme-bg"
                 />
               </div>
 
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-2 cursor-pointer group">
-                  <input type="checkbox" className="w-4 h-4 rounded-md border-theme-border bg-theme-bg text-theme-accent focus:ring-theme-accent/30 transition-all" />
-                  <span className="text-xs font-bold text-theme-textSecondary group-hover:text-theme-text transition-colors italic">Stay Persistent</span>
+                  <input type="checkbox" className="w-4 h-4 rounded-md border-slate-300 bg-white/80 text-indigo-500 focus:ring-indigo-300/60 transition-all" />
+                  <span className="text-xs font-medium text-slate-500 group-hover:text-slate-700 transition-colors">Keep me signed in</span>
                 </label>
-                <Link to="/forgot-password" size="sm" className="text-xs font-black text-theme-accent hover:underline uppercase tracking-widest">
-                  Reset Link?
+                <Link to="/forgot-password" size="sm" className="text-xs font-semibold text-indigo-500 hover:underline tracking-wide">
+                  Forgot password?
                 </Link>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="linear-btn-primary w-full py-4 shadow-accent-glow flex items-center justify-center gap-3 group relative overflow-hidden"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-sky-500 text-white shadow-[0_14px_34px_rgba(99,102,241,.36)] hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(59,130,246,.38)] transition-all duration-300 flex items-center justify-center gap-3 font-semibold tracking-wide relative overflow-hidden group"
               >
                 <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
                 {loading ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    <span className="text-[14px] font-black uppercase tracking-widest">Verifying...</span>
+                    <span className="text-[14px] font-semibold">Verifying...</span>
                   </>
                 ) : (
                   <>
-                    <Zap size={16} fill="white" />
-                    <span className="text-[14px] font-black uppercase tracking-widest">Access Workspace</span>
+                    <span className="text-[14px] font-semibold">Access Workspace</span>
                   </>
                 )}
               </button>
             </form>
 
-            <p className="text-center text-[12px] font-medium text-theme-textSecondary mt-10 relative z-10">
-              No access credentials?{" "}
-              <Link to="/signup" className="font-black text-theme-accent hover:underline uppercase tracking-widest ml-1">
-                Register Source
+            <p className="text-center text-[12px] font-medium text-slate-500 mt-8 relative z-10">
+              New to HireSense?{" "}
+              <Link to="/signup" className="font-semibold text-indigo-500 hover:underline ml-1">
+                Create account
               </Link>
             </p>
           </div>
