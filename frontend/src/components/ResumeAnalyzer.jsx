@@ -12,21 +12,45 @@ export default function ResumeAnalyzer() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
+  const getUploadErrorMessage = (error) => {
+    const status = error?.response?.status
+    const detail = error?.response?.data?.detail
+    const code = typeof detail === "object" ? detail?.code : undefined
+
+    if (!error?.response) return "Server not responding"
+    if (code === "INVALID_FILE_FORMAT" || status === 415) return "Invalid file format"
+    if (code === "FILE_UPLOAD_FAILED" || status === 400 || status === 422) {
+      return "File upload failed"
+    }
+    if (status >= 500 || code === "SERVER_ERROR") return "Server not responding"
+    return "File upload failed"
+  }
+
   const handleUpload = async (e) => {
     e.preventDefault()
     if (!file || !jobDescription) return toast.error("Intelligence required.")
+    const fileName = (file.name || "").toLowerCase()
+    const isPdf = fileName.endsWith(".pdf")
+    const isDocx = fileName.endsWith(".docx")
+    if (!isPdf && !isDocx) {
+      return toast.error("Invalid file format")
+    }
 
     setLoading(true)
     const formData = new FormData()
     formData.append("resume", file)
     formData.append("job_description", jobDescription)
+    formData.append("job_role", "Not specified")
 
     try {
-      const res = await api.post("/analyze-resume", formData)
+      const res = await api.post("/analyze-resume", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 90000,
+      })
       setResult(res.data)
       toast.success("Analysis synchronized.")
-    } catch {
-      toast.error("Cloud synchronization failed.")
+    } catch (error) {
+      toast.error(getUploadErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -77,7 +101,7 @@ export default function ResumeAnalyzer() {
                      <h3 className="text-[13px] font-black text-theme-text uppercase tracking-widest">Candidate Payload</h3>
                   </div>
                   <label className="flex flex-col items-center justify-center border-2 border-dashed border-theme-border/60 rounded-2xl p-8 bg-theme-bg/20 hover:bg-theme-accent/[0.03] hover:border-theme-accent/30 transition-all duration-500 cursor-pointer group/upload">
-                    <input type="file" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
+                    <input type="file" accept=".pdf,.docx" className="hidden" onChange={(e) => setFile(e.target.files[0])} />
                     <div className="w-12 h-12 rounded-xl bg-theme-surface border border-theme-border flex items-center justify-center text-theme-textSecondary group-hover/upload:text-theme-accent group-hover/upload:shadow-accent-glow transition-all duration-500 mb-4">
                        <FileText size={24} />
                     </div>
