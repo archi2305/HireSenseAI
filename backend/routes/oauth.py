@@ -47,14 +47,14 @@ oauth.register(
 
 @router.get("/{provider}/login")
 async def login(request: Request, provider: str):
+    FRONTEND_URL = get_clean_env("FRONTEND_URL").rstrip("/") or "http://localhost:5173"
     client = oauth.create_client(provider)
     if not client:
-        raise HTTPException(status_code=404, detail="Provider not supported")
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=provider_not_supported")
         
     if not client.client_id:
-        raise HTTPException(
-            status_code=400,
-            detail=f"{provider.capitalize()} Client attributes missing! Check Render Environment Variables."
+        return RedirectResponse(
+            url=f"{FRONTEND_URL}/login?error=provider_not_configured&provider={provider}"
         )
         
     # Dynamically build the exact requested redirect URL without localhost hardcoding
@@ -66,7 +66,10 @@ async def login(request: Request, provider: str):
         base_url = base_url.replace("http://", "https://")
         
     redirect_uri = f"{base_url}/auth/{provider}/callback"
-    return await client.authorize_redirect(request, redirect_uri)
+    try:
+        return await client.authorize_redirect(request, redirect_uri)
+    except Exception:
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=oauth_redirect_failed")
 
 @router.get("/{provider}/callback", name="auth_via_provider")
 async def auth_via_provider(request: Request, provider: str, db: Session = Depends(get_db)):

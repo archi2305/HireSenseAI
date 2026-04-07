@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Mail, Lock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 import InputField from "../components/InputField";
 import SocialButton from "../components/SocialButton";
@@ -11,6 +12,7 @@ import SectionReveal from "../components/SectionReveal";
 function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [formData, setFormData] = useState({
     email: "",
@@ -19,6 +21,33 @@ function Login() {
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const provider = searchParams.get("provider");
+    if (!error) return;
+
+    if (error === "provider_not_configured") {
+      const providerName = provider ? `${provider[0].toUpperCase()}${provider.slice(1)}` : "Social";
+      toast.error(`${providerName} login is not configured on server`);
+      return;
+    }
+    if (error === "provider_not_supported") {
+      toast.error("Selected social provider is not supported");
+      return;
+    }
+    if (error === "oauth_redirect_failed") {
+      toast.error("Could not start social login flow");
+      return;
+    }
+    if (error === "oauth_failed") {
+      toast.error("Social login failed. Please try again");
+      return;
+    }
+    if (error === "missing_email") {
+      toast.error("Social account email is unavailable");
+    }
+  }, [searchParams]);
 
   const validate = () => {
     const newErrors = {};
