@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import api from "../services/api";
+import api, { API_BASE_URL } from "../services/api";
 import { toast } from "react-hot-toast";
 
 const AuthContext = createContext();
@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const devLogin = async () => {
+    console.log("[auth] API:", `${API_BASE_URL}/api/auth/dev-login`);
     try {
       const response = await api.post("/auth/dev-login");
       const { access_token } = response.data;
@@ -106,6 +107,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
+    console.log("[auth] API:", `${API_BASE_URL}/api/auth/login`);
     try {
       const response = await api.post("/auth/login", { email, password });
       const { access_token } = response.data;
@@ -143,6 +145,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (fullname, email, password) => {
+    console.log("[auth] API:", `${API_BASE_URL}/api/auth/signup`);
     try {
       await api.post("/auth/signup", { fullname, email, password });
       toast.success("Account created successfully! Please log in.", {

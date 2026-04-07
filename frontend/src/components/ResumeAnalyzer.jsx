@@ -4,9 +4,10 @@ import toast from "react-hot-toast"
 import ATSResultCard from "./ATSResultCard"
 import { motion, AnimatePresence } from "framer-motion"
 import SectionReveal from "./SectionReveal"
+import { API_BASE_URL } from "../services/api"
 
 export default function ResumeAnalyzer() {
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
+  const API_URL = API_BASE_URL
   const [file, setFile] = useState(null)
   const [jobDescription, setJobDescription] = useState("")
   const [loading, setLoading] = useState(false)
