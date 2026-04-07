@@ -21,33 +21,29 @@ def get_clean_env(key: str) -> str:
     val = val.replace('\n', '').replace('\r', '').replace(' ', '')
     return val.strip('"\'-')
 
-# Google config
-oauth.register(
-    name='google',
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_id=get_clean_env("GOOGLE_CLIENT_ID"),
-    client_secret=get_clean_env("GOOGLE_CLIENT_SECRET"),
-    client_kwargs={
-        'scope': 'openid email profile'
-    }
-)
+# Google OAuth removed — no GOOGLE_* env vars required.
 
-# GitHub config
-oauth.register(
-    name='github',
-    client_id=get_clean_env("GITHUB_CLIENT_ID"),
-    client_secret=get_clean_env("GITHUB_CLIENT_SECRET"),
-    access_token_url='https://github.com/login/oauth/access_token',
-    access_token_params=None,
-    authorize_url='https://github.com/login/oauth/authorize',
-    authorize_params=None,
-    api_base_url='https://api.github.com/',
-    client_kwargs={'scope': 'user:email'},
-)
+# GitHub: register only when credentials are present (optional OAuth)
+_github_id = get_clean_env("GITHUB_CLIENT_ID")
+_github_secret = get_clean_env("GITHUB_CLIENT_SECRET")
+if _github_id and _github_secret:
+    oauth.register(
+        name='github',
+        client_id=_github_id,
+        client_secret=_github_secret,
+        access_token_url='https://github.com/login/oauth/access_token',
+        access_token_params=None,
+        authorize_url='https://github.com/login/oauth/authorize',
+        authorize_params=None,
+        api_base_url='https://api.github.com/',
+        client_kwargs={'scope': 'user:email'},
+    )
 
 @router.get("/{provider}/login")
 async def login(request: Request, provider: str):
     FRONTEND_URL = get_clean_env("FRONTEND_URL").rstrip("/") or "http://localhost:5173"
+    if provider.lower() == "google":
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_disabled")
     client = oauth.create_client(provider)
     if not client:
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error=provider_not_supported")
@@ -74,6 +70,8 @@ async def login(request: Request, provider: str):
 @router.get("/{provider}/callback", name="auth_via_provider")
 async def auth_via_provider(request: Request, provider: str, db: Session = Depends(get_db)):
     FRONTEND_URL = get_clean_env("FRONTEND_URL").rstrip("/") or "http://localhost:5173"
+    if provider.lower() == "google":
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_disabled")
     client = oauth.create_client(provider)
     if not client:
         raise HTTPException(status_code=404, detail="Provider not supported")
@@ -83,13 +81,9 @@ async def auth_via_provider(request: Request, provider: str, db: Session = Depen
     except OAuthError as error:
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error=oauth_failed")
 
-    if provider == "google":
-        user_info = token.get('userinfo')
-        if not user_info:
-            raise HTTPException(status_code=400, detail="Missing user info")
-        email = user_info.get("email")
-        name = user_info.get("name")
-    elif provider == "github":
+    email = None
+    name = None
+    if provider == "github":
         resp = await client.get('user', token=token)
         user_info = resp.json()
         email = user_info.get("email")
@@ -99,7 +93,9 @@ async def auth_via_provider(request: Request, provider: str, db: Session = Depen
             emails = resp_emails.json()
             primary_email = next((e['email'] for e in emails if e['primary']), None)
             email = primary_email or emails[0]['email']
-            
+    else:
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=provider_not_supported")
+
     if not email:
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error=missing_email")
 

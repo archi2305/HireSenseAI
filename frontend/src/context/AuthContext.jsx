@@ -33,6 +33,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const devLogin = async () => {
+    try {
+      const response = await api.post("/auth/dev-login");
+      const { access_token } = response.data;
+      localStorage.setItem("token", access_token);
+      localStorage.setItem("isAuthenticated", "true");
+      await checkUser();
+      toast.success("Signed in as demo user", {
+        style: {
+          background: "#f0fdf4",
+          color: "#166534",
+          border: "1px solid #bbf7d0",
+        },
+      });
+      return true;
+    } catch (error) {
+      console.error("Dev login failed", error);
+      toast.error(error.response?.data?.detail || "Demo login failed", {
+        style: {
+          background: "#fef2f2",
+          color: "#991b1b",
+          border: "1px solid #fecaca",
+        },
+      });
+      return false;
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", { email, password });
@@ -107,7 +135,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, loginWithToken }}>
+    <AuthContext.Provider value={{ user, loading, login, devLogin, signup, logout, loginWithToken }}>
       {!loading && children}
     </AuthContext.Provider>
   );
