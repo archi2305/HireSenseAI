@@ -42,6 +42,21 @@ if _google_id and _google_secret:
         client_kwargs={"scope": "openid email profile"},
     )
 
+_github_id = get_clean_env("GITHUB_CLIENT_ID")
+_github_secret = get_clean_env("GITHUB_CLIENT_SECRET")
+if _github_id and _github_secret:
+    oauth.register(
+        name="github",
+        client_id=_github_id,
+        client_secret=_github_secret,
+        access_token_url="https://github.com/login/oauth/access_token",
+        access_token_params=None,
+        authorize_url="https://github.com/login/oauth/authorize",
+        authorize_params=None,
+        api_base_url="https://api.github.com/",
+        client_kwargs={"scope": "user:email"},
+    )
+
 @router.get("/google/login")
 async def google_login(request: Request):
     frontend_url = get_frontend_url()
@@ -83,6 +98,69 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
         
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+
+    query = urlencode({
+        "token": access_token,
+        "email": user.email,
+        "name": user.fullname or name,
+    })
+    redirect_url = f"{frontend_url}/oauth-success?{query}"
+    return RedirectResponse(url=redirect_url)
+
+@router.get("/github/login")
+async def github_login(request: Request):
+    frontend_url = get_frontend_url()
+    client = oauth.create_client("github")
+    if not client:
+        return RedirectResponse(url=f"{frontend_url}/login?error=github_not_configured")
+
+    redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
+    try:
+        return await client.authorize_redirect(request, redirect_uri)
+    except Exception:
+        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_redirect_failed")
+
+@router.get("/github/callback")
+async def github_callback(request: Request, db: Session = Depends(get_db)):
+    frontend_url = get_frontend_url()
+    client = oauth.create_client("github")
+    if not client:
+        return RedirectResponse(url=f"{frontend_url}/login?error=github_not_configured")
+
+    try:
+        token = await client.authorize_access_token(request)
+        resp = await client.get("user", token=token)
+        user_info = resp.json()
+    except OAuthError:
+        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+    except Exception:
+        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+
+    email = user_info.get("email")
+    name = user_info.get("name") or user_info.get("login") or "GitHub User"
+    if not email:
+        try:
+            resp_emails = await client.get("user/emails", token=token)
+            emails = resp_emails.json()
+            primary_email = next((e.get("email") for e in emails if e.get("primary")), None)
+            email = primary_email or (emails[0].get("email") if emails else None)
+        except Exception:
+            email = None
+
+    if not email:
+        return RedirectResponse(url=f"{frontend_url}/login?error=missing_email")
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        user = models.User(fullname=name, email=email, hashed_password=None)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
