@@ -12,7 +12,10 @@ from utils.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import timedelta
 from dotenv import load_dotenv
 
-load_dotenv()
+# Ensure we load the same backend/.env that main.py uses
+_BACKEND_DIR = os.path.dirname(os.path.dirname(__file__))
+_DOTENV_PATH = os.path.join(_BACKEND_DIR, ".env")
+load_dotenv(_DOTENV_PATH)
 
 router = APIRouter()
 oauth = OAuth()

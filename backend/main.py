@@ -5,6 +5,27 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import shutil
+import uuid
+import os
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+from dotenv import load_dotenv
+
+# Load environment variables explicitly from backend/.env
+BASE_DIR = os.path.dirname(__file__)
+DOTENV_PATH = os.path.join(BASE_DIR, ".env")
+load_dotenv(DOTENV_PATH)
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+
+print("Google ID:", GOOGLE_CLIENT_ID)
+print("GitHub ID:", GITHUB_CLIENT_ID)
+
 try:
     from services.skill_matcher import calculate_ats_score
     from services.suggestion_engine import generate_suggestions
@@ -14,11 +35,6 @@ except ImportError:
     from backend.services.suggestion_engine import generate_suggestions
     from backend.services.resume_parser import extract_text_from_pdf, extract_text_from_file
 
-import shutil
-import uuid
-import os
-from fastapi.responses import FileResponse, JSONResponse
-
 try:
     from database import engine
     import models
@@ -27,12 +43,6 @@ except ImportError:
     from backend.database import engine
     import backend.models as models
     from backend.routes import auth, oauth, password, profile, settings
-from fastapi.staticfiles import StaticFiles
-
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
