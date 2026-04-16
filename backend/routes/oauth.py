@@ -81,13 +81,13 @@ def auth_error_response(
 _google_id = get_clean_env("GOOGLE_CLIENT_ID")
 _google_secret = get_clean_env("GOOGLE_CLIENT_SECRET")
 if _google_id and _google_secret:
-    # We still register the client for callback usage, but the login URL
-    # is generated manually in /auth/google/login to avoid any wrong endpoints.
     oauth.register(
         name="google",
         client_id=_google_id,
         client_secret=_google_secret,
-        server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+        access_token_url="https://oauth2.googleapis.com/token",
+        authorize_url="https://accounts.google.com/o/oauth2/v2/auth",
+        api_base_url="https://openidconnect.googleapis.com/v1/",
         client_kwargs={"scope": "openid email profile"},
     )
 
@@ -108,41 +108,41 @@ if _github_id and _github_secret:
 
 @router.get("/google/login")
 async def google_login(request: Request):
-    """
-    Manually build the Google OAuth 2.0 authorization URL so it always
-    points to accounts.google.com (not Google Cloud Console).
-    """
-    client_id = get_clean_env("GOOGLE_CLIENT_ID")
-    if not client_id:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Google auth not configured"},
+    client = oauth.create_client("google")
+    if not client:
+        return JSONResponse(status_code=503, content={"error": "Google auth not configured"})
+
+    redirect_uri = f"{get_backend_base_url(request)}/auth/google/callback"
+    request.session["oauth_frontend_url_google"] = get_frontend_url(request)
+    try:
+        return await client.authorize_redirect(
+            request,
+            redirect_uri,
+            access_type="offline",
+            prompt="consent",
         )
-
-    backend_base = get_backend_base_url(request)
-    redirect_uri = f"{backend_base}/auth/google/callback"
-
-    params = {
-        "client_id": client_id,
-        "redirect_uri": redirect_uri,
-        "response_type": "code",
-        "scope": "openid email profile",
-        "access_type": "offline",
-    }
-
-    google_auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
-    return RedirectResponse(google_auth_url)
+    except Exception:
+        return auth_error_response(
+            request,
+            status_code=502,
+            error="oauth_redirect_failed",
+            detail="Could not start OAuth redirect flow",
+            redirect_error="oauth_redirect_failed",
+        )
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-    frontend_url = get_frontend_url(request)
+    frontend_url = request.session.pop("oauth_frontend_url_google", None) or get_frontend_url(request)
     client = oauth.create_client("google")
     if not client:
         return missing_provider_response(request, "google")
 
     try:
         token = await client.authorize_access_token(request)
-        user_info = token.get("userinfo") or await client.userinfo(token=token)
+        user_info = token.get("userinfo")
+        if not user_info:
+            resp = await client.get("userinfo", token=token)
+            user_info = resp.json()
     except OAuthError:
         return auth_error_response(
             request,
@@ -194,12 +194,12 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/github/login")
 async def github_login(request: Request):
-    frontend_url = get_frontend_url(request)
     client = oauth.create_client("github")
     if not client:
         return missing_provider_response(request, "github")
 
     redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
+    request.session["oauth_frontend_url_github"] = get_frontend_url(request)
     try:
         return await client.authorize_redirect(request, redirect_uri)
     except Exception:
@@ -213,7 +213,7 @@ async def github_login(request: Request):
 
 @router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
-    frontend_url = get_frontend_url(request)
+    frontend_url = request.session.pop("oauth_frontend_url_github", None) or get_frontend_url(request)
     client = oauth.create_client("github")
     if not client:
         return missing_provider_response(request, "github")
