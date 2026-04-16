@@ -1,16 +1,16 @@
 import os
-from urllib.parse import urlencode
-from urllib.parse import urlparse
+from datetime import timedelta
+from urllib.parse import urlencode, urlparse
+
+import httpx
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from authlib.integrations.starlette_client import OAuth, OAuthError
 
 import models
 from database import get_db
-from utils.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from datetime import timedelta
-from dotenv import load_dotenv
+from utils.security import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 
 # Ensure we load the same backend/.env that main.py uses
 _BACKEND_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -18,7 +18,6 @@ _DOTENV_PATH = os.path.join(_BACKEND_DIR, ".env")
 load_dotenv(_DOTENV_PATH)
 
 router = APIRouter()
-oauth = OAuth()
 
 def get_clean_env(key: str) -> str:
     val = os.environ.get(key, "")
@@ -78,72 +77,37 @@ def auth_error_response(
         return JSONResponse(status_code=status_code, content=payload)
     return RedirectResponse(url=f"{frontend_url}/login?error={redirect_error}")
 
-_google_id = get_clean_env("GOOGLE_CLIENT_ID")
-_google_secret = get_clean_env("GOOGLE_CLIENT_SECRET")
-if _google_id and _google_secret:
-    oauth.register(
-        name="google",
-        client_id=_google_id,
-        client_secret=_google_secret,
-        access_token_url="https://oauth2.googleapis.com/token",
-        authorize_url="https://accounts.google.com/o/oauth2/v2/auth",
-        api_base_url="https://openidconnect.googleapis.com/v1/",
-        client_kwargs={"scope": "openid email profile"},
-    )
-
-_github_id = get_clean_env("GITHUB_CLIENT_ID")
-_github_secret = get_clean_env("GITHUB_CLIENT_SECRET")
-if _github_id and _github_secret:
-    oauth.register(
-        name="github",
-        client_id=_github_id,
-        client_secret=_github_secret,
-        access_token_url="https://github.com/login/oauth/access_token",
-        access_token_params=None,
-        authorize_url="https://github.com/login/oauth/authorize",
-        authorize_params=None,
-        api_base_url="https://api.github.com/",
-        client_kwargs={"scope": "user:email"},
-    )
-
 @router.get("/google/login")
 async def google_login(request: Request):
-    client = oauth.create_client("google")
-    if not client:
-        return JSONResponse(status_code=503, content={"error": "Google auth not configured"})
+    google_client_id = get_clean_env("GOOGLE_CLIENT_ID")
+    if not google_client_id:
+        return JSONResponse(status_code=503, content={"error": "Google not configured"})
 
     redirect_uri = f"{get_backend_base_url(request)}/auth/google/callback"
     request.session["oauth_frontend_url_google"] = get_frontend_url(request)
-    try:
-        return await client.authorize_redirect(
-            request,
-            redirect_uri,
-            access_type="offline",
-            prompt="consent",
-        )
-    except Exception:
-        return auth_error_response(
-            request,
-            status_code=502,
-            error="oauth_redirect_failed",
-            detail="Could not start OAuth redirect flow",
-            redirect_error="oauth_redirect_failed",
-        )
+
+    params = {
+        "client_id": google_client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
+    print(url)
+    return RedirectResponse(url)
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
     frontend_url = request.session.pop("oauth_frontend_url_google", None) or get_frontend_url(request)
-    client = oauth.create_client("google")
-    if not client:
+    google_client_id = get_clean_env("GOOGLE_CLIENT_ID")
+    google_client_secret = get_clean_env("GOOGLE_CLIENT_SECRET")
+    if not google_client_id or not google_client_secret:
         return missing_provider_response(request, "google")
 
-    try:
-        token = await client.authorize_access_token(request)
-        user_info = token.get("userinfo")
-        if not user_info:
-            resp = await client.get("userinfo", token=token)
-            user_info = resp.json()
-    except OAuthError:
+    code = request.query_params.get("code")
+    if not code:
         return auth_error_response(
             request,
             status_code=401,
@@ -151,6 +115,33 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
             detail="Auth failed",
             redirect_error="oauth_failed",
         )
+
+    redirect_uri = f"{get_backend_base_url(request)}/auth/google/callback"
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            token_res = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": google_client_id,
+                    "client_secret": google_client_secret,
+                    "redirect_uri": redirect_uri,
+                    "grant_type": "authorization_code",
+                },
+                headers={"Accept": "application/json"},
+            )
+            token_res.raise_for_status()
+            token_data = token_res.json()
+            access_token = token_data.get("access_token")
+            if not access_token:
+                raise ValueError("missing_google_access_token")
+
+            user_res = await client.get(
+                "https://openidconnect.googleapis.com/v1/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+            user_res.raise_for_status()
+            user_info = user_res.json()
     except Exception:
         return auth_error_response(
             request,
@@ -194,35 +185,31 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/github/login")
 async def github_login(request: Request):
-    client = oauth.create_client("github")
-    if not client:
-        return missing_provider_response(request, "github")
+    github_client_id = get_clean_env("GITHUB_CLIENT_ID")
+    if not github_client_id:
+        return JSONResponse(status_code=503, content={"error": "GitHub not configured"})
 
     redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
     request.session["oauth_frontend_url_github"] = get_frontend_url(request)
-    try:
-        return await client.authorize_redirect(request, redirect_uri)
-    except Exception:
-        return auth_error_response(
-            request,
-            status_code=502,
-            error="oauth_redirect_failed",
-            detail="Could not start OAuth redirect flow",
-            redirect_error="oauth_redirect_failed",
-        )
+    params = {
+        "client_id": github_client_id,
+        "redirect_uri": redirect_uri,
+        "scope": "user",
+    }
+    url = "https://github.com/login/oauth/authorize?" + urlencode(params)
+    print(url)
+    return RedirectResponse(url)
 
 @router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
     frontend_url = request.session.pop("oauth_frontend_url_github", None) or get_frontend_url(request)
-    client = oauth.create_client("github")
-    if not client:
+    github_client_id = get_clean_env("GITHUB_CLIENT_ID")
+    github_client_secret = get_clean_env("GITHUB_CLIENT_SECRET")
+    if not github_client_id or not github_client_secret:
         return missing_provider_response(request, "github")
 
-    try:
-        token = await client.authorize_access_token(request)
-        resp = await client.get("user", token=token)
-        user_info = resp.json()
-    except OAuthError:
+    code = request.query_params.get("code")
+    if not code:
         return auth_error_response(
             request,
             status_code=401,
@@ -230,6 +217,38 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
             detail="Auth failed",
             redirect_error="oauth_failed",
         )
+
+    redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            token_res = await client.post(
+                "https://github.com/login/oauth/access_token",
+                data={
+                    "client_id": github_client_id,
+                    "client_secret": github_client_secret,
+                    "code": code,
+                    "redirect_uri": redirect_uri,
+                },
+                headers={"Accept": "application/json"},
+            )
+            token_res.raise_for_status()
+            token_data = token_res.json()
+            access_token = token_data.get("access_token")
+            if not access_token:
+                raise ValueError("missing_github_access_token")
+
+            user_res = await client.get(
+                "https://api.github.com/user",
+                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+            )
+            user_res.raise_for_status()
+            user_info = user_res.json()
+
+            emails_res = await client.get(
+                "https://api.github.com/user/emails",
+                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+            )
+            emails = emails_res.json() if emails_res.status_code == 200 else []
     except Exception:
         return auth_error_response(
             request,
@@ -243,8 +262,6 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
     name = user_info.get("name") or user_info.get("login") or "GitHub User"
     if not email:
         try:
-            resp_emails = await client.get("user/emails", token=token)
-            emails = resp_emails.json()
             primary_email = next((e.get("email") for e in emails if e.get("primary")), None)
             email = primary_email or (emails[0].get("email") if emails else None)
         except Exception:
