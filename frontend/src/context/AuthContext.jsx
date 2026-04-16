@@ -13,10 +13,19 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkUser = async () => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+    const isDemoSession =
+      localStorage.getItem("isDemoUser") === "true" ||
+      sessionStorage.getItem("isDemoUser") === "true";
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        if (isDemoSession) {
+          localStorage.setItem("user", JSON.stringify(parsedUser));
+          localStorage.setItem("isDemoUser", "true");
+          localStorage.removeItem("token");
+        }
         localStorage.setItem("isAuthenticated", "true");
         setLoading(false);
         return;
@@ -50,6 +59,9 @@ export const AuthProvider = ({ children }) => {
     const demoUser = { name: "Demo User", role: "Recruiter" };
     setUser(demoUser);
     localStorage.setItem("user", JSON.stringify(demoUser));
+    sessionStorage.setItem("user", JSON.stringify(demoUser));
+    localStorage.setItem("isDemoUser", "true");
+    sessionStorage.setItem("isDemoUser", "true");
     localStorage.setItem("isAuthenticated", "true");
     localStorage.removeItem("token");
     toast.success("Signed in as demo user", {
@@ -68,6 +80,9 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post("/auth/login", { email, password });
       const { access_token } = response.data;
       localStorage.removeItem("user");
+      localStorage.removeItem("isDemoUser");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("isDemoUser");
       localStorage.setItem("token", access_token);
       localStorage.setItem("isAuthenticated", "true");
       await checkUser();
@@ -93,6 +108,9 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithToken = async (token) => {
     localStorage.removeItem("user");
+    localStorage.removeItem("isDemoUser");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("isDemoUser");
     localStorage.setItem("token", token);
     localStorage.setItem("isAuthenticated", "true");
     await checkUser();
@@ -130,6 +148,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
+    localStorage.removeItem("isDemoUser");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("isDemoUser");
     setUser(null);
     toast.success("Logged out successfully", {
       style: {
