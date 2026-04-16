@@ -13,6 +13,19 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkUser = async () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+        localStorage.setItem("isAuthenticated", "true");
+        setLoading(false);
+        return;
+      } catch (parseError) {
+        console.error("Failed to parse stored user", parseError);
+        localStorage.removeItem("user");
+      }
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
       setLoading(false);
@@ -33,77 +46,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const devLogin = async () => {
-    console.log("[auth] API:", `${API_BASE_URL}/api/auth/dev-login`);
-    try {
-      const response = await api.post("/auth/dev-login");
-      const { access_token } = response.data;
-      localStorage.setItem("token", access_token);
-      localStorage.setItem("isAuthenticated", "true");
-      await checkUser();
-      toast.success("Signed in as demo user", {
-        style: {
-          background: "#f0fdf4",
-          color: "#166534",
-          border: "1px solid #bbf7d0",
-        },
-      });
-      return true;
-    } catch (error) {
-      console.error("Dev login failed, trying fallback flow", error);
-      const status = error?.response?.status;
-      const demoEmail = "demo@hiresense.local";
-      const demoPassword = "demo123456";
-
-      // Backward-compatible fallback for older backends without /auth/dev-login
-      if (status === 404) {
-        try {
-          await api.post("/auth/signup", {
-            fullname: "Demo User",
-            email: demoEmail,
-            password: demoPassword,
-          });
-        } catch (signupError) {
-          const detail = signupError?.response?.data?.detail;
-          // Ignore "already registered" and proceed to login
-          if (
-            !(signupError?.response?.status === 400 && detail === "Email already registered")
-          ) {
-            console.error("Demo fallback signup failed", signupError);
-          }
-        }
-
-        try {
-          const loginResponse = await api.post("/auth/login", {
-            email: demoEmail,
-            password: demoPassword,
-          });
-          const { access_token } = loginResponse.data;
-          localStorage.setItem("token", access_token);
-          localStorage.setItem("isAuthenticated", "true");
-          await checkUser();
-          toast.success("Signed in as demo user", {
-            style: {
-              background: "#f0fdf4",
-              color: "#166534",
-              border: "1px solid #bbf7d0",
-            },
-          });
-          return true;
-        } catch (fallbackLoginError) {
-          console.error("Demo fallback login failed", fallbackLoginError);
-        }
-      }
-
-      toast.error(error.response?.data?.detail || "Demo login failed", {
-        style: {
-          background: "#fef2f2",
-          color: "#991b1b",
-          border: "1px solid #fecaca",
-        },
-      });
-      return false;
-    }
+  const devLogin = () => {
+    const demoUser = { name: "Demo User", role: "Recruiter" };
+    setUser(demoUser);
+    localStorage.setItem("user", JSON.stringify(demoUser));
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.removeItem("token");
+    toast.success("Signed in as demo user", {
+      style: {
+        background: "#f0fdf4",
+        color: "#166534",
+        border: "1px solid #bbf7d0",
+      },
+    });
+    return demoUser;
   };
 
   const login = async (email, password) => {
@@ -111,6 +67,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post("/auth/login", { email, password });
       const { access_token } = response.data;
+      localStorage.removeItem("user");
       localStorage.setItem("token", access_token);
       localStorage.setItem("isAuthenticated", "true");
       await checkUser();
@@ -135,6 +92,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithToken = async (token) => {
+    localStorage.removeItem("user");
     localStorage.setItem("token", token);
     localStorage.setItem("isAuthenticated", "true");
     await checkUser();
