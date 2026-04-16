@@ -5,18 +5,28 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from services.skill_matcher import calculate_ats_score
-from services.suggestion_engine import generate_suggestions
-from services.resume_parser import extract_text_from_pdf, extract_text_from_file
+try:
+    from services.skill_matcher import calculate_ats_score
+    from services.suggestion_engine import generate_suggestions
+    from services.resume_parser import extract_text_from_pdf, extract_text_from_file
+except ImportError:
+    from backend.services.skill_matcher import calculate_ats_score
+    from backend.services.suggestion_engine import generate_suggestions
+    from backend.services.resume_parser import extract_text_from_pdf, extract_text_from_file
 
 import shutil
 import uuid
 import os
 from fastapi.responses import FileResponse, JSONResponse
 
-from database import engine
-import models
-from routes import auth, oauth, password, profile, settings
+try:
+    from database import engine
+    import models
+    from routes import auth, oauth, password, profile, settings
+except ImportError:
+    from backend.database import engine
+    import backend.models as models
+    from backend.routes import auth, oauth, password, profile, settings
 from fastapi.staticfiles import StaticFiles
 
 from dotenv import load_dotenv
@@ -77,8 +87,12 @@ app.mount("/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
 
 from fastapi import Depends
 from sqlalchemy.orm import Session
-from database import get_db
-from models import ResumeAnalysis, User
+try:
+    from database import get_db
+    from models import ResumeAnalysis, User
+except ImportError:
+    from backend.database import get_db
+    from backend.models import ResumeAnalysis, User
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import or_
