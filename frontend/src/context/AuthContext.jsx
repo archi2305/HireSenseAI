@@ -14,18 +14,10 @@ export const AuthProvider = ({ children }) => {
 
   const checkUser = async () => {
     const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
-    const isDemoSession =
-      localStorage.getItem("isDemoUser") === "true" ||
-      sessionStorage.getItem("isDemoUser") === "true";
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
-        if (isDemoSession) {
-          localStorage.setItem("user", JSON.stringify(parsedUser));
-          localStorage.setItem("isDemoUser", "true");
-          localStorage.removeItem("token");
-        }
         localStorage.setItem("isAuthenticated", "true");
         setLoading(false);
         return;
@@ -55,34 +47,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const devLogin = () => {
-    const demoUser = { name: "Demo User", role: "Recruiter" };
-    setUser(demoUser);
-    localStorage.setItem("user", JSON.stringify(demoUser));
-    sessionStorage.setItem("user", JSON.stringify(demoUser));
-    localStorage.setItem("isDemoUser", "true");
-    sessionStorage.setItem("isDemoUser", "true");
-    localStorage.setItem("isAuthenticated", "true");
-    localStorage.removeItem("token");
-    toast.success("Signed in as demo user", {
-      style: {
-        background: "#f0fdf4",
-        color: "#166534",
-        border: "1px solid #bbf7d0",
-      },
-    });
-    return demoUser;
-  };
-
   const login = async (email, password) => {
     console.log("[auth] API:", `${API_BASE_URL}/api/auth/login`);
     try {
       const response = await api.post("/auth/login", { email, password });
       const { access_token } = response.data;
       localStorage.removeItem("user");
-      localStorage.removeItem("isDemoUser");
       sessionStorage.removeItem("user");
-      sessionStorage.removeItem("isDemoUser");
       localStorage.setItem("token", access_token);
       localStorage.setItem("isAuthenticated", "true");
       await checkUser();
@@ -108,9 +79,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithToken = async (token) => {
     localStorage.removeItem("user");
-    localStorage.removeItem("isDemoUser");
     sessionStorage.removeItem("user");
-    sessionStorage.removeItem("isDemoUser");
     localStorage.setItem("token", token);
     localStorage.setItem("isAuthenticated", "true");
     await checkUser();
@@ -148,9 +117,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
-    localStorage.removeItem("isDemoUser");
     sessionStorage.removeItem("user");
-    sessionStorage.removeItem("isDemoUser");
     setUser(null);
     toast.success("Logged out successfully", {
       style: {
@@ -161,7 +128,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, devLogin, signup, logout, loginWithToken }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, loginWithToken }}>
       {!loading && children}
     </AuthContext.Provider>
   );

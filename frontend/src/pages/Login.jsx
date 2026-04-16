@@ -11,7 +11,7 @@ import SocialButton from "../components/SocialButton";
 import SectionReveal from "../components/SectionReveal";
 
 function Login() {
-  const { login, devLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
@@ -104,19 +104,6 @@ function Login() {
     window.location.href = `${AUTH_BASE_URL}/auth/github/login`;
   };
 
-  const handleDemoLogin = () => {
-    setLoading(true);
-    try {
-      devLogin();
-      navigate("/dashboard");
-    } catch (error) {
-      toast.error("Demo login failed");
-      console.error("Demo login failed", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const GoogleIcon = (props) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M21.35 11.1h-9.18v2.98h5.27c-.23 1.48-1.73 4.35-5.27 4.35-3.17 0-5.75-2.62-5.75-5.85s2.58-5.85 5.75-5.85c1.8 0 3 .77 3.69 1.43l2.51-2.43C16.72 4.2 14.66 3.3 12.17 3.3 7.2 3.3 3.17 7.36 3.17 12.35s4.03 9.05 9 9.05c5.2 0 8.64-3.65 8.64-8.8 0-.6-.07-1.05-.16-1.5z"/>
@@ -165,14 +152,6 @@ function Login() {
             </div>
 
             <div className="space-y-3 mb-8 relative z-10">
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                disabled={loading}
-                className="w-full py-3 rounded-2xl border border-indigo-200/80 bg-white/90 text-sm font-semibold text-indigo-700 hover:bg-white hover:shadow-md transition-all disabled:opacity-60"
-              >
-                Continue as demo (no password)
-              </button>
               <SocialButton
                 icon={GoogleIcon}
                 text="Sign in with Google"

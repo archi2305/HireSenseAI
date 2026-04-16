@@ -57,29 +57,6 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-
-@router.post("/dev-login", response_model=schemas.Token)
-def dev_login(db: Session = Depends(get_db)):
-    """Password-free demo user for local/dev when OAuth is disabled. No env vars required."""
-    email = "demo@hiresense.local"
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if not user:
-        user = models.User(
-            fullname="Demo User",
-            email=email,
-            hashed_password=get_password_hash("demo"),
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
 @router.post("/login", response_model=schemas.Token)
 def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
