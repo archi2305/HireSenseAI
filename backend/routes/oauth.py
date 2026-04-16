@@ -81,6 +81,8 @@ def auth_error_response(
 _google_id = get_clean_env("GOOGLE_CLIENT_ID")
 _google_secret = get_clean_env("GOOGLE_CLIENT_SECRET")
 if _google_id and _google_secret:
+    # We still register the client for callback usage, but the login URL
+    # is generated manually in /auth/google/login to avoid any wrong endpoints.
     oauth.register(
         name="google",
         client_id=_google_id,
@@ -106,21 +108,30 @@ if _github_id and _github_secret:
 
 @router.get("/google/login")
 async def google_login(request: Request):
-    client = oauth.create_client("google")
-    if not client:
-        return missing_provider_response(request, "google")
-
-    redirect_uri = f"{get_backend_base_url(request)}/auth/google/callback"
-    try:
-        return await client.authorize_redirect(request, redirect_uri)
-    except Exception:
-        return auth_error_response(
-            request,
-            status_code=502,
-            error="oauth_redirect_failed",
-            detail="Could not start OAuth redirect flow",
-            redirect_error="oauth_redirect_failed",
+    """
+    Manually build the Google OAuth 2.0 authorization URL so it always
+    points to accounts.google.com (not Google Cloud Console).
+    """
+    client_id = get_clean_env("GOOGLE_CLIENT_ID")
+    if not client_id:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Google auth not configured"},
         )
+
+    backend_base = get_backend_base_url(request)
+    redirect_uri = f"{backend_base}/auth/google/callback"
+
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+    }
+
+    google_auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
+    return RedirectResponse(google_auth_url)
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
