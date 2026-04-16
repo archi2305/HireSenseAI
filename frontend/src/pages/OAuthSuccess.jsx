@@ -12,11 +12,16 @@ function OAuthSuccess() {
   useEffect(() => {
     const token = searchParams.get("token");
     if (token) {
-      loginWithToken(token).then(() => {
-        navigate("/dashboard");
-      });
+      loginWithToken(token)
+        .then(() => {
+          navigate("/dashboard");
+        })
+        .catch((error) => {
+          toast.error(error?.userMessage || "Auth failed");
+          navigate("/login");
+        });
     } else {
-      toast.error("Failed to authenticate securely with the social provider");
+      toast.error("Auth failed");
       navigate("/login");
     }
   }, [searchParams, loginWithToken, navigate]);

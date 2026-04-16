@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Mail, Lock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
+import { AUTH_BASE_URL } from "../services/api";
 
 import InputField from "../components/InputField";
 import SocialButton from "../components/SocialButton";
@@ -95,12 +96,12 @@ function Login() {
 
   const handleGoogleLogin = () => {
     setLoading(true);
-    window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/auth/google/login`;
+    window.location.href = `${AUTH_BASE_URL}/auth/google/login`;
   };
 
   const handleGithubLogin = () => {
     setLoading(true);
-    window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/auth/github/login`;
+    window.location.href = `${AUTH_BASE_URL}/auth/github/login`;
   };
 
   const handleDemoLogin = () => {

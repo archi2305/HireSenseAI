@@ -1,7 +1,7 @@
 import os
 from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session
 from authlib.integrations.starlette_client import OAuth, OAuthError
 
@@ -31,6 +31,17 @@ def get_backend_base_url(request: Request) -> str:
         base_url = base_url.replace("http://", "https://")
     return base_url
 
+def missing_provider_response(request: Request, provider: str):
+    frontend_url = get_frontend_url()
+    is_json_request = "application/json" in request.headers.get("accept", "")
+    payload = {
+        "error": "missing_configuration",
+        "detail": f"{provider} OAuth is not configured",
+    }
+    if is_json_request:
+        return JSONResponse(status_code=503, content=payload)
+    return RedirectResponse(url=f"{frontend_url}/login?error={provider}_not_configured")
+
 _google_id = get_clean_env("GOOGLE_CLIENT_ID")
 _google_secret = get_clean_env("GOOGLE_CLIENT_SECRET")
 if _google_id and _google_secret:
@@ -59,10 +70,9 @@ if _github_id and _github_secret:
 
 @router.get("/google/login")
 async def google_login(request: Request):
-    frontend_url = get_frontend_url()
     client = oauth.create_client("google")
     if not client:
-        return RedirectResponse(url=f"{frontend_url}/login?error=google_not_configured")
+        return missing_provider_response(request, "google")
 
     redirect_uri = f"{get_backend_base_url(request)}/auth/google/callback"
     try:
@@ -75,7 +85,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     frontend_url = get_frontend_url()
     client = oauth.create_client("google")
     if not client:
-        return RedirectResponse(url=f"{frontend_url}/login?error=google_not_configured")
+        return missing_provider_response(request, "google")
 
     try:
         token = await client.authorize_access_token(request)
@@ -116,7 +126,7 @@ async def github_login(request: Request):
     frontend_url = get_frontend_url()
     client = oauth.create_client("github")
     if not client:
-        return RedirectResponse(url=f"{frontend_url}/login?error=github_not_configured")
+        return missing_provider_response(request, "github")
 
     redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
     try:
@@ -129,7 +139,7 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
     frontend_url = get_frontend_url()
     client = oauth.create_client("github")
     if not client:
-        return RedirectResponse(url=f"{frontend_url}/login?error=github_not_configured")
+        return missing_provider_response(request, "github")
 
     try:
         token = await client.authorize_access_token(request)

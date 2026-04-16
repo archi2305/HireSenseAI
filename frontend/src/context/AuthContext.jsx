@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
       });
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Login failed", {
+      toast.error(error?.userMessage || error.response?.data?.detail || "Auth failed", {
         style: {
           background: "#fef2f2",
           color: "#991b1b",
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
       });
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Signup failed", {
+      toast.error(error?.userMessage || error.response?.data?.detail || "Auth failed", {
         style: {
           background: "#fef2f2",
           color: "#991b1b",
