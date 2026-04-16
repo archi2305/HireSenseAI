@@ -1,5 +1,6 @@
 import os
 from urllib.parse import urlencode
+from urllib.parse import urlparse
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session
@@ -21,8 +22,28 @@ def get_clean_env(key: str) -> str:
     val = val.replace('\n', '').replace('\r', '').replace(' ', '')
     return val.strip('"\'-')
 
-def get_frontend_url() -> str:
-    return get_clean_env("FRONTEND_URL").rstrip("/") or "http://localhost:5173"
+def _extract_origin(url_value: str) -> str:
+    if not url_value:
+        return ""
+    parsed = urlparse(url_value)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return ""
+
+def _is_local_origin(origin: str) -> bool:
+    return origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")
+
+def get_frontend_url(request: Request | None = None) -> str:
+    configured = get_clean_env("FRONTEND_URL").rstrip("/")
+    if request:
+        origin = request.headers.get("origin", "")
+        referer_origin = _extract_origin(request.headers.get("referer", ""))
+        local_origin = origin if _is_local_origin(origin) else (
+            referer_origin if _is_local_origin(referer_origin) else ""
+        )
+        if local_origin:
+            return local_origin
+    return configured or "http://localhost:5173"
 
 def get_backend_base_url(request: Request) -> str:
     base_url = str(request.base_url).rstrip("/")
@@ -47,7 +68,7 @@ def auth_error_response(
     detail: str,
     redirect_error: str,
 ):
-    frontend_url = get_frontend_url()
+    frontend_url = get_frontend_url(request)
     is_json_request = "application/json" in request.headers.get("accept", "")
     payload = {"error": error, "detail": detail}
     if is_json_request:
@@ -100,7 +121,7 @@ async def google_login(request: Request):
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-    frontend_url = get_frontend_url()
+    frontend_url = get_frontend_url(request)
     client = oauth.create_client("google")
     if not client:
         return missing_provider_response(request, "google")
@@ -159,7 +180,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/github/login")
 async def github_login(request: Request):
-    frontend_url = get_frontend_url()
+    frontend_url = get_frontend_url(request)
     client = oauth.create_client("github")
     if not client:
         return missing_provider_response(request, "github")
@@ -178,7 +199,7 @@ async def github_login(request: Request):
 
 @router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
-    frontend_url = get_frontend_url()
+    frontend_url = get_frontend_url(request)
     client = oauth.create_client("github")
     if not client:
         return missing_provider_response(request, "github")
