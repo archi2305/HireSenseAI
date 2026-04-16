@@ -32,15 +32,27 @@ def get_backend_base_url(request: Request) -> str:
     return base_url
 
 def missing_provider_response(request: Request, provider: str):
+    return auth_error_response(
+        request,
+        status_code=503,
+        error="missing_configuration",
+        detail=f"{provider} OAuth is not configured",
+        redirect_error=f"{provider}_not_configured",
+    )
+
+def auth_error_response(
+    request: Request,
+    status_code: int,
+    error: str,
+    detail: str,
+    redirect_error: str,
+):
     frontend_url = get_frontend_url()
     is_json_request = "application/json" in request.headers.get("accept", "")
-    payload = {
-        "error": "missing_configuration",
-        "detail": f"{provider} OAuth is not configured",
-    }
+    payload = {"error": error, "detail": detail}
     if is_json_request:
-        return JSONResponse(status_code=503, content=payload)
-    return RedirectResponse(url=f"{frontend_url}/login?error={provider}_not_configured")
+        return JSONResponse(status_code=status_code, content=payload)
+    return RedirectResponse(url=f"{frontend_url}/login?error={redirect_error}")
 
 _google_id = get_clean_env("GOOGLE_CLIENT_ID")
 _google_secret = get_clean_env("GOOGLE_CLIENT_SECRET")
@@ -78,7 +90,13 @@ async def google_login(request: Request):
     try:
         return await client.authorize_redirect(request, redirect_uri)
     except Exception:
-        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_redirect_failed")
+        return auth_error_response(
+            request,
+            status_code=502,
+            error="oauth_redirect_failed",
+            detail="Could not start OAuth redirect flow",
+            redirect_error="oauth_redirect_failed",
+        )
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
@@ -91,15 +109,33 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
         token = await client.authorize_access_token(request)
         user_info = token.get("userinfo") or await client.userinfo(token=token)
     except OAuthError:
-        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+        return auth_error_response(
+            request,
+            status_code=401,
+            error="oauth_failed",
+            detail="Auth failed",
+            redirect_error="oauth_failed",
+        )
     except Exception:
-        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+        return auth_error_response(
+            request,
+            status_code=401,
+            error="oauth_failed",
+            detail="Auth failed",
+            redirect_error="oauth_failed",
+        )
 
     email = user_info.get("email")
     name = user_info.get("name") or user_info.get("given_name") or "Google User"
 
     if not email:
-        return RedirectResponse(url=f"{frontend_url}/login?error=missing_email")
+        return auth_error_response(
+            request,
+            status_code=400,
+            error="missing_email",
+            detail="Email is not available from social provider",
+            redirect_error="missing_email",
+        )
 
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
@@ -132,7 +168,13 @@ async def github_login(request: Request):
     try:
         return await client.authorize_redirect(request, redirect_uri)
     except Exception:
-        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_redirect_failed")
+        return auth_error_response(
+            request,
+            status_code=502,
+            error="oauth_redirect_failed",
+            detail="Could not start OAuth redirect flow",
+            redirect_error="oauth_redirect_failed",
+        )
 
 @router.get("/github/callback")
 async def github_callback(request: Request, db: Session = Depends(get_db)):
@@ -146,9 +188,21 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
         resp = await client.get("user", token=token)
         user_info = resp.json()
     except OAuthError:
-        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+        return auth_error_response(
+            request,
+            status_code=401,
+            error="oauth_failed",
+            detail="Auth failed",
+            redirect_error="oauth_failed",
+        )
     except Exception:
-        return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
+        return auth_error_response(
+            request,
+            status_code=401,
+            error="oauth_failed",
+            detail="Auth failed",
+            redirect_error="oauth_failed",
+        )
 
     email = user_info.get("email")
     name = user_info.get("name") or user_info.get("login") or "GitHub User"
@@ -162,7 +216,13 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
             email = None
 
     if not email:
-        return RedirectResponse(url=f"{frontend_url}/login?error=missing_email")
+        return auth_error_response(
+            request,
+            status_code=400,
+            error="missing_email",
+            detail="Email is not available from social provider",
+            redirect_error="missing_email",
+        )
 
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
