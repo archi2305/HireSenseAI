@@ -84,7 +84,8 @@ def auth_error_response(
 async def google_login(request: Request):
     google_client_id = get_clean_env("GOOGLE_CLIENT_ID")
     if not google_client_id:
-        return JSONResponse(status_code=503, content={"error": "Google not configured"})
+        frontend_url = get_frontend_url(request)
+        return RedirectResponse(url=f"{frontend_url}/login?error=google_not_configured")
 
     redirect_uri = f"{get_backend_base_url(request)}/auth/google/callback"
     request.session["oauth_frontend_url_google"] = get_frontend_url(request)

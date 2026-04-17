@@ -13,6 +13,7 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const oauthEnabled = (import.meta.env.VITE_ENABLE_OAUTH || "true").toLowerCase() !== "false";
   
   const [formData, setFormData] = useState({
     email: "",
@@ -93,6 +94,20 @@ function Login() {
     }
   };
 
+  const handleSocialLogin = (provider) => {
+    if (!oauthEnabled) {
+      toast("Social sign-in is temporarily disabled. Use email/password login.", {
+        icon: "ℹ️",
+      });
+      return;
+    }
+    if (provider === "google") {
+      window.location.href = "http://localhost:8000/auth/google/login";
+      return;
+    }
+    window.location.href = "http://localhost:8000/auth/github/login";
+  };
+
   const GoogleIcon = (props) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M21.35 11.1h-9.18v2.98h5.27c-.23 1.48-1.73 4.35-5.27 4.35-3.17 0-5.75-2.62-5.75-5.85s2.58-5.85 5.75-5.85c1.8 0 3 .77 3.69 1.43l2.51-2.43C16.72 4.2 14.66 3.3 12.17 3.3 7.2 3.3 3.17 7.36 3.17 12.35s4.03 9.05 9 9.05c5.2 0 8.64-3.65 8.64-8.8 0-.6-.07-1.05-.16-1.5z"/>
@@ -145,23 +160,23 @@ function Login() {
                 icon={GoogleIcon}
                 text="Sign in with Google"
                 provider="Google"
-                onClick={() => {
-                  window.location.href = "http://localhost:8000/auth/google/login";
-                }}
-                disabled={loading}
+                onClick={() => handleSocialLogin("google")}
+                disabled={loading || !oauthEnabled}
                 className="!rounded-2xl !border-white/70 !bg-white/75 !text-slate-700 hover:!bg-white hover:!shadow-md hover:!border-indigo-200"
               />
               <SocialButton
                 icon={GithubIcon}
                 text="Sign in with GitHub"
                 provider="GitHub"
-                onClick={() => {
-                  console.log("Redirecting to backend...");
-                  window.location.href = "http://localhost:8000/auth/github/login";
-                }}
-                disabled={loading}
+                onClick={() => handleSocialLogin("github")}
+                disabled={loading || !oauthEnabled}
                 className="!rounded-2xl !border-white/70 !bg-white/75 !text-slate-700 hover:!bg-white hover:!shadow-md hover:!border-indigo-200"
               />
+              {!oauthEnabled && (
+                <p className="text-center text-xs text-slate-500">
+                  Social login is disabled right now. Sign in with email/password.
+                </p>
+              )}
             </div>
 
             <div className="mb-8 flex items-center gap-4 relative z-10">

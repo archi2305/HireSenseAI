@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
+import logging
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,13 +19,20 @@ BASE_DIR = os.path.dirname(__file__)
 DOTENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(DOTENV_PATH, override=True)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger("hiresense-backend")
+
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 
-print("Google ID:", GOOGLE_CLIENT_ID)
-print("GitHub ID:", GITHUB_CLIENT_ID)
+logger.info("Environment loaded from %s", DOTENV_PATH)
+logger.info("Google OAuth configured: %s", bool(GOOGLE_CLIENT_ID))
+logger.info("GitHub OAuth configured: %s", bool(GITHUB_CLIENT_ID))
 
 try:
     from services.skill_matcher import calculate_ats_score
@@ -44,7 +52,11 @@ except ImportError:
     import backend.models as models
     from backend.routes import auth, oauth, password, profile, settings
 
-models.Base.metadata.create_all(bind=engine)
+try:
+    models.Base.metadata.create_all(bind=engine)
+    logger.info("Database tables ensured")
+except Exception as exc:
+    logger.exception("Database initialization error: %s", exc)
 
 
 class DashboardStats(BaseModel):
@@ -70,7 +82,7 @@ class AnalysisResult(BaseModel):
 
 from starlette.middleware.sessions import SessionMiddleware
 
-app = FastAPI()
+app = FastAPI(title="HireSense Backend")
 
 # OAuth Requires Session Middleware
 app.add_middleware(
@@ -81,16 +93,75 @@ app.add_middleware(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(oauth.router, prefix="/auth", tags=["oauth"])
-app.include_router(password.router, prefix="/api/auth", tags=["password"])
-app.include_router(profile.router, prefix="/api", tags=["profile"])
-app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+def _is_truthy(value: str | None) -> bool:
+    return (value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+DISABLE_OAUTH = _is_truthy(os.getenv("DISABLE_OAUTH", "true"))
+if DISABLE_OAUTH:
+    logger.warning("OAuth routes are temporarily disabled (DISABLE_OAUTH=true)")
+
+def _safe_include_router(router, prefix: str, tags: list[str], name: str):
+    try:
+        app.include_router(router, prefix=prefix, tags=tags)
+        logger.info("Router loaded: %s", name)
+    except Exception as exc:
+        logger.exception("Failed to load router '%s': %s", name, exc)
+
+_safe_include_router(auth.router, prefix="/api/auth", tags=["auth"], name="auth")
+if not DISABLE_OAUTH:
+    _safe_include_router(oauth.router, prefix="/auth", tags=["oauth"], name="oauth")
+_safe_include_router(password.router, prefix="/api/auth", tags=["password"], name="password")
+_safe_include_router(profile.router, prefix="/api", tags=["profile"], name="profile")
+_safe_include_router(settings.router, prefix="/api/settings", tags=["settings"], name="settings")
+
+@app.get("/health")
+def health_check():
+    return {"status": "OK"}
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "HireSense backend is running",
+        "health": "/health",
+        "docs": "/docs",
+    }
+
+@app.on_event("startup")
+def startup_diagnostics():
+    logger.info("Backend startup checks beginning")
+    try:
+        with engine.connect() as conn:
+            conn.exec_driver_sql("SELECT 1")
+        logger.info("Database connection test passed")
+    except Exception as exc:
+        logger.exception("Database connection test failed: %s", exc)
+    try:
+        logger.info(
+            "Startup summary | DISABLE_OAUTH=%s | FRONTEND_URL=%s | DATABASE_URL_SET=%s",
+            DISABLE_OAUTH,
+            os.getenv("FRONTEND_URL", ""),
+            bool(os.getenv("DATABASE_URL")),
+        )
+    except Exception as exc:
+        logger.exception("Unexpected startup logging failure: %s", exc)
+    try:
+        discovered_routes: list[str] = []
+        for route in app.routes:
+            path = getattr(route, "path", "")
+            methods = sorted(list(getattr(route, "methods", []) or []))
+            if path:
+                discovered_routes.append(f"{','.join(methods) or 'N/A'} {path}")
+        logger.info("Registered routes (%d):", len(discovered_routes))
+        for route_line in sorted(discovered_routes):
+            logger.info("  %s", route_line)
+    except Exception as exc:
+        logger.exception("Failed to log registered routes: %s", exc)
 
 os.makedirs("uploads/avatars", exist_ok=True)
 app.mount("/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
@@ -317,6 +388,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
 
 
 @app.get("/analyses")
+@app.get("/analysis")
+@app.get("/resumes")
 def list_analyses(db: Session = Depends(get_db)):
     analyses = db.query(ResumeAnalysis).order_by(ResumeAnalysis.created_at.desc()).all()
     results = [

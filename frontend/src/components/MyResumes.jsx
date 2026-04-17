@@ -12,8 +12,14 @@ function MyResumes({ searchQuery = "" }) {
   useEffect(() => {
     const fetchResumes = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/resumes`)
-        setResumes(response.data || [])
+        const response = await axios.get(`${API_BASE_URL}/analyses`)
+        const normalized = (response.data || []).map((item) => ({
+          id: item.id,
+          name: item.resume_name || "Untitled Resume",
+          updated_at: item.date,
+          completion_percentage: item.ats_score ?? 0,
+        }))
+        setResumes(normalized)
       } catch (err) {
         console.error("Failed to load resumes", err)
         setError("Failed to load resumes")

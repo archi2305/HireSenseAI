@@ -15,10 +15,9 @@ export default function CandidateMatching() {
     if (!jobDescription) return toast.error("Intel framework required.")
     setLoading(true)
     try {
-      const res = await api.post("/match-candidates", { 
-        job_description: jobDescription,
-        top_n: 10
-      })
+      const formData = new FormData()
+      formData.append("job_description", jobDescription)
+      const res = await api.post("/candidates/match", formData)
       setResults(res.data)
       toast.success("Matching engine synchronized.")
     } catch {

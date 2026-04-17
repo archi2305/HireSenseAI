@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
-import { AnimatePresence } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useState } from "react"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
@@ -38,7 +38,7 @@ function ProtectedRoute({ children }) {
     )
   }
 
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" />
   return children
 }
 

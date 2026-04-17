@@ -19,7 +19,7 @@ function History() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/analysis`)
+        const response = await axios.get(`${API_BASE_URL}/analyses`)
         setAnalyses(response.data || [])
       } catch (error) {
         console.error("Failed to fetch history API", error)
