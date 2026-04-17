@@ -5,8 +5,8 @@ import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 const toastVariants = {
   initial: { 
     opacity: 0, 
-    y: -50, 
-    scale: 0.8 
+    y: -16,
+    scale: 0.98
   },
   animate: { 
     opacity: 1, 
@@ -21,10 +21,10 @@ const toastVariants = {
   },
   exit: { 
     opacity: 0, 
-    y: -50, 
-    scale: 0.8,
+    y: -12,
+    scale: 0.98,
     transition: {
-      duration: 0.2,
+      duration: 0.18,
       ease: 'easeInOut'
     }
   }
@@ -59,18 +59,18 @@ const ToastContainer = () => {
   }, []);
 
   const getToastStyles = (type) => {
-    const baseStyles = "flex items-center gap-3 p-4 rounded-2xl shadow-lg backdrop-blur-sm border";
+    const baseStyles = "flex items-center gap-3 p-4 rounded-xl shadow-lg border";
     
     switch (type) {
       case 'success':
-        return `${baseStyles} bg-success/90 text-white border-success/80`;
+        return `${baseStyles} bg-emerald-600 text-white border-emerald-500`;
       case 'error':
-        return `${baseStyles} bg-error/90 text-white border-error/80`;
+        return `${baseStyles} bg-rose-600 text-white border-rose-500`;
       case 'warning':
-        return `${baseStyles} bg-warning/90 text-white border-warning/80`;
+        return `${baseStyles} bg-amber-500 text-white border-amber-400`;
       case 'info':
       default:
-        return `${baseStyles} bg-info/90 text-white border-info/80`;
+        return `${baseStyles} bg-slate-700 text-white border-slate-600`;
     }
   };
 
@@ -95,7 +95,7 @@ const ToastContainer = () => {
   };
 
   return (
-    <div className="fixed top-20 right-6 z-[95] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div

@@ -87,9 +87,6 @@ export default function Dashboard() {
           <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
             Upload Resume
           </button>
-          <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
-            New Extraction
-          </button>
         </div>
       </div>
 
@@ -132,8 +129,8 @@ export default function Dashboard() {
             <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
               Upload Resume
             </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/analyzer")}>
-              New Extraction
+            <button className="btn btn-secondary" onClick={() => navigate("/history")}>
+              View History
             </button>
             <button className="btn btn-secondary" onClick={() => navigate("/analytics")}>
               Match Rate Analytics

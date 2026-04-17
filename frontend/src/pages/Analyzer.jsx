@@ -126,14 +126,6 @@ export default function Analyzer() {
           />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          <span style={{ fontSize: 11, color: "var(--text-2)", fontWeight: 700, letterSpacing: ".08em" }}>
-            OR
-          </span>
-          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-        </div>
-
         <div>
           <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-2)", marginBottom: 8 }}>
             Target Role
@@ -150,6 +142,14 @@ export default function Analyzer() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: 11, color: "var(--text-2)", fontWeight: 700, letterSpacing: ".08em" }}>
+            OR
+          </span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
 
         <div>
