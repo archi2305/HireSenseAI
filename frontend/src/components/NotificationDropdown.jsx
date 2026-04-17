@@ -14,7 +14,7 @@ const NotificationDropdown = ({ items, open, onDismissAll }) => {
 
   return (
     <div className="max-h-[400px] flex flex-col font-sans">
-      <div className="px-6 py-4 border-b border-theme-border bg-theme-surface flex items-center justify-between">
+      <div className="px-6 py-4 border-b border-theme-border bg-theme-sidebar/50 flex items-center justify-between">
          <div className="flex items-center gap-2">
             <Zap size={14} className="text-theme-accent" />
             <h3 className="text-[11px] font-black text-theme-text uppercase tracking-widest leading-none">Intelligence Feed</h3>
@@ -33,7 +33,7 @@ const NotificationDropdown = ({ items, open, onDismissAll }) => {
             transition={{ delay: idx * 0.05 }}
             className="p-5 hover:bg-theme-accent/[0.03] transition-all duration-300 group cursor-pointer relative overflow-hidden"
           >
-             <div className="absolute top-0 right-0 w-16 h-16 bg-theme-accent/5 blur-2xl pointer-events-none group-hover:opacity-100 opacity-0 transition-opacity" />
+             <div className="absolute top-0 right-0 w-16 h-16 bg-theme-accent/5 pointer-events-none group-hover:opacity-100 opacity-0 transition-opacity" />
              
              <div className="flex gap-4 relative z-10">
                 <div className="w-10 h-10 rounded-xl bg-theme-bg border border-theme-border flex items-center justify-center text-theme-accent shrink-0 group-hover:bg-theme-accent group-hover:text-white transition-all duration-500 shadow-sm">
@@ -54,7 +54,7 @@ const NotificationDropdown = ({ items, open, onDismissAll }) => {
         ))}
       </div>
 
-      <div className="p-3 border-t border-theme-border bg-theme-surface">
+      <div className="p-3 border-t border-theme-border bg-theme-sidebar/30">
          <button
            onClick={onDismissAll}
            className="w-full py-2.5 rounded-xl text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] hover:text-theme-text hover:bg-theme-surface transition-all duration-300 active:scale-95"

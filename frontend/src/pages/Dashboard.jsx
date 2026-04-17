@@ -129,11 +129,11 @@ export default function Dashboard() {
             <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
               Upload Resume
             </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/history")}>
-              View History
-            </button>
             <button className="btn btn-secondary" onClick={() => navigate("/analytics")}>
               Match Rate Analytics
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate("/pipelines")}>
+              View Pipelines
             </button>
           </div>
         )}

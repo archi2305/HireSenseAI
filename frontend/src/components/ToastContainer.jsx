@@ -21,10 +21,10 @@ const toastVariants = {
   },
   exit: { 
     opacity: 0, 
-    y: -12,
+    y: -16,
     scale: 0.98,
     transition: {
-      duration: 0.18,
+      duration: 0.2,
       ease: 'easeInOut'
     }
   }
@@ -63,14 +63,14 @@ const ToastContainer = () => {
     
     switch (type) {
       case 'success':
-        return `${baseStyles} bg-emerald-600 text-white border-emerald-500`;
+        return `${baseStyles} bg-success text-white border-success/80`;
       case 'error':
-        return `${baseStyles} bg-rose-600 text-white border-rose-500`;
+        return `${baseStyles} bg-error text-white border-error/80`;
       case 'warning':
-        return `${baseStyles} bg-amber-500 text-white border-amber-400`;
+        return `${baseStyles} bg-warning text-white border-warning/80`;
       case 'info':
       default:
-        return `${baseStyles} bg-slate-700 text-white border-slate-600`;
+        return `${baseStyles} bg-info text-white border-info/80`;
     }
   };
 
@@ -95,7 +95,7 @@ const ToastContainer = () => {
   };
 
   return (
-    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-[12px] pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div

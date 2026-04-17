@@ -110,16 +110,9 @@ function App() {
           <Toaster 
             position="top-right" 
             toastOptions={{ 
-              className: '!border-theme-border !text-theme-text !bg-theme-surface',
+              className: '!border-theme-border !text-theme-text !bg-theme-surface !shadow-lg',
               duration: 4000,
-              style: {
-                maxWidth: "320px",
-                marginTop: "20px",
-                marginRight: "20px",
-                borderRadius: "12px",
-                boxShadow: "0 12px 30px rgba(15, 23, 42, 0.18)",
-                backdropFilter: "none",
-              }
+              style: { maxWidth: "320px", marginTop: "20px", marginRight: "20px", borderRadius: "12px" }
             }} 
           />
           <Routes>

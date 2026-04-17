@@ -263,7 +263,7 @@ function Header({ notifications, onCommandPalette }) {
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="fixed top-5 right-5 w-full max-w-[320px] z-[9999] bg-theme-surface border border-theme-border rounded-xl shadow-lg overflow-hidden"
+                className="fixed top-5 right-5 w-full max-w-[320px] z-[9999] bg-theme-surface border border-theme-border rounded-xl shadow-premium overflow-hidden"
               >
                 <NotificationDropdown
                   items={notifications}
