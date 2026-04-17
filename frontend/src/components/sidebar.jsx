@@ -1,5 +1,5 @@
 import React from "react"
-import { Layers, FileText, History, Settings, Target, User, Command, Zap } from "lucide-react"
+import { LayoutDashboard, FileText, History, Settings, User, Zap } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 
@@ -7,13 +7,12 @@ function Sidebar() {
   const location = useLocation()
   
   const menu = [
-    { name: "Workspace", path: "/dashboard", icon: Layers },
-    { name: "Intel Parser", path: "/analyzer", icon: FileText },
-    { name: "Match Core", path: "/matching", icon: Target },
-    { name: "Activity Log", path: "/history", icon: History },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Analyzer", path: "/analyzer", icon: FileText },
+    { name: "History", path: "/history", icon: History },
   ]
   const bottomMenu = [
-    { name: "Preferences", path: "/settings", icon: Settings }
+    { name: "Preferences", path: "/preferences", icon: Settings }
   ]
 
   return (

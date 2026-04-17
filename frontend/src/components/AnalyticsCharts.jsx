@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  AreaChart, Area, Cell, PieChart, Pie 
+  AreaChart, Area, Cell
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 
-const AnalyticsCharts = () => {
+const AnalyticsCharts = ({ showSkills = true }) => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -49,7 +49,7 @@ const AnalyticsCharts = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className={`grid grid-cols-1 ${showSkills ? "lg:grid-cols-2" : ""} gap-8`}>
       {/* Parsing Volume */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -102,47 +102,48 @@ const AnalyticsCharts = () => {
         </div>
       </motion.div>
 
-      {/* Skill Density */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="linear-card p-6 border-theme-accent/5 bg-theme-surface/50 backdrop-blur-sm"
-      >
-        <div className="flex items-center justify-between mb-8">
-           <h3 className="text-[13px] font-black text-theme-text uppercase tracking-widest">Skill Intelligence</h3>
-           <span className="px-2 py-0.5 rounded-full bg-theme-accent/10 border border-theme-accent/20 text-theme-accent text-[9px] font-black uppercase tracking-widest">High Affinity</span>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={skillData} layout="vertical" barSize={12}>
-              <XAxis type="number" hide />
-              <YAxis 
-                type="category" 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: chartTheme.text, fontSize: 10, fontWeight: 900 }} 
-                width={70}
-              />
-              <Tooltip 
-                 cursor={{ fill: 'transparent' }} 
-                 content={<CustomTooltip />}
-              />
-              <Bar 
-                dataKey="value" 
-                radius={[0, 4, 4, 0]} 
-                animationDuration={2000}
-                animationEasing="cubic-bezier(0.16, 1, 0.3, 1)"
-              >
-                 {skillData.map((entry, index) => (
+      {showSkills && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="linear-card p-6 border-theme-accent/5 bg-theme-surface/50 backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-[13px] font-black text-theme-text uppercase tracking-widest">Skill Intelligence</h3>
+            <span className="px-2 py-0.5 rounded-full bg-theme-accent/10 border border-theme-accent/20 text-theme-accent text-[9px] font-black uppercase tracking-widest">High Affinity</span>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={skillData} layout="vertical" barSize={12}>
+                <XAxis type="number" hide />
+                <YAxis 
+                  type="category" 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: chartTheme.text, fontSize: 10, fontWeight: 900 }} 
+                  width={70}
+                />
+                <Tooltip 
+                   cursor={{ fill: 'transparent' }} 
+                   content={<CustomTooltip />}
+                />
+                <Bar 
+                  dataKey="value" 
+                  radius={[0, 4, 4, 0]} 
+                  animationDuration={2000}
+                  animationEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+                >
+                  {skillData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} opacity={0.8} />
-                 ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

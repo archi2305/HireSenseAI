@@ -156,6 +156,7 @@ function Login() {
                 text="Sign in with GitHub"
                 provider="GitHub"
                 onClick={() => {
+                  console.log("Redirecting to backend...");
                   window.location.href = "http://localhost:8000/auth/github/login";
                 }}
                 disabled={loading}

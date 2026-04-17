@@ -2,24 +2,24 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import {
-  Search, Command, LayoutDashboard, Users, FileText,
-  Settings, History, Zap, ArrowRight, User, BarChart2, X
+  Search, LayoutDashboard, FileText, Settings,
+  History, Zap, ArrowRight, User, BarChart2, X
 } from "lucide-react"
 import { useDashboard } from "../context/DashboardContext"
 
 const PAGES = [
   { id:"dashboard", label:"Dashboard",      icon:LayoutDashboard, path:"/dashboard",   group:"Pages"   },
-  { id:"analyzer",  label:"Resume Analyzer",icon:FileText,         path:"/analyzer",    group:"Pages"   },
-  { id:"matching",  label:"Candidate Match",icon:Users,            path:"/matching",    group:"Pages"   },
+  { id:"analyzer",  label:"Analyzer",       icon:FileText,         path:"/analyzer",    group:"Pages"   },
+  { id:"results",   label:"Results",        icon:BarChart2,        path:"/results",     group:"Pages"   },
   { id:"history",   label:"History",         icon:History,          path:"/history",     group:"Pages"   },
-  { id:"settings",  label:"Settings",        icon:Settings,         path:"/settings",    group:"Pages"   },
+  { id:"settings",  label:"Preferences",     icon:Settings,         path:"/preferences", group:"Pages"   },
   { id:"profile",   label:"Profile",         icon:User,             path:"/profile",     group:"Pages"   },
 ]
 
 const ACTIONS = [
   { id:"upload",    label:"Upload Resume",   icon:Zap,              action:"upload",     group:"Actions" },
-  { id:"match",     label:"Match Candidates",icon:BarChart2,        action:"match",      group:"Actions" },
   { id:"analyze",   label:"New Analysis",   icon:FileText,          action:"analyze",    group:"Actions" },
+  { id:"history",   label:"Open History",   icon:History,           action:"history",    group:"Actions" },
 ]
 
 export default function CommandPalette({ open, onClose }) {
@@ -58,8 +58,8 @@ export default function CommandPalette({ open, onClose }) {
   const handleSelect = useCallback((item) => {
     if (item.path)   { navigate(item.path); onClose() }
     else if (item.action === "upload")  { navigate("/analyzer"); onClose() }
-    else if (item.action === "match")   { navigate("/matching"); onClose() }
     else if (item.action === "analyze") { navigate("/analyzer"); onClose() }
+    else if (item.action === "history") { navigate("/history"); onClose() }
     else onClose()
   }, [navigate, onClose])
 

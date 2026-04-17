@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 # Load environment variables explicitly from backend/.env
 BASE_DIR = os.path.dirname(__file__)
 DOTENV_PATH = os.path.join(BASE_DIR, ".env")
-load_dotenv(DOTENV_PATH)
+load_dotenv(DOTENV_PATH, override=True)
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")

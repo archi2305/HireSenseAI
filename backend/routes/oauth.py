@@ -4,7 +4,8 @@ from urllib.parse import urlencode, urlparse
 import urllib.parse
 
 import httpx
-from dotenv import load_dotenv
+import requests
+from dotenv import load_dotenv, dotenv_values
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -16,12 +17,13 @@ from utils.security import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 # Ensure we load the same backend/.env that main.py uses
 _BACKEND_DIR = os.path.dirname(os.path.dirname(__file__))
 _DOTENV_PATH = os.path.join(_BACKEND_DIR, ".env")
-load_dotenv(_DOTENV_PATH)
+load_dotenv(_DOTENV_PATH, override=True)
 
 router = APIRouter()
 
 def get_clean_env(key: str) -> str:
-    val = os.environ.get(key, "")
+    file_vals = dotenv_values(_DOTENV_PATH)
+    val = file_vals.get(key) or os.environ.get(key, "")
     val = val.replace('\n', '').replace('\r', '').replace(' ', '')
     return val.strip('"\'-')
 
@@ -185,89 +187,80 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
     return RedirectResponse(url=redirect_url)
 
 @router.get("/github/login")
-async def github_login(request: Request):
+async def github_login():
     github_client_id = get_clean_env("GITHUB_CLIENT_ID")
     if not github_client_id:
-        return JSONResponse(status_code=503, content={"error": "GitHub not configured"})
+        return {"error": "GitHub not configured"}
 
     redirect_uri = "http://localhost:8000/auth/github/callback"
-    request.session["oauth_frontend_url_github"] = get_frontend_url(request)
     params = {
         "client_id": github_client_id,
         "redirect_uri": redirect_uri,
         "scope": "user",
     }
     github_url = "https://github.com/login/oauth/authorize?" + urllib.parse.urlencode(params)
-    print("GitHub OAuth URL:", github_url)
+    print("Redirecting to:", github_url)
     return RedirectResponse(github_url)
 
 @router.get("/github/callback")
-async def github_callback(code: str, request: Request, db: Session = Depends(get_db)):
-    print("GitHub callback received code:", code)
-    frontend_url = request.session.pop("oauth_frontend_url_github", None) or get_frontend_url(request)
+def github_callback(request: Request, db: Session = Depends(get_db)):
+    code = request.query_params.get("code")
+    if not code:
+        return {"error": "No code received"}
+
     github_client_id = get_clean_env("GITHUB_CLIENT_ID")
     github_client_secret = get_clean_env("GITHUB_CLIENT_SECRET")
     if not github_client_id or not github_client_secret:
-        return missing_provider_response(request, "github")
+        return {"error": "GitHub not configured"}
 
-    redirect_uri = "http://localhost:8000/auth/github/callback"
+    token_url = "https://github.com/login/oauth/access_token"
+    data = {
+        "client_id": github_client_id,
+        "client_secret": github_client_secret,
+        "code": code,
+        "redirect_uri": "http://localhost:8000/auth/github/callback",
+    }
+    headers = {"Accept": "application/json"}
+
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            token_res = await client.post(
-                "https://github.com/login/oauth/access_token",
-                data={
-                    "client_id": github_client_id,
-                    "client_secret": github_client_secret,
-                    "code": code,
-                    "redirect_uri": redirect_uri,
-                },
-                headers={"Accept": "application/json"},
-            )
-            token_res.raise_for_status()
-            token_data = token_res.json()
-            access_token = token_data.get("access_token")
-            if not access_token:
-                raise ValueError("missing_github_access_token")
+        response = requests.post(token_url, data=data, headers=headers, timeout=20)
+        token_json = response.json()
+    except Exception as exc:
+        return {"error": "Token exchange failed", "details": str(exc)}
 
-            user_res = await client.get(
-                "https://api.github.com/user",
-                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
-            )
-            user_res.raise_for_status()
-            user_info = user_res.json()
+    access_token = token_json.get("access_token")
+    if not access_token:
+        return {"error": "Failed to get access token", "details": token_json}
 
-            emails_res = await client.get(
-                "https://api.github.com/user/emails",
-                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
-            )
-            emails = emails_res.json() if emails_res.status_code == 200 else []
-    except Exception:
-        return auth_error_response(
-            request,
-            status_code=401,
-            error="oauth_failed",
-            detail="Auth failed",
-            redirect_error="oauth_failed",
+    try:
+        user_response = requests.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=20,
         )
+        user_data = user_response.json()
+    except Exception as exc:
+        return {"error": "Failed to fetch user data", "details": str(exc)}
 
-    email = user_info.get("email")
-    name = user_info.get("name") or user_info.get("login") or "GitHub User"
+    email = user_data.get("email")
     if not email:
         try:
-            primary_email = next((e.get("email") for e in emails if e.get("primary")), None)
-            email = primary_email or (emails[0].get("email") if emails else None)
+            emails_response = requests.get(
+                "https://api.github.com/user/emails",
+                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+                timeout=20,
+            )
+            emails_data = emails_response.json() if emails_response.ok else []
+            primary = next((item.get("email") for item in emails_data if item.get("primary")), None)
+            email = primary or (emails_data[0].get("email") if emails_data else None)
         except Exception:
             email = None
 
     if not email:
-        return auth_error_response(
-            request,
-            status_code=400,
-            error="missing_email",
-            detail="Email is not available from social provider",
-            redirect_error="missing_email",
-        )
+        return {"error": "Email not available from GitHub"}
 
+    name = user_data.get("name") or user_data.get("login") or "GitHub User"
+    avatar = user_data.get("avatar_url", "")
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         user = models.User(fullname=name, email=email, hashed_password=None)
@@ -276,14 +269,14 @@ async def github_callback(code: str, request: Request, db: Session = Depends(get
         db.refresh(user)
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
+    app_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-
+    frontend_url = get_frontend_url(request)
     query = urlencode({
-        "token": access_token,
+        "token": app_token,
         "email": user.email,
         "name": user.fullname or name,
+        "avatar": avatar,
     })
-    redirect_url = f"{frontend_url}/oauth-success?{query}"
-    return RedirectResponse(url=redirect_url)
+    return RedirectResponse(f"{frontend_url}/oauth-success?{query}")

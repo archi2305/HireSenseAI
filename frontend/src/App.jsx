@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence } from "framer-motion"
 import { useEffect, useState } from "react"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
+import { AnalysisProvider } from "./context/AnalysisContext"
 import ToastContainer from "./components/ToastContainer"
 import PageTransition from "./components/PageTransition"
 import CommandPalette from "./components/CommandPalette"
@@ -13,9 +14,9 @@ import Header from "./components/Header"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import Dashboard from "./pages/Dashboard"
-import ResumeAnalyzer from "./components/ResumeAnalyzer"
-import CandidateMatching from "./pages/CandidateMatching"
+import Analyzer from "./pages/Analyzer"
 import History from "./pages/History"
+import Results from "./pages/Results"
 import Settings from "./pages/Settings"
 import OAuthSuccess from "./pages/OAuthSuccess"
 import ForgotPassword from "./pages/ForgotPassword"
@@ -79,10 +80,11 @@ function Layout() {
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-              <Route path="analyzer"  element={<PageTransition><ResumeAnalyzer /></PageTransition>} />
-              <Route path="matching"  element={<PageTransition><CandidateMatching /></PageTransition>} />
+              <Route path="analyzer"  element={<PageTransition><Analyzer /></PageTransition>} />
+              <Route path="results"   element={<PageTransition><Results /></PageTransition>} />
               <Route path="history"   element={<PageTransition><History /></PageTransition>} />
               <Route path="profile"   element={<PageTransition><Profile /></PageTransition>} />
+              <Route path="preferences" element={<PageTransition><Settings /></PageTransition>} />
               <Route path="settings"  element={<PageTransition><Settings /></PageTransition>} />
             </Routes>
           </AnimatePresence>
@@ -98,30 +100,32 @@ function App() {
   return (
     <AuthProvider>
       <DashboardProvider>
-        <Toaster 
-          position="bottom-right" 
-          toastOptions={{ 
-            className: 'floating-layer backdrop-premium !border-theme-border !text-theme-text !bg-theme-surface/80',
-            duration: 4000
-          }} 
-        />
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/oauth-success" element={<OAuthSuccess />} />
-
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
+        <AnalysisProvider>
+          <Toaster 
+            position="bottom-right" 
+            toastOptions={{ 
+              className: 'floating-layer backdrop-premium !border-theme-border !text-theme-text !bg-theme-surface/80',
+              duration: 4000
+            }} 
           />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/oauth-success" element={<OAuthSuccess />} />
+
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AnalysisProvider>
       </DashboardProvider>
     </AuthProvider>
   )

@@ -4,6 +4,7 @@ import {
   Search, Filter, Download, ChevronRight, X,
   Mail, MapPin, Calendar, Star, Zap, Brain
 } from "lucide-react"
+import toast from "react-hot-toast"
 import { useDashboard } from "../context/DashboardContext"
 
 /* ────────────────────────────────────────────
@@ -134,22 +135,51 @@ function CandidatePanel({ candidate, onClose }) {
 /* ────────────────────────────────────────────
    MAIN CANDIDATE TABLE
    ──────────────────────────────────────────── */
-export default function CandidateTable({ limit, hideFilters }) {
+export default function CandidateTable({ limit, hideFilters, searchQuery = "" }) {
   const { candidates: ctx, loading } = useDashboard()
   const [localSearch, setLocalSearch] = useState("")
   const [selected, setSelected] = useState(null)
 
   // Apply limit then local search for client-side filtering
   const base = limit ? ctx.slice(0, limit) : ctx
-  const display = localSearch
+  const combinedSearch = [searchQuery, localSearch].filter(Boolean).join(" ").trim()
+  const display = combinedSearch
     ? base.filter(c =>
         [c.name, c.email, c.role, c.job_role].some(f =>
-          f && f.toLowerCase().includes(localSearch.toLowerCase())
+          f && f.toLowerCase().includes(combinedSearch.toLowerCase())
         )
       )
     : base
 
   const scoreColor = s => s >= 85 ? "#10b981" : s >= 60 ? "#f59e0b" : "#ef4444"
+
+  const exportCsv = () => {
+    if (display.length === 0) {
+      toast.error("No candidates available to export")
+      return
+    }
+
+    const rows = [
+      ["Name", "Email", "Role", "ATS Score"],
+      ...display.map((c) => [
+        c.name || "",
+        c.email || "",
+        c.role || c.job_role || "",
+        `${c.score ?? c.ats_score ?? 0}`,
+      ]),
+    ]
+    const csv = rows
+      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+      .join("\n")
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    link.href = URL.createObjectURL(blob)
+    link.download = "candidate-feed.csv"
+    link.click()
+    URL.revokeObjectURL(link.href)
+    toast.success("Candidate feed exported")
+  }
 
   return (
     <div style={{ position:"relative" }}>
@@ -166,10 +196,18 @@ export default function CandidateTable({ limit, hideFilters }) {
               onChange={e => setLocalSearch(e.target.value)}
             />
           </div>
-          <button className="btn btn-secondary" style={{ fontSize:12, padding:"7px 14px", whiteSpace:"nowrap" }}>
+          <button
+            className="btn btn-secondary"
+            style={{ fontSize:12, padding:"7px 14px", whiteSpace:"nowrap" }}
+            onClick={() => setLocalSearch("")}
+          >
             <Filter size={13} /> Filters
           </button>
-          <button className="btn btn-secondary" style={{ fontSize:12, padding:"7px 14px", whiteSpace:"nowrap" }}>
+          <button
+            className="btn btn-secondary"
+            style={{ fontSize:12, padding:"7px 14px", whiteSpace:"nowrap" }}
+            onClick={exportCsv}
+          >
             <Download size={13} /> Export
           </button>
         </div>
