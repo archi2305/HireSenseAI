@@ -190,37 +190,27 @@ async def github_login(request: Request):
     if not github_client_id:
         return JSONResponse(status_code=503, content={"error": "GitHub not configured"})
 
-    redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
+    redirect_uri = "http://localhost:8000/auth/github/callback"
     request.session["oauth_frontend_url_github"] = get_frontend_url(request)
     params = {
         "client_id": github_client_id,
         "redirect_uri": redirect_uri,
-        # Request explicit email scope so /user/emails returns data for private email profiles.
-        "scope": "read:user user:email",
+        "scope": "user",
     }
-    url = "https://github.com/login/oauth/authorize?" + urllib.parse.urlencode(params)
-    print("GitHub URL:", url)
-    return RedirectResponse(url)
+    github_url = "https://github.com/login/oauth/authorize?" + urllib.parse.urlencode(params)
+    print("GitHub OAuth URL:", github_url)
+    return RedirectResponse(github_url)
 
 @router.get("/github/callback")
-async def github_callback(request: Request, db: Session = Depends(get_db)):
+async def github_callback(code: str, request: Request, db: Session = Depends(get_db)):
+    print("GitHub callback received code:", code)
     frontend_url = request.session.pop("oauth_frontend_url_github", None) or get_frontend_url(request)
     github_client_id = get_clean_env("GITHUB_CLIENT_ID")
     github_client_secret = get_clean_env("GITHUB_CLIENT_SECRET")
     if not github_client_id or not github_client_secret:
         return missing_provider_response(request, "github")
 
-    code = request.query_params.get("code")
-    if not code:
-        return auth_error_response(
-            request,
-            status_code=401,
-            error="oauth_failed",
-            detail="Auth failed",
-            redirect_error="oauth_failed",
-        )
-
-    redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
+    redirect_uri = "http://localhost:8000/auth/github/callback"
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             token_res = await client.post(
