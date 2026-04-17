@@ -36,7 +36,7 @@ const ToastContainer = () => {
   useEffect(() => {
     // Listen for custom toast events
     const handleToast = (event) => {
-      const { type, message, duration = 5000 } = event.detail;
+      const { type, message, duration = 4000 } = event.detail;
       const id = Date.now();
       
       const newToast = {
@@ -95,7 +95,7 @@ const ToastContainer = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-20 right-6 z-[95] flex flex-col gap-3 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
           <motion.div
@@ -104,7 +104,7 @@ const ToastContainer = () => {
             initial="initial"
             animate="animate"
             exit="exit"
-            className={`${getToastStyles(toast.type)} pointer-events-auto max-w-md`}
+            className={`${getToastStyles(toast.type)} pointer-events-auto max-w-[320px]`}
             layout
           >
             {getIcon(toast.type)}

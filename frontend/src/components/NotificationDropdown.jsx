@@ -2,7 +2,7 @@ import React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Bell, CheckCircle, Info, Zap, X, ChevronRight } from "lucide-react"
 
-const NotificationDropdown = ({ items, open }) => {
+const NotificationDropdown = ({ items, open, onDismissAll }) => {
   if (!items || items.length === 0) {
     return (
       <div className="p-12 text-center opacity-30">
@@ -55,7 +55,10 @@ const NotificationDropdown = ({ items, open }) => {
       </div>
 
       <div className="p-3 border-t border-theme-border bg-theme-sidebar/30">
-         <button className="w-full py-2.5 rounded-xl text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] hover:text-theme-text hover:bg-theme-surface transition-all duration-300 active:scale-95">
+         <button
+           onClick={onDismissAll}
+           className="w-full py-2.5 rounded-xl text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] hover:text-theme-text hover:bg-theme-surface transition-all duration-300 active:scale-95"
+         >
            Dismiss All Intel
          </button>
       </div>

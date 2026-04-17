@@ -35,7 +35,7 @@ function History() {
     if (!search.trim()) return analyses
     const q = search.toLowerCase()
     return analyses.filter((item) =>
-      [item?.candidate, item?.job_role, item?.id, `${item?.ats_score ?? ""}`]
+      [item?.resume_name, item?.job_role, item?.id, `${item?.ats_score ?? ""}`]
         .filter(Boolean)
         .some((field) => String(field).toLowerCase().includes(q))
     )
@@ -105,7 +105,7 @@ function History() {
               {!loading && filteredAnalyses.length === 0 && (
                 <tr>
                   <td colSpan={5} style={{ padding: 18, color: "var(--text-2)", fontSize: 13 }}>
-                    No parsed resumes found.
+                    No data yet. Upload your first resume.
                   </td>
                 </tr>
               )}
@@ -115,7 +115,7 @@ function History() {
                   <td style={{ padding: "12px 12px", fontSize: 13, fontWeight: 600 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <Briefcase size={14} style={{ color: "var(--accent)" }} />
-                      {item.candidate || "Unknown Candidate"}
+                      {item.resume_name || "Unknown Resume"}
                     </div>
                   </td>
                   <td style={{ padding: "12px 12px", fontSize: 13 }}>{item.job_role || "N/A"}</td>

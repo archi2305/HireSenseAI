@@ -8,8 +8,8 @@ export default function QuickActionPanel() {
 
   const actions = [
     { label: "Analyze", icon: Zap, path: "/analyzer", color: "bg-theme-accent" },
-    { label: "Match", icon: Target, path: "/matching", color: "bg-theme-accent" },
-    { label: "Search", icon: Search, path: "/dashboard", color: "bg-theme-accent" },
+    { label: "Match Rate", icon: Target, path: "/analytics", color: "bg-theme-accent" },
+    { label: "Search", icon: Search, path: "/search", color: "bg-theme-accent" },
   ]
 
   return (

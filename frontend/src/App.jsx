@@ -18,6 +18,9 @@ import Analyzer from "./pages/Analyzer"
 import History from "./pages/History"
 import Results from "./pages/Results"
 import Settings from "./pages/Settings"
+import Analytics from "./pages/Analytics"
+import Pipelines from "./pages/Pipelines"
+import SearchResults from "./pages/SearchResults"
 import OAuthSuccess from "./pages/OAuthSuccess"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
@@ -81,6 +84,9 @@ function Layout() {
             <Routes location={location} key={location.pathname}>
               <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
               <Route path="analyzer"  element={<PageTransition><Analyzer /></PageTransition>} />
+              <Route path="analytics" element={<PageTransition><Analytics /></PageTransition>} />
+              <Route path="pipelines" element={<PageTransition><Pipelines /></PageTransition>} />
+              <Route path="search" element={<PageTransition><SearchResults /></PageTransition>} />
               <Route path="results"   element={<PageTransition><Results /></PageTransition>} />
               <Route path="history"   element={<PageTransition><History /></PageTransition>} />
               <Route path="profile"   element={<PageTransition><Profile /></PageTransition>} />
@@ -102,10 +108,11 @@ function App() {
       <DashboardProvider>
         <AnalysisProvider>
           <Toaster 
-            position="bottom-right" 
+            position="top-right" 
             toastOptions={{ 
               className: 'floating-layer backdrop-premium !border-theme-border !text-theme-text !bg-theme-surface/80',
-              duration: 4000
+              duration: 4000,
+              style: { maxWidth: "320px", marginTop: "64px" }
             }} 
           />
           <Routes>

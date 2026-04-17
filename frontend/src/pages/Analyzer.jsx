@@ -5,7 +5,14 @@ import toast from "react-hot-toast"
 import { API_BASE_URL } from "../services/api"
 import { useAnalysis } from "../context/AnalysisContext"
 
-const ROLES = ["Frontend", "Backend", "AI/ML", "DevOps"]
+const ROLES = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "Data Scientist",
+  "AI Engineer",
+  "DevOps Engineer",
+]
 
 export default function Analyzer() {
   const navigate = useNavigate()
@@ -16,51 +23,65 @@ export default function Analyzer() {
 
   const onSubmit = async (event) => {
     event.preventDefault()
+    const hasFile = Boolean(file)
+    const hasJobDescription = Boolean(analysisInput.jobDescription.trim())
 
-    if (!file) {
-      toast.error("Please upload a resume file")
+    if (!hasFile && !hasJobDescription) {
+      toast.error("Upload a resume or provide a job description")
       return
     }
-    if (!analysisInput.role) {
+    if (!analysisInput.role.trim()) {
       toast.error("Please select a role")
       return
     }
-    if (!analysisInput.jobDescription.trim()) {
-      toast.error("Please add a job description")
-      return
-    }
-
-    const fileName = file.name.toLowerCase()
-    const isSupported = fileName.endsWith(".pdf") || fileName.endsWith(".docx")
-    if (!isSupported) {
-      toast.error("Only PDF or DOCX files are supported")
-      return
-    }
-
-    const formData = new FormData()
-    formData.append("file", file)
-    formData.append("role", analysisInput.role)
-    formData.append("job_description", analysisInput.jobDescription)
 
     setLoading(true)
     try {
-      const response = await fetch(`${API_BASE_URL}/api/analyze`, {
-        method: "POST",
-        body: formData,
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(data?.detail || "Analysis failed")
+      if (hasFile) {
+        const fileName = file.name.toLowerCase()
+        const isSupported = fileName.endsWith(".pdf") || fileName.endsWith(".docx")
+        if (!isSupported) {
+          throw new Error("Only PDF or DOCX files are supported")
+        }
+
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("role", analysisInput.role)
+        formData.append("job_description", analysisInput.jobDescription)
+
+        const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+          method: "POST",
+          body: formData,
+        })
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(data?.detail || "Analysis failed")
+        }
+
+        setUploadedResume({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        })
+        setAnalysisResult(data)
+        toast.success("Resume analyzed successfully")
+        navigate("/results")
+        return
       }
 
-      setUploadedResume({
-        name: file.name,
-        type: file.type,
-        size: file.size,
+      const matchFormData = new FormData()
+      matchFormData.append("job_description", analysisInput.jobDescription)
+      const matchResponse = await fetch(`${API_BASE_URL}/candidates/match`, {
+        method: "POST",
+        body: matchFormData,
       })
-      setAnalysisResult(data)
-      toast.success("Resume analyzed successfully")
-      navigate("/results")
+      const matchData = await matchResponse.json().catch(() => [])
+      if (!matchResponse.ok) {
+        throw new Error("Match analysis failed")
+      }
+      setAnalysisResult({ match_results: matchData })
+      toast.success("Match rate analysis completed")
+      navigate("/analytics")
     } catch (error) {
       toast.error(error.message || "Unable to analyze resume")
     } finally {
@@ -75,10 +96,10 @@ export default function Analyzer() {
           Resume Analyzer
         </p>
         <h1 style={{ fontSize: 30, fontWeight: 900, color: "var(--text)", margin: 0 }}>
-          Upload resume and run AI match
+          Upload and analyze ATS fit
         </h1>
         <p style={{ marginTop: 10, color: "var(--text-2)", fontSize: 14 }}>
-          Choose a role, provide the job description, and run a single pipeline analysis.
+          Upload Resume runs ATS analysis. Job Description-only runs Match Rate analysis.
         </p>
       </div>
 
@@ -103,6 +124,14 @@ export default function Analyzer() {
             style={{ display: "none" }}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+          <span style={{ fontSize: 11, color: "var(--text-2)", fontWeight: 700, letterSpacing: ".08em" }}>
+            OR
+          </span>
+          <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
         </div>
 
         <div>
@@ -142,7 +171,11 @@ export default function Analyzer() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading || (!file && !analysisInput.jobDescription.trim())}
+          >
             {loading ? (
               <>
                 <span className="animate-spin" style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,.35)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block" }} />

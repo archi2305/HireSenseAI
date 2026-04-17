@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight, CheckCircle, FileCheck, TrendingUp, Zap } from "lucide-react"
+import { ArrowRight, CheckCircle, FileCheck, TrendingUp, Zap, Sparkles } from "lucide-react"
 import axios from "axios"
 import AnalyticsCharts from "../components/AnalyticsCharts"
-import ActivityFeed from "../components/ActivityFeed"
 import { useDashboard } from "../context/DashboardContext"
 import { useAnalysis } from "../context/AnalysisContext"
+import EmptyState from "../components/EmptyState"
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
 
@@ -46,21 +46,21 @@ export default function Dashboard() {
         value: `${Math.round(stats.avg_score ?? 0)}%`,
         icon: TrendingUp,
         color: "#10b981",
-        onClick: () => navigate("/results"),
+        onClick: () => navigate("/analytics"),
       },
       {
         title: "AI Accuracy",
         value: `${Math.round((stats.avg_score ?? 0) * 0.96)}%`,
         icon: CheckCircle,
         color: "#f59e0b",
-        onClick: () => navigate("/results"),
+        onClick: () => navigate("/analytics"),
       },
       {
         title: "Active Pipelines",
         value: stats.active_jobs ?? 0,
         icon: Zap,
         color: "#3b82f6",
-        onClick: () => navigate("/analyzer"),
+        onClick: () => navigate("/pipelines"),
       },
     ],
     [navigate, stats]
@@ -118,13 +118,28 @@ export default function Dashboard() {
       </div>
 
       <div className="card" style={{ padding: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <p style={{ margin: 0, fontWeight: 800, fontSize: 14 }}>Recent Activity</p>
-          <button className="btn btn-secondary" onClick={() => navigate("/history")}>
-            View All
-          </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <p style={{ margin: 0, fontWeight: 800, fontSize: 14 }}>Quick Actions</p>
         </div>
-        <ActivityFeed />
+        {Number(stats.total_resumes || 0) === 0 ? (
+          <EmptyState
+            title="No data yet"
+            description="No data yet. Upload your first resume."
+            icon={Sparkles}
+          />
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
+            <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
+              Upload Resume
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate("/analyzer")}>
+              New Extraction
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate("/analytics")}>
+              Match Rate Analytics
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
