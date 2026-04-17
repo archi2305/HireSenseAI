@@ -190,12 +190,13 @@ async def github_login(request: Request):
     if not github_client_id:
         return JSONResponse(status_code=503, content={"error": "GitHub not configured"})
 
-    redirect_uri = "http://localhost:8000/auth/github/callback"
+    redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
     request.session["oauth_frontend_url_github"] = get_frontend_url(request)
     params = {
         "client_id": github_client_id,
         "redirect_uri": redirect_uri,
-        "scope": "user",
+        # Request explicit email scope so /user/emails returns data for private email profiles.
+        "scope": "read:user user:email",
     }
     url = "https://github.com/login/oauth/authorize?" + urllib.parse.urlencode(params)
     print("GitHub URL:", url)
@@ -219,7 +220,7 @@ async def github_callback(request: Request, db: Session = Depends(get_db)):
             redirect_error="oauth_failed",
         )
 
-    redirect_uri = "http://localhost:8000/auth/github/callback"
+    redirect_uri = f"{get_backend_base_url(request)}/auth/github/callback"
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             token_res = await client.post(

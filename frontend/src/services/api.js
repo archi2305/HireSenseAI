@@ -11,14 +11,16 @@ const readEnv = (key) => {
 };
 
 export const API_BASE_URL =
-  readEnv("VITE_API_URL") ||
   readEnv("NEXT_PUBLIC_API_URL") ||
+  readEnv("VITE_API_URL") ||
   "http://localhost:8000";
 
 export const AUTH_BASE_URL = API_BASE_URL;
+console.log("API_URL", API_BASE_URL);
 
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },

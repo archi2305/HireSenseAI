@@ -94,11 +94,6 @@ function Login() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    setLoading(true);
-    window.location.href = `${AUTH_BASE_URL}/auth/google/login`;
-  };
-
   const handleGithubLogin = () => {
     setLoading(true);
     window.location.href = `${AUTH_BASE_URL}/auth/github/login`;
@@ -156,7 +151,9 @@ function Login() {
                 icon={GoogleIcon}
                 text="Sign in with Google"
                 provider="Google"
-                onClick={handleGoogleLogin}
+                onClick={() => {
+                  window.location.href = "http://localhost:8000/auth/google/login";
+                }}
                 disabled={loading}
                 className="!rounded-2xl !border-white/70 !bg-white/75 !text-slate-700 hover:!bg-white hover:!shadow-md hover:!border-indigo-200"
               />
