@@ -1,17 +1,9 @@
 def generate_suggestions(missing_skills):
-    suggestions = []
-
-    for skill in list(missing_skills)[:5]:
-        suggestions.append(f"Add projects or experience related to {skill}.")
-
-    # Add practical generic ATS improvements.
-    suggestions.extend(
-        [
-            "Include measurable achievements in each recent role.",
-            "Use stronger action verbs for impact-focused bullets.",
-            "Improve project descriptions with tools, scale, and outcomes.",
-        ]
-    )
-
-    # Keep 3-5 suggestions for concise UI.
-    return suggestions[:5]
+    unique_missing = []
+    seen = set()
+    for skill in missing_skills:
+        value = (skill or "").strip().lower()
+        if value and value not in seen:
+            seen.add(value)
+            unique_missing.append(value)
+    return [f"Add projects using {skill}" for skill in unique_missing[:5]]

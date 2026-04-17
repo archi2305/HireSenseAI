@@ -35,11 +35,11 @@ logger.info("Google OAuth configured: %s", bool(GOOGLE_CLIENT_ID))
 logger.info("GitHub OAuth configured: %s", bool(GITHUB_CLIENT_ID))
 
 try:
-    from services.skill_matcher import calculate_ats_score
+    from services.skill_matcher import calculate_ats_score, detect_best_role
     from services.suggestion_engine import generate_suggestions
     from services.resume_parser import extract_text_from_pdf, extract_text_from_file
 except ImportError:
-    from backend.services.skill_matcher import calculate_ats_score
+    from backend.services.skill_matcher import calculate_ats_score, detect_best_role
     from backend.services.suggestion_engine import generate_suggestions
     from backend.services.resume_parser import extract_text_from_pdf, extract_text_from_file
 
@@ -217,7 +217,8 @@ async def upload_resume(
     db: Session = Depends(get_db)
 ):
     uploaded_file = file or resume
-    effective_role = role or job_role or "Not specified"
+    selected_role = role or job_role
+    effective_role = selected_role or "Not specified"
     print(
         f"[upload] analyze request received: filename={getattr(uploaded_file, 'filename', None)} "
         f"role={effective_role}"
@@ -276,9 +277,18 @@ async def upload_resume(
             parsing_warning = (
                 "Resume text could not be extracted fully. Results may be less accurate."
             )
+        if not selected_role:
+            detected_role = detect_best_role(resume_text)
+            if detected_role:
+                effective_role = detected_role
+
         jd = job_description or _default_job_description(effective_role)
         
-        ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
+        ats_score, matched_skills, missing_skills = calculate_ats_score(
+            resume_text,
+            jd,
+            selected_role=effective_role if effective_role != "Not specified" else None,
+        )
         suggestions = generate_suggestions(missing_skills)
         suggestions_text = "\n".join(f"- {item}" for item in suggestions)
 
@@ -330,7 +340,6 @@ async def bulk_upload(
     db: Session = Depends(get_db)
 ):
     results = []
-    jd = job_description or _default_job_description(job_role)
     
     for resume in resumes:
         file_ext = os.path.splitext(resume.filename)[1]
@@ -341,13 +350,19 @@ async def bulk_upload(
             
         try:
             resume_text = extract_text_from_pdf(file_path)
-            ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
+            effective_role = job_role or detect_best_role(resume_text) or "Not specified"
+            effective_jd = job_description or _default_job_description(effective_role)
+            ats_score, matched_skills, missing_skills = calculate_ats_score(
+                resume_text,
+                effective_jd,
+                selected_role=effective_role if effective_role != "Not specified" else None,
+            )
             suggestions = generate_suggestions(missing_skills)
             suggestions_text = "\n".join(f"- {item}" for item in suggestions)
             
             db_analysis = ResumeAnalysis(
                 resume_name=resume.filename or "uploaded_resume",
-                job_role=job_role or "Not specified",
+                job_role=effective_role,
                 ats_score=ats_score,
                 matched_skills=matched_skills,
                 missing_skills=missing_skills,
