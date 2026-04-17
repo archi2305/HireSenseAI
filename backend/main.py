@@ -43,6 +43,28 @@ except ImportError:
     from backend.services.suggestion_engine import generate_suggestions
     from backend.services.resume_parser import extract_text_from_pdf, extract_text_from_file
 
+ROLE_JD_TEMPLATES = {
+    "frontend developer": "Frontend Developer role requiring javascript, react, html, css, git, rest api.",
+    "backend developer": "Backend Developer role requiring python, fastapi, sql, postgresql, docker, git, rest api.",
+    "full stack developer": "Full Stack Developer role requiring javascript, react, node, python, sql, docker, git.",
+    "software engineer": "Software Engineer role requiring python, java, sql, git, docker, rest api.",
+    "data analyst": "Data Analyst role requiring sql, python, postgresql, machine learning, git.",
+    "machine learning engineer": "Machine Learning Engineer role requiring python, machine learning, ai, sql, docker, aws.",
+    "devops engineer": "DevOps Engineer role requiring docker, kubernetes, aws, git, python, rest api.",
+    "cloud engineer": "Cloud Engineer role requiring aws, docker, kubernetes, python, git, rest api.",
+    "mobile app developer": "Mobile App Developer role requiring javascript, react, api integration, git.",
+}
+
+
+def _default_job_description(role: str) -> str:
+    role_key = (role or "").strip().lower()
+    if role_key in ROLE_JD_TEMPLATES:
+        return ROLE_JD_TEMPLATES[role_key]
+    return (
+        "General Software Engineer role requiring python, javascript, sql, git, rest api, "
+        "docker, and solid software engineering fundamentals."
+    )
+
 try:
     from database import engine
     import models
@@ -75,7 +97,7 @@ class AnalysisResult(BaseModel):
     ats_score: int
     matched_skills: List[str]
     missing_skills: List[str]
-    suggestions: str
+    suggestions: List[str]
     created_at: datetime
     file_path: Optional[str] = None
 
@@ -254,10 +276,11 @@ async def upload_resume(
             parsing_warning = (
                 "Resume text could not be extracted fully. Results may be less accurate."
             )
-        jd = job_description or "Provide a comprehensive matching score based on standard industry skills."
+        jd = job_description or _default_job_description(effective_role)
         
         ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
-        suggestions = generate_suggestions(resume_text, jd, missing_skills)
+        suggestions = generate_suggestions(missing_skills)
+        suggestions_text = "\n".join(f"- {item}" for item in suggestions)
 
         db_analysis = ResumeAnalysis(
             resume_name=uploaded_file.filename or "uploaded_resume",
@@ -265,7 +288,7 @@ async def upload_resume(
             ats_score=ats_score,
             matched_skills=matched_skills,
             missing_skills=missing_skills,
-            suggestions=suggestions,
+            suggestions=suggestions_text,
             file_path=file_path,
             created_at=datetime.utcnow()
         )
@@ -279,7 +302,8 @@ async def upload_resume(
             "ats_score": db_analysis.ats_score,
             "matched_skills": db_analysis.matched_skills,
             "missing_skills": db_analysis.missing_skills,
-            "suggestions": db_analysis.suggestions,
+            "suggestions": suggestions,
+            "suggestions_text": db_analysis.suggestions,
             "created_at": db_analysis.created_at,
             "warning": parsing_warning,
         }
@@ -306,7 +330,7 @@ async def bulk_upload(
     db: Session = Depends(get_db)
 ):
     results = []
-    jd = job_description or "General tech role requiring modern skills"
+    jd = job_description or _default_job_description(job_role)
     
     for resume in resumes:
         file_ext = os.path.splitext(resume.filename)[1]
@@ -318,7 +342,8 @@ async def bulk_upload(
         try:
             resume_text = extract_text_from_pdf(file_path)
             ats_score, matched_skills, missing_skills = calculate_ats_score(resume_text, jd)
-            suggestions = generate_suggestions(resume_text, jd, missing_skills)
+            suggestions = generate_suggestions(missing_skills)
+            suggestions_text = "\n".join(f"- {item}" for item in suggestions)
             
             db_analysis = ResumeAnalysis(
                 resume_name=resume.filename or "uploaded_resume",
@@ -326,7 +351,7 @@ async def bulk_upload(
                 ats_score=ats_score,
                 matched_skills=matched_skills,
                 missing_skills=missing_skills,
-                suggestions=suggestions,
+                suggestions=suggestions_text,
                 file_path=file_path,
                 created_at=datetime.utcnow()
             )

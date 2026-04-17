@@ -1,79 +1,56 @@
-import json
-import os
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+import re
 
-SKILLS_FILE = os.path.join(os.path.dirname(__file__), "skills.json")
+SKILLS_DB = [
+    "python",
+    "java",
+    "c++",
+    "javascript",
+    "react",
+    "node",
+    "fastapi",
+    "django",
+    "sql",
+    "postgresql",
+    "mongodb",
+    "docker",
+    "kubernetes",
+    "aws",
+    "git",
+    "rest api",
+    "html",
+    "css",
+    "machine learning",
+    "ai",
+]
 
-def load_skills():
-    with open(SKILLS_FILE, "r") as f:
-        return json.load(f)
 
-def extract_skills(text):
-    skills = load_skills()
-    text = text.lower()
-    found = []
+def _normalize_text(text: str) -> str:
+    return (text or "").lower()
 
-    for skill in skills:
-        if skill in text:
-            found.append(skill)
 
-    return found
+def _contains_skill(text: str, skill: str) -> bool:
+    # Use substring for phrase/symbol skills; boundary checks for plain tokens.
+    if " " in skill or not re.fullmatch(r"[a-z0-9]+", skill):
+        return skill in text
+    pattern = r"\b" + re.escape(skill) + r"\b"
+    return bool(re.search(pattern, text))
 
-def calculate_ats_score(resume_text, job_description):
 
-    # Extended standard tech stack dictionary
-    SKILLS = [
-        "python", "sql", "docker", "fastapi", "aws", "git", "rest", "api",
-        "javascript", "react", "node", "typescript", "java", "c++", "linux",
-        "kubernetes", "azure", "gcp", "machine learning", "mongodb",
-        "postgresql", "html", "css", "agile"
-    ]
+def extract_skills(text: str) -> list[str]:
+    normalized = _normalize_text(text)
+    return [skill for skill in SKILLS_DB if _contains_skill(normalized, skill)]
 
-    resume_text = resume_text.lower()
-    job_description = job_description.lower()
 
-    matched_skills = []
-    missing_skills = []
+def calculate_ats_score(resume_text: str, job_description: str):
+    required_skills = extract_skills(job_description)
+    resume_skills = extract_skills(resume_text)
 
-    # If the job description is short/generic, establish a baseline score by extracting all known skills
-    is_generic_jd = "comprehensive" in job_description or "general tech" in job_description or len(job_description.split()) < 10
+    matched = sorted(set(required_skills) & set(resume_skills))
+    missing = sorted(set(required_skills) - set(resume_skills))
 
-    required_skills = [s for s in SKILLS if s in job_description]
-    
-    if is_generic_jd or not required_skills:
-        for skill in SKILLS:
-            if skill in resume_text:
-                matched_skills.append(skill)
-        
-        # Calculate a baseline generic score: 5 solid technical skills guarantees a 100% baseline for a blank JD
-        ats_score = min(100, len(matched_skills) * 20)
-        return ats_score, matched_skills, []
-    
-    # Extract required skills to determine boolean matches
-    for skill in required_skills:
-        if skill in resume_text:
-            matched_skills.append(skill)
-        else:
-            missing_skills.append(skill)
+    if len(required_skills) == 0:
+        score = 50
+    else:
+        score = int((len(matched) / len(required_skills)) * 100)
 
-    # Transform semantic similarity via Scikit-Learn TF-IDF Vectorization
-    try:
-        vectorizer = TfidfVectorizer(stop_words='english')
-        tfidf_matrix = vectorizer.fit_transform([job_description, resume_text])
-        cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-        
-        # Base score from pure linguistic vector overlap mapped to 1-100%
-        base_score = int(cosine_sim * 100)
-        
-        # Boost semantics via hard-coded skill arrays 
-        if required_skills:
-            skill_ratio = len(matched_skills) / len(required_skills)
-            ats_score = min(100, int(base_score * 0.5 + (skill_ratio * 100) * 0.5))
-        else:
-            ats_score = min(100, base_score + (len(matched_skills) * 5))
-            
-    except Exception:
-        ats_score = 0
-
-    return ats_score, matched_skills, missing_skills
+    return score, matched, missing

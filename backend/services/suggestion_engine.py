@@ -1,17 +1,17 @@
-def generate_suggestions(resume_text, job_description, missing_skills):
+def generate_suggestions(missing_skills):
+    suggestions = []
 
-    suggestions = ""
+    for skill in list(missing_skills)[:5]:
+        suggestions.append(f"Add projects or experience related to {skill}.")
 
-    if missing_skills:
-        suggestions += "Skill Gap Analysis:\n"
-        for skill in missing_skills:
-            suggestions += f"- Consider adding practical experience with {skill}.\n"
-        suggestions += "\n"
+    # Add practical generic ATS improvements.
+    suggestions.extend(
+        [
+            "Include measurable achievements in each recent role.",
+            "Use stronger action verbs for impact-focused bullets.",
+            "Improve project descriptions with tools, scale, and outcomes.",
+        ]
+    )
 
-    suggestions += "Resume Optimization Tips:\n"
-    suggestions += "- Use measurable achievements (e.g., improved performance by 30%).\n"
-    suggestions += "- Use strong action verbs.\n"
-    suggestions += "- Align your summary with job description keywords.\n"
-    suggestions += "- Highlight impact over responsibilities.\n"
-
-    return suggestions
+    # Keep 3-5 suggestions for concise UI.
+    return suggestions[:5]

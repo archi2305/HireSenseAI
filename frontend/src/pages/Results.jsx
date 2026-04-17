@@ -8,8 +8,9 @@ function normalizeList(value) {
   if (Array.isArray(value)) return value.filter(Boolean)
   if (typeof value === "string") {
     return value
-      .split(",")
+      .split(/\n|,/)
       .map((item) => item.trim())
+      .map((item) => item.replace(/^-\s*/, ""))
       .filter(Boolean)
   }
   return []
@@ -25,7 +26,7 @@ export default function Results() {
     )
     const missingSkills = normalizeList(analysisResult?.missing_skills)
     const suggestedRoles = normalizeList(analysisResult?.suggested_roles)
-    const improvementList = normalizeList(analysisResult?.improvements)
+    const improvementList = normalizeList(analysisResult?.suggestions || analysisResult?.improvements)
 
     if (improvementList.length > 0) return { matchedSkills, missingSkills, suggestedRoles, improvementList }
 
@@ -78,7 +79,15 @@ export default function Results() {
         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
           ATS Score
         </p>
-        <p style={{ fontSize: 56, fontWeight: 900, lineHeight: 1, color: atsScore >= 80 ? "var(--success)" : "var(--warning)", margin: 0 }}>
+        <p
+          style={{
+            fontSize: 56,
+            fontWeight: 900,
+            lineHeight: 1,
+            color: atsScore > 80 ? "var(--success)" : atsScore >= 50 ? "var(--warning)" : "var(--error)",
+            margin: 0,
+          }}
+        >
           {atsScore}%
         </p>
       </div>
@@ -117,7 +126,7 @@ export default function Results() {
         <div className="card card-lift" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8 }}>
             <Sparkles size={15} style={{ color: "var(--accent)" }} />
-            Improvements
+            AI Suggestions
           </h3>
           <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
             {data.improvementList.map((item) => (

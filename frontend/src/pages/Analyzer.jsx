@@ -9,9 +9,12 @@ const ROLES = [
   "Frontend Developer",
   "Backend Developer",
   "Full Stack Developer",
-  "Data Scientist",
-  "AI Engineer",
+  "Software Engineer",
+  "Data Analyst",
+  "Machine Learning Engineer",
   "DevOps Engineer",
+  "Cloud Engineer",
+  "Mobile App Developer",
 ]
 
 export default function Analyzer() {
