@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { ArrowRight, CheckCircle2, AlertTriangle, Sparkles, BriefcaseBusiness, Download } from "lucide-react"
+import { ArrowRight, CheckCircle2, AlertTriangle, Sparkles, BriefcaseBusiness, Download, FilePenLine } from "lucide-react"
 import toast from "react-hot-toast"
 import { useAnalysis } from "../context/AnalysisContext"
 import { API_BASE_URL } from "../services/api"
-import { fetchAnalysisById, improveBullet } from "../services/analysisService"
+import { fetchAnalysisById, improveBullet, generateCoverLetter } from "../services/analysisService"
 
 function normalizeList(value) {
   if (!value) return []
@@ -26,6 +26,8 @@ export default function Results() {
   const [activeResult, setActiveResult] = useState(analysisResult)
   const [smartSuggestions, setSmartSuggestions] = useState([])
   const [improvingIndex, setImprovingIndex] = useState(-1)
+  const [coverLetter, setCoverLetter] = useState("")
+  const [coverLoading, setCoverLoading] = useState(false)
 
   useEffect(() => {
     const analysisId = id ? String(id) : ""
@@ -126,6 +128,20 @@ export default function Results() {
     toast.success("Bullet improved")
   }
 
+  const handleGenerateCoverLetter = async () => {
+    setCoverLoading(true)
+    const result = await generateCoverLetter({
+      resumeId: analysisId,
+      role: analysisInput.role || activeResult?.job_role,
+      jobDescription: analysisInput.jobDescription,
+      matchedSkills: data.matchedSkills,
+      highlights: data.improvementList,
+    })
+    setCoverLetter(result.cover_letter || "")
+    setCoverLoading(false)
+    toast.success("Cover letter generated")
+  }
+
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1240, margin: "0 auto", display: "grid", gap: 18 }}>
       <div className="card" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -146,6 +162,10 @@ export default function Results() {
               Download PDF
             </a>
           ) : null}
+          <button className="btn btn-secondary" onClick={handleGenerateCoverLetter} disabled={coverLoading}>
+            <FilePenLine size={14} />
+            {coverLoading ? "Generating..." : "Generate Cover Letter"}
+          </button>
           <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
             Upload Resume
             <ArrowRight size={14} />
@@ -308,6 +328,18 @@ export default function Results() {
           )}
         </div>
       </div>
+
+      {coverLetter ? (
+        <div className="card card-lift" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8 }}>
+            <FilePenLine size={15} style={{ color: "var(--accent)" }} />
+            Generated Cover Letter
+          </h3>
+          <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "inherit", lineHeight: 1.6, color: "var(--text-2)" }}>
+            {coverLetter}
+          </pre>
+        </div>
+      ) : null}
     </div>
   )
 }

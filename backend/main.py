@@ -119,6 +119,14 @@ class ChatRequest(BaseModel):
     message: str
 
 
+class CoverLetterRequest(BaseModel):
+    role: Optional[str] = None
+    job_description: Optional[str] = None
+    resume_id: Optional[int] = None
+    matched_skills: Optional[List[str]] = None
+    highlights: Optional[List[str]] = None
+
+
 from starlette.middleware.sessions import SessionMiddleware
 
 app = FastAPI(title="HireSense Backend")
@@ -301,13 +309,17 @@ async def upload_resume(
 
         jd = job_description or _default_job_description(effective_role)
         
-        ats_score, matched_skills, missing_skills = calculate_ats_score(
+        ats_score, matched_skills, missing_skills, score_breakdown = calculate_ats_score(
             resume_text,
             jd,
             selected_role=effective_role if effective_role != "Not specified" else None,
         )
-        suggestions = generate_suggestions(missing_skills)
-        ai_suggestions = generate_smart_suggestions(missing_skills, role=effective_role)
+        suggestions = generate_suggestions(
+            missing_skills, role=effective_role, score_breakdown=score_breakdown
+        )
+        ai_suggestions = generate_smart_suggestions(
+            missing_skills, role=effective_role, resume_text=resume_text
+        )
         suggestions_text = "\n".join(f"- {item}" for item in suggestions)
 
         db_analysis = ResumeAnalysis(
@@ -332,6 +344,7 @@ async def upload_resume(
             "missing_skills": db_analysis.missing_skills,
             "suggestions": suggestions,
             "ai_suggestions": ai_suggestions,
+            "score_breakdown": score_breakdown,
             "suggestions_text": db_analysis.suggestions,
             "created_at": db_analysis.created_at,
             "warning": parsing_warning,
@@ -371,12 +384,14 @@ async def bulk_upload(
             resume_text = extract_text_from_pdf(file_path)
             effective_role = job_role or detect_best_role(resume_text) or "Not specified"
             effective_jd = job_description or _default_job_description(effective_role)
-            ats_score, matched_skills, missing_skills = calculate_ats_score(
+            ats_score, matched_skills, missing_skills, score_breakdown = calculate_ats_score(
                 resume_text,
                 effective_jd,
                 selected_role=effective_role if effective_role != "Not specified" else None,
             )
-            suggestions = generate_suggestions(missing_skills)
+            suggestions = generate_suggestions(
+                missing_skills, role=effective_role, score_breakdown=score_breakdown
+            )
             suggestions_text = "\n".join(f"- {item}" for item in suggestions)
             
             db_analysis = ResumeAnalysis(
@@ -393,7 +408,14 @@ async def bulk_upload(
             db.commit()
             db.refresh(db_analysis)
             
-            results.append({"filename": resume.filename, "status": "success", "id": db_analysis.id})
+            results.append(
+                {
+                    "filename": resume.filename,
+                    "status": "success",
+                    "id": db_analysis.id,
+                    "score_breakdown": score_breakdown,
+                }
+            )
         except Exception as e:
             if os.path.exists(file_path): os.remove(file_path)
             results.append({"filename": resume.filename, "status": "error", "message": str(e)})
@@ -426,10 +448,54 @@ def chat_assistant(payload: ChatRequest):
         return {"reply": "Focus on quantified outcomes, strong action verbs, and include the tools you used."}
     if "skill" in lower or "skills" in lower:
         return {"reply": "Add a dedicated skills section and mirror the job description keywords that match your experience."}
+    if "bullet" in lower:
+        return {"reply": "Use this structure: action verb + scope + tech stack + measurable result."}
+    if "cover letter" in lower:
+        return {"reply": "Keep it role-specific, mention 2-3 matching skills, and close with company-value alignment."}
     if "summary" in lower:
         return {"reply": "Keep your summary to 2-3 lines with role, years of experience, and one measurable achievement."}
 
     return {"reply": "Highlight impact with numbers, tailor keywords to the target role, and emphasize recent projects."}
+
+
+@app.post("/api/generate-cover-letter")
+def generate_cover_letter(payload: CoverLetterRequest, db: Session = Depends(get_db)):
+    role = (payload.role or "Software Engineer").strip()
+    job_description = (payload.job_description or "").strip()
+    matched_skills = payload.matched_skills or []
+    highlights = payload.highlights or []
+
+    if payload.resume_id:
+        analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.resume_id).first()
+        if analysis:
+            role = analysis.job_role or role
+            matched_skills = matched_skills or (analysis.matched_skills or [])
+            if not highlights and analysis.suggestions:
+                highlights = [
+                    line.strip().lstrip("-").strip()
+                    for line in analysis.suggestions.splitlines()
+                    if line.strip()
+                ][:3]
+
+    top_skills = ", ".join(matched_skills[:5]) if matched_skills else "problem solving, collaboration, and delivery"
+    jd_focus = (
+        "Your job description emphasizes impact, ownership, and role-aligned execution."
+        if not job_description
+        else f"The posted requirements highlight: {job_description[:240]}."
+    )
+    achievement_line = highlights[0] if highlights else "I consistently deliver measurable outcomes and maintain high engineering quality."
+
+    letter = (
+        f"Dear Hiring Manager,\n\n"
+        f"I am writing to express my interest in the {role} position. I am excited about the opportunity to contribute to your team by combining technical execution with business-focused outcomes.\n\n"
+        f"My recent experience aligns closely with this role, especially across {top_skills}. I have delivered production-grade work that improves reliability, performance, and user value through pragmatic architecture and iterative delivery.\n\n"
+        f"{achievement_line} In prior projects, I focused on clear ownership, cross-functional collaboration, and measurable improvements that supported both product and engineering goals.\n\n"
+        f"{jd_focus} I am confident that my background and execution mindset would make me a strong addition to your organization.\n\n"
+        f"Thank you for your time and consideration. I would welcome the opportunity to discuss how I can contribute to your team.\n\n"
+        f"Sincerely,\nCandidate"
+    )
+
+    return {"cover_letter": letter}
 
 
 @app.delete("/candidate/{candidate_id}")
@@ -508,6 +574,19 @@ def get_analysis_by_id(analysis_id: int, db: Session = Depends(get_db)):
         if cleaned:
             suggestions.append(cleaned)
 
+    base_score = float(analysis.ats_score or 0)
+    score_breakdown = {
+        "skills": max(40.0, min(95.0, base_score + 4)),
+        "experience": max(35.0, min(92.0, base_score - 5)),
+        "projects": max(35.0, min(92.0, base_score - 2)),
+        "keywords": max(35.0, min(90.0, base_score - 3)),
+    }
+    ai_suggestions = generate_smart_suggestions(
+        analysis.missing_skills or [],
+        role=analysis.job_role or "Software Engineer",
+        resume_text="\n".join(suggestions),
+    )
+
     return {
         "id": analysis.id,
         "resume_name": analysis.resume_name,
@@ -516,6 +595,8 @@ def get_analysis_by_id(analysis_id: int, db: Session = Depends(get_db)):
         "matched_skills": analysis.matched_skills or [],
         "missing_skills": analysis.missing_skills or [],
         "suggestions": suggestions,
+        "ai_suggestions": ai_suggestions,
+        "score_breakdown": score_breakdown,
         "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
     }
 

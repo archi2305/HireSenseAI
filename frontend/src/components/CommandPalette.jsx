@@ -20,6 +20,12 @@ const ACTIONS = [
   { id:"history",   label:"Open History",   icon:History,           action:"history",    group:"Actions" },
 ]
 
+const COMPONENTS = [
+  { id: "comp-upload", label: "Upload Flow Card", icon: Zap, path: "/dashboard", group: "Components" },
+  { id: "comp-analyzer", label: "Analyzer Form", icon: FileText, path: "/analyzer", group: "Components" },
+  { id: "comp-results", label: "Results Suggestion Cards", icon: History, path: "/history", group: "Components" },
+]
+
 export default function CommandPalette({ open, onClose }) {
   const [query, setQuery]   = useState("")
   const [cursor, setCursor] = useState(0)
@@ -50,8 +56,11 @@ export default function CommandPalette({ open, onClose }) {
   const actionItems = ACTIONS.filter(a =>
     a.label.toLowerCase().includes(query.toLowerCase())
   )
+  const componentItems = COMPONENTS.filter(c =>
+    c.label.toLowerCase().includes(query.toLowerCase())
+  )
 
-  const allItems = [...candidateItems, ...pageItems, ...actionItems]
+  const allItems = [...candidateItems, ...pageItems, ...actionItems, ...componentItems]
 
   const handleSelect = useCallback((item) => {
     if (item.path)   { navigate(item.path); onClose() }

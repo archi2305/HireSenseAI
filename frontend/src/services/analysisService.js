@@ -133,3 +133,34 @@ export async function improveBullet({ bullet, context }) {
     }
   }
 }
+
+export async function generateCoverLetter({
+  resumeId,
+  role,
+  jobDescription,
+  matchedSkills,
+  highlights,
+}) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/generate-cover-letter`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        resume_id: resumeId,
+        role,
+        job_description: jobDescription,
+        matched_skills: matchedSkills || [],
+        highlights: highlights || [],
+      }),
+    })
+    if (!response.ok) {
+      throw new Error("Failed to generate cover letter")
+    }
+    return await response.json()
+  } catch (_) {
+    return {
+      cover_letter:
+        "Dear Hiring Manager,\n\nI am excited to apply for this opportunity. My background aligns strongly with your requirements, and I focus on delivering measurable outcomes.\n\nI have hands-on experience across the required stack and consistently improve reliability, quality, and delivery speed.\n\nThank you for your consideration.\n\nSincerely,\nCandidate",
+    }
+  }
+}

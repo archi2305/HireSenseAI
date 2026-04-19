@@ -8,20 +8,18 @@ import { analyzeResume } from "../services/analysisService"
 import AnalyzerLoadingSteps from "../components/AnalyzerLoadingSteps"
 
 const ROLES = [
-  "Frontend Developer",
   "Backend Developer",
+  "Frontend Developer",
   "Full Stack Developer",
   "Mobile App Developer",
-  "Android Developer",
-  "iOS Developer",
-  "Software Engineer",
   "Data Analyst",
+  "ML Engineer",
   "Machine Learning Engineer",
-  "AI Engineer",
   "DevOps Engineer",
-  "Cloud Engineer",
   "Cybersecurity Analyst",
   "UI/UX Designer",
+  "Cloud Engineer",
+  "Software Engineer",
 ]
 
 export default function Analyzer() {
