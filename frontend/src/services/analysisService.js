@@ -42,7 +42,11 @@ function buildMockAnalysis({ file, role, jobDescription }) {
 
 function buildAiSuggestions(result) {
   if (Array.isArray(result?.ai_suggestions) && result.ai_suggestions.length > 0) {
-    return result.ai_suggestions
+    const unique = result.ai_suggestions.filter(
+      (item, idx, arr) =>
+        arr.findIndex((other) => `${other?.original}|${other?.improved}` === `${item?.original}|${item?.improved}`) === idx
+    )
+    return unique.slice(0, 1)
   }
 
   const missing = Array.isArray(result?.missing_skills) ? result.missing_skills : []
@@ -54,14 +58,14 @@ function buildAiSuggestions(result) {
         improved: "Built internal dashboard that reduced manual reporting time by 35%.",
         tips: ["Add measurable results", "Use action verbs", "Mention tools used"],
       },
-    ]
+    ].slice(0, 1)
   }
 
   return target.map((skill) => ({
     original: `Worked on ${skill} features`,
     improved: `Implemented ${skill} features that improved delivery speed by 25%.`,
     tips: ["Add measurable results", "Use action verbs", `Mention tools used for ${skill}`],
-  }))
+  })).slice(0, 1)
 }
 
 export async function analyzeResume({ file, role, jobDescription }) {

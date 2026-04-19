@@ -54,7 +54,11 @@ export default function Results() {
     }
     const fromApi = Array.isArray(activeResult.ai_suggestions) ? activeResult.ai_suggestions : []
     if (fromApi.length > 0) {
-      setSmartSuggestions(fromApi)
+      const unique = fromApi.filter(
+        (item, idx, arr) =>
+          arr.findIndex((other) => `${other?.original}|${other?.improved}` === `${item?.original}|${item?.improved}`) === idx
+      )
+      setSmartSuggestions(unique.slice(0, 1))
       return
     }
     const fallbackTips = normalizeList(activeResult?.suggestions).slice(0, 3).map((item) => ({
