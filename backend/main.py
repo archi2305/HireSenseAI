@@ -494,9 +494,7 @@ def chat_assistant(payload: ChatRequest):
             db.close()
 
     if not lower:
-        return {
-            "reply": "I can help with keywords, ATS score, bullet rewrites, or role-specific improvements. Which one do you want?"
-        }
+        return {"reply": "Do you want help with keywords, ATS score, improvement steps, bullet rewrites, or cover letter drafting?"}
 
     roles = {
         "backend": "Backend Developer",
@@ -550,6 +548,18 @@ def chat_assistant(payload: ChatRequest):
             return reply
         return pick_variant(fallback_options, f"{message}|{len(history)}")
 
+    greeting_tokens = {"hi", "hello", "hey", "hii", "yo"}
+    if lower in greeting_tokens:
+        reply = "Hi! I can help with your resume analysis. What do you want to work on right now?"
+        return {"reply": avoid_repeat(reply, ["Hello! Tell me what you need: ATS score clarity, keywords, bullet rewrite, or improvements."])}
+
+    if "what does this app do" in lower or "what this app do" in lower or "what can this app do" in lower:
+        reply = (
+            "This app analyzes your resume, calculates an ATS score, detects matched and missing skills, "
+            "shows role-based improvement suggestions, and can generate a tailored cover letter."
+        )
+        return {"reply": avoid_repeat(reply, ["It parses your resume, scores ATS readiness, highlights gaps, and helps you improve bullets and cover letters."])}
+
     if "keyword" in lower or "keywords" in lower:
         role = detect_role(lower)
         if not role:
@@ -563,7 +573,7 @@ def chat_assistant(payload: ChatRequest):
         reply = "\n".join(blocks)
         return {"reply": avoid_repeat(reply, ["Use 8-12 role-matching keywords naturally in summary, skills, and 2 project bullets."])}
 
-    if "ats" in lower and "score" in lower:
+    if "ats" in lower or ("score" in lower and "resume" in lower):
         reply = (
             "A safe ATS target is 70–80%.\n"
             "- Below 60%: high rejection risk\n"
@@ -603,7 +613,7 @@ def chat_assistant(payload: ChatRequest):
         return {"reply": avoid_repeat(reply, ["Paste a weak bullet and I’ll provide 3 stronger rewrites with different tones."])}
 
     if "cover letter" in lower:
-        reply = "For a strong cover letter, anchor 3 points: role match, quantified achievements, and company-fit statement. Keep it 250–350 words with 4 concise paragraphs."
+        reply = "The cover letter feature uses your resume + target role + optional job description to generate a professional, ATS-friendly draft you can copy or download."
         return {"reply": avoid_repeat(reply, ["If you share role + JD, I can draft a ready-to-send cover letter now."])}
 
     if "summary" in lower:
