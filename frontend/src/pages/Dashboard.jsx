@@ -105,7 +105,7 @@ export default function Dashboard() {
       </motion.div>
 
       <motion.div
-        className="card card-lift"
+        className="card card-lift glow-card"
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.05 }}
@@ -115,7 +115,9 @@ export default function Dashboard() {
           <p style={{ fontSize: 11, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".09em", marginBottom: 6 }}>
             Dashboard Overview
           </p>
-          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900 }}>Hiring Intelligence Console</h1>
+          <h1 className="text-gradient-brand" style={{ margin: 0, fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em" }}>
+            Hiring Intelligence Console
+          </h1>
           <p style={{ marginTop: 8, color: "var(--text-2)", fontSize: 14 }}>Overview metrics, performance trends, and recent resume activity.</p>
         </div>
         <button className="btn btn-secondary" onClick={() => navigate("/history")}>View History</button>

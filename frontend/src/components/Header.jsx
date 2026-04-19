@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react"
-import { Bell, Search, LogOut, ChevronRight, Moon, Sun, Briefcase, Command } from "lucide-react"
+import { Bell, Search, LogOut, ChevronRight, Moon, Sun, BrainCircuit, BriefcaseBusiness, Command } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
 import NotificationDropdown from "./NotificationDropdown"
@@ -126,11 +126,12 @@ function Header({ notifications, onCommandPalette }) {
       
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 group cursor-pointer">
-           <div className="w-8 h-8 rounded-lg bg-theme-accent/10 border border-theme-accent/20 flex items-center justify-center text-theme-accent group-hover:shadow-accent-glow transition-all duration-300">
-              <Briefcase size={16} />
+           <div className="w-8 h-8 rounded-lg border border-theme-accent/25 bg-gradient-to-br from-violet-500/25 via-indigo-500/25 to-cyan-400/20 flex items-center justify-center text-theme-accent group-hover:shadow-accent-glow transition-all duration-300 relative">
+              <BrainCircuit size={14} />
+              <BriefcaseBusiness size={10} className="absolute -bottom-[1px] -right-[1px] text-cyan-100" />
            </div>
            <div className="flex flex-col">
-              <span className="text-[12px] font-bold text-theme-text tracking-tight group-hover:text-theme-accent transition-colors">HireSense AI</span>
+              <span className="text-[12px] font-bold text-gradient-brand tracking-tight">HireSense AI</span>
               <div className="flex items-center gap-1.5 text-[10px] text-theme-textSecondary font-medium">
                  <span>{formattedTitle}</span>
                  <ChevronRight size={10} className="opacity-30" />

@@ -1,5 +1,5 @@
 import React from "react"
-import { LayoutDashboard, FileText, History, Settings, User, Zap } from "lucide-react"
+import { LayoutDashboard, FileText, History, Settings, User, BrainCircuit, BriefcaseBusiness } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 
@@ -22,19 +22,20 @@ function Sidebar() {
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[30%] bg-theme-accent/5 blur-[80px] pointer-events-none" />
 
       <div className="px-6 h-16 flex items-center gap-3 shrink-0 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-theme-accent flex items-center justify-center text-white shadow-accent-glow relative overflow-hidden group">
-          <Zap size={16} fill="white" className="relative z-10" />
-          <motion.div 
-            animate={{ x: ['100%', '-100%'] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        <div className="w-9 h-9 rounded-xl border border-theme-accent/30 bg-gradient-to-br from-violet-500/35 via-indigo-500/25 to-cyan-400/20 flex items-center justify-center text-white shadow-accent-glow relative overflow-hidden group">
+          <BrainCircuit size={15} className="relative z-10" />
+          <BriefcaseBusiness size={11} className="absolute -bottom-[1px] -right-[1px] z-10 text-cyan-100" />
+          <motion.div
+            animate={{ x: ["120%", "-120%"] }}
+            transition={{ repeat: Infinity, duration: 2.2, ease: "linear" }}
             className="absolute inset-0 bg-white/20 skew-x-12"
           />
         </div>
         <div className="flex flex-col">
-           <h2 className="text-[15px] font-black text-theme-text tracking-tighter leading-none">
+           <h2 className="text-[15px] font-black text-gradient-brand tracking-tighter leading-none">
              HIRESENSE
            </h2>
-           <span className="text-[10px] text-theme-accent font-bold tracking-widest uppercase">Intelligent</span>
+           <span className="text-[10px] text-theme-textSecondary font-bold tracking-widest uppercase">AI Hiring Copilot</span>
         </div>
       </div>
 

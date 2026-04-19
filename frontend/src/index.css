@@ -6,34 +6,49 @@
    THEME TOKENS (Light-only, Mixpanel Style)
    ============================================ */
 :root {
-  --bg:           #f4f7ff;
-  --surface:      rgba(255, 255, 255, 0.72);
-  --sidebar:      rgba(255, 255, 255, 0.68);
-  --border:       rgba(152, 167, 255, 0.24);
-  --text:         #111827;
-  --text-2:       #6b7280;
-  --accent:       #726cff;
-  --accent-h:     #5d56ff;
+  --bg:           #0b0f1a;
+  --surface:      rgba(20, 27, 46, 0.64);
+  --sidebar:      rgba(15, 22, 39, 0.72);
+  --border:       rgba(124, 139, 255, 0.24);
+  --text:         #edf2ff;
+  --text-2:       #aab5d6;
+  --accent:       #8b80ff;
+  --accent-h:     #9b91ff;
   --success:      #10b981;
   --warning:      #f59e0b;
   --error:        #ef4444;
-  --glow:         rgba(114,108,255,0.24);
-  --shadow-sm:    0 4px 20px rgba(79, 93, 177, 0.09);
-  --shadow-md:    0 12px 34px rgba(75, 92, 173, 0.14);
-  --shadow-lg:    0 26px 64px rgba(69, 84, 162, 0.18);
+  --glow:         rgba(139, 128, 255, 0.25);
+  --shadow-sm:    0 6px 22px rgba(13, 18, 36, 0.44);
+  --shadow-md:    0 14px 36px rgba(10, 15, 33, 0.5);
+  --shadow-lg:    0 28px 74px rgba(9, 13, 29, 0.64);
 }
 
-/* Dark mode fallback – keep tokens consistent */
+/* Light mode fallback for manual toggle */
+.light {
+  --bg:       #f4f7ff;
+  --surface:  rgba(255, 255, 255, 0.74);
+  --sidebar:  rgba(255, 255, 255, 0.74);
+  --border:   rgba(152, 167, 255, 0.24);
+  --text:     #111827;
+  --text-2:   #66708c;
+  --accent:   #726cff;
+  --accent-h: #5d56ff;
+  --glow:     rgba(114, 108, 255, 0.24);
+  --shadow-sm: 0 4px 20px rgba(79, 93, 177, 0.09);
+  --shadow-md: 0 12px 34px rgba(75, 92, 173, 0.14);
+  --shadow-lg: 0 26px 64px rgba(69, 84, 162, 0.18);
+}
+
 .dark {
-  --bg:       #070a16;
-  --surface:  rgba(22, 27, 46, 0.72);
-  --sidebar:  rgba(14, 18, 32, 0.7);
+  --bg:       #0b0f1a;
+  --surface:  rgba(20, 27, 46, 0.64);
+  --sidebar:  rgba(15, 22, 39, 0.72);
   --border:   rgba(124, 139, 255, 0.24);
-  --text:     #ffffff;
-  --text-2:   #a1a1aa;
+  --text:     #edf2ff;
+  --text-2:   #aab5d6;
   --accent:   #8b80ff;
-  --accent-h: #9e95ff;
-  --glow:     rgba(139, 128, 255, 0.22);
+  --accent-h: #9b91ff;
+  --glow:     rgba(139, 128, 255, 0.25);
 }
 
 /* ============================================
@@ -105,7 +120,11 @@
 
   /* Cards */
   .card {
-    background: linear-gradient(160deg, color-mix(in srgb, var(--surface) 92%, white 8%), color-mix(in srgb, var(--surface) 96%, var(--accent) 4%));
+    background: linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--surface) 94%, #ffffff 6%),
+      color-mix(in srgb, var(--surface) 92%, var(--accent) 8%)
+    );
     border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: var(--shadow-sm);
@@ -130,13 +149,13 @@
   .btn:active { transform: scale(.97); }
 
   .btn-primary {
-    background-image: linear-gradient(135deg, #7c6dff 0%, #8f7dff 42%, #6f63ff 100%);
+    background-image: linear-gradient(135deg, #7d70ff 0%, #956dff 48%, #7f79ff 100%);
     color: #fff;
     border: 1px solid rgba(143, 125, 255, 0.55);
     box-shadow: 0 10px 28px rgba(114, 108, 255, 0.22), 0 0 0 0 rgba(114, 108, 255, 0.14);
   }
   .btn-primary:hover {
-    background-image: linear-gradient(135deg, #8478ff 0%, #9b8bff 46%, #756cff 100%);
+    background-image: linear-gradient(135deg, #8a7eff 0%, #a37fff 48%, #8b86ff 100%);
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 14px 34px rgba(114, 108, 255, 0.3), 0 0 28px rgba(114, 108, 255, 0.2);
   }
@@ -148,7 +167,7 @@
   .btn-secondary:hover { background: var(--bg); border-color: var(--accent); color: var(--accent); }
 
   .btn-glow {
-    box-shadow: 0 12px 28px rgba(114, 108, 255, 0.22), 0 0 24px rgba(114, 108, 255, 0.14);
+    box-shadow: 0 14px 30px rgba(114, 108, 255, 0.24), 0 0 28px rgba(138, 126, 255, 0.2);
   }
 
   /* Inputs */
@@ -230,6 +249,13 @@
     z-index: 50;
     overflow-y: auto;
     box-shadow: -12px 0 40px rgba(0,0,0,.12);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(120deg, #9e8bff 0%, #79a8ff 45%, #5cd6d6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 }
 
