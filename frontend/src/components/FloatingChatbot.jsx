@@ -29,10 +29,14 @@ export default function FloatingChatbot() {
     setLoading(true)
 
     try {
+      const history = messages
+        .map((msg) => msg.text)
+        .filter(Boolean)
+        .slice(-8)
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({ message: content, history }),
       })
       const data = await response.json().catch(() => ({}))
       const reply = data?.reply || "Add quantified achievements and relevant skills."

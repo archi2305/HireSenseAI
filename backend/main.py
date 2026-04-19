@@ -117,6 +117,7 @@ class BulletImproveRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    history: Optional[List[str]] = None
 
 
 class CoverLetterRequest(BaseModel):
@@ -443,21 +444,121 @@ def improve_bullet(payload: BulletImproveRequest):
 def chat_assistant(payload: ChatRequest):
     message = (payload.message or "").strip()
     lower = message.lower()
+    history = [h.strip().lower() for h in (payload.history or []) if (h or "").strip()]
+
     if not lower:
-        return {"reply": "Share a resume bullet or ask what to improve, and I will suggest a stronger version."}
+        return {
+            "reply": "I can help with keywords, ATS score, bullet rewrites, or role-specific improvements. Which one do you want?"
+        }
+
+    roles = {
+        "backend": "Backend Developer",
+        "frontend": "Frontend Developer",
+        "full stack": "Full Stack Developer",
+        "mobile": "Mobile App Developer",
+        "data analyst": "Data Analyst",
+        "ml": "Machine Learning Engineer",
+        "machine learning": "Machine Learning Engineer",
+        "devops": "DevOps Engineer",
+        "ui/ux": "UI/UX Designer",
+        "ui ux": "UI/UX Designer",
+        "cloud": "Cloud Engineer",
+    }
+
+    role_keywords = {
+        "Backend Developer": {
+            "Languages": ["Python", "Java", "Node.js", "Go"],
+            "Frameworks": ["FastAPI", "Django", "Spring Boot", "Express"],
+            "Databases": ["PostgreSQL", "MySQL", "MongoDB", "Redis"],
+            "Tools": ["Docker", "Git", "AWS", "CI/CD"],
+            "Concepts": ["REST API", "Microservices", "System Design", "Authentication"],
+        },
+        "Frontend Developer": {
+            "Languages": ["JavaScript", "TypeScript", "HTML", "CSS"],
+            "Frameworks": ["React", "Next.js", "Vue", "Redux"],
+            "Tools": ["Vite", "Tailwind CSS", "Jest", "Storybook"],
+            "Concepts": ["Responsive Design", "Accessibility", "Performance", "State Management"],
+        },
+        "Data Analyst": {
+            "Languages": ["SQL", "Python", "R"],
+            "Tools": ["Power BI", "Tableau", "Excel", "Looker"],
+            "Concepts": ["Data Cleaning", "A/B Testing", "Dashboarding", "Business Storytelling"],
+        },
+    }
+
+    def detect_role(text: str) -> Optional[str]:
+        for key, value in roles.items():
+            if key in text:
+                return value
+        return None
+
+    def pick_variant(options: List[str], seed: str) -> str:
+        if not options:
+            return ""
+        index = abs(hash(seed)) % len(options)
+        return options[index]
+
+    def avoid_repeat(reply: str, fallback_options: List[str]) -> str:
+        if reply.lower() not in history:
+            return reply
+        return pick_variant(fallback_options, f"{message}|{len(history)}")
+
+    if "keyword" in lower or "keywords" in lower:
+        role = detect_role(lower)
+        if not role:
+            return {"reply": "Which role should I optimize keywords for? Backend, Frontend, Full Stack, Mobile, Data Analyst, ML, DevOps, UI/UX, or Cloud?"}
+        dataset = role_keywords.get(role)
+        if not dataset:
+            return {"reply": f"{role} keywords:\n- Core Skills: API design, Git, testing, cloud deployment\n- Impact Terms: optimized, delivered, reduced latency, improved reliability"}
+        blocks = [f"{role} Keywords:"]
+        for section, items in dataset.items():
+            blocks.append(f"- {section}: {', '.join(items)}")
+        reply = "\n".join(blocks)
+        return {"reply": avoid_repeat(reply, ["Use 8-12 role-matching keywords naturally in summary, skills, and 2 project bullets."])}
+
+    if "ats" in lower and "score" in lower:
+        reply = (
+            "A safe ATS target is 70–80%.\n"
+            "- Below 60%: high rejection risk\n"
+            "- 70–80%: competitive shortlist range\n"
+            "- 85%+: strong profile for screening"
+        )
+        return {"reply": avoid_repeat(reply, ["Aim for 75%+ by improving missing critical skills, quantified bullets, and JD keyword alignment."])}
 
     if "improve" in lower or "better" in lower:
-        return {"reply": "Focus on quantified outcomes, strong action verbs, and include the tools you used."}
-    if "skill" in lower or "skills" in lower:
-        return {"reply": "Add a dedicated skills section and mirror the job description keywords that match your experience."}
-    if "bullet" in lower:
-        return {"reply": "Use this structure: action verb + scope + tech stack + measurable result."}
-    if "cover letter" in lower:
-        return {"reply": "Keep it role-specific, mention 2-3 matching skills, and close with company-value alignment."}
-    if "summary" in lower:
-        return {"reply": "Keep your summary to 2-3 lines with role, years of experience, and one measurable achievement."}
+        role = detect_role(lower)
+        role_hint = f" for {role}" if role else ""
+        reply = (
+            f"Action plan{role_hint}:\n"
+            "1) Add 2–3 measurable achievements (%, $, time saved)\n"
+            "2) Add one role-specific project with stack + impact\n"
+            "3) Rewrite bullets using action verb + scope + result\n"
+            "4) Add missing critical tools directly from the JD"
+        )
+        return {"reply": avoid_repeat(reply, ["Share one bullet, and I will rewrite it into a high-impact ATS-friendly version."])}
 
-    return {"reply": "Highlight impact with numbers, tailor keywords to the target role, and emphasize recent projects."}
+    if "skill" in lower or "skills" in lower:
+        reply = (
+            "Prioritize skills in this order:\n"
+            "- Must-have: role-critical stack (top 6 from JD)\n"
+            "- Job-relevant tools: deployment/testing/analytics tools\n"
+            "- Proof layer: add each skill inside a project bullet with outcome"
+        )
+        return {"reply": avoid_repeat(reply, ["Send your target role and I will give a precise missing-skills checklist."])}
+
+    if "bullet" in lower:
+        reply = "Use this formula: Action Verb + What You Built + Tech Stack + Measurable Result. Example: 'Developed a FastAPI service with PostgreSQL that reduced response time by 35%.'"
+        return {"reply": avoid_repeat(reply, ["Paste a weak bullet and I’ll provide 3 stronger rewrites with different tones."])}
+
+    if "cover letter" in lower:
+        reply = "For a strong cover letter, anchor 3 points: role match, quantified achievements, and company-fit statement. Keep it 250–350 words with 4 concise paragraphs."
+        return {"reply": avoid_repeat(reply, ["If you share role + JD, I can draft a ready-to-send cover letter now."])}
+
+    if "summary" in lower:
+        reply = "Write a 2–3 line summary: years of experience, core stack, and one quantified outcome. Example: 'Backend engineer with 4 years of Python/FastAPI experience, improved API latency by 38% and scaled services to 1M+ requests/day.'"
+        return {"reply": avoid_repeat(reply, ["Want a summary rewrite? Paste your current summary."])}
+
+    return {"reply": "Do you want help with keywords, ATS score, improvement steps, bullet rewrites, or cover letter drafting?"}
 
 
 @app.post("/api/generate-cover-letter")
