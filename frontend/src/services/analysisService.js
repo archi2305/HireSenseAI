@@ -168,3 +168,59 @@ export async function generateCoverLetter({
     }
   }
 }
+
+export async function recalculateScore({ analysisId, role, jobDescription }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recalculate-score`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analysis_id: analysisId, role, job_description: jobDescription || "" }),
+    })
+    if (!response.ok) throw new Error("Failed to recalculate score")
+    return await response.json()
+  } catch (_) {
+    return null
+  }
+}
+
+export async function generateInterviewQuestions({ analysisId, role, resumeText }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/interview-questions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analysis_id: analysisId, role, resume_text: resumeText || "" }),
+    })
+    if (!response.ok) throw new Error("Failed to generate interview questions")
+    return await response.json()
+  } catch (_) {
+    return { hr: [], technical: [], project_based: [] }
+  }
+}
+
+export async function runAtsFormatCheck({ analysisId, role }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ats-format-check`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analysis_id: analysisId, role: role || "" }),
+    })
+    if (!response.ok) throw new Error("Failed to run ATS format check")
+    return await response.json()
+  } catch (_) {
+    return { checks: {}, issues: [] }
+  }
+}
+
+export async function improveResumeOneClick({ analysisId, role }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/improve-resume`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ analysis_id: analysisId, role: role || "" }),
+    })
+    if (!response.ok) throw new Error("Failed to improve resume")
+    return await response.json()
+  } catch (_) {
+    return { original_bullets: [], improved_bullets: [] }
+  }
+}

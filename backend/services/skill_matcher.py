@@ -172,6 +172,29 @@ def _score_keywords_context(resume_text: str, job_description: str, selected_rol
     return round(45.0 + min(55.0, jaccard * 100.0), 2)
 
 
+def _score_ats_formatting(resume_text: str) -> float:
+    text = resume_text or ""
+    lowered = _normalize_text(text)
+    has_summary = "summary" in lowered or "profile" in lowered
+    has_experience = "experience" in lowered or "work history" in lowered
+    has_projects = "project" in lowered or "projects" in lowered
+    has_skills = "skills" in lowered or "technologies" in lowered
+    has_education = "education" in lowered
+    has_email = bool(re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text))
+    has_phone = bool(re.search(r"(\+?\d[\d\s\-\(\)]{8,}\d)", text))
+    bullet_count = len(re.findall(r"(^|\n)\s*[-•*]\s+", text))
+    has_table_like = "|" in text or "\t" in text
+
+    section_score = sum([has_summary, has_experience, has_projects, has_skills, has_education]) / 5.0
+    contact_score = 1.0 if has_email and has_phone else 0.6 if has_email or has_phone else 0.2
+    bullet_score = min(1.0, bullet_count / 6.0)
+    ats_penalty = 0.18 if has_table_like else 0.0
+
+    score = ((section_score * 0.5) + (contact_score * 0.25) + (bullet_score * 0.25)) * 100.0
+    score = max(35.0, min(95.0, score - (ats_penalty * 100.0)))
+    return round(score, 2)
+
+
 def detect_best_role(resume_text: str) -> str | None:
     strengths = extract_skills_with_strength(resume_text)
     best_role = None
@@ -224,13 +247,13 @@ def calculate_ats_score(
     skills_score = (weighted_match / max(weighted_total, 1.0)) * 100.0
     experience_score = _score_experience(resume_text, role)
     projects_score = _score_projects(resume_text, matched)
-    keyword_score = _score_keywords_context(resume_text, job_description, role)
+    formatting_score = _score_ats_formatting(resume_text)
 
     final_score = (
         (skills_score * 0.50)
         + (experience_score * 0.20)
         + (projects_score * 0.20)
-        + (keyword_score * 0.10)
+        + (formatting_score * 0.10)
     )
 
     final_score = max(40.0, min(90.0, final_score))
@@ -243,6 +266,111 @@ def calculate_ats_score(
         "skills": round(skills_score, 2),
         "experience": round(experience_score, 2),
         "projects": round(projects_score, 2),
-        "keywords": round(keyword_score, 2),
+        "formatting": round(formatting_score, 2),
     }
     return int(round(final_score)), matched, missing_critical, breakdown
+
+
+def calculate_job_description_match(
+    resume_text: str,
+    job_description: str,
+    selected_role: str | None = None,
+) -> Dict[str, object]:
+    resume_tokens = set(_normalize_text(resume_text).split())
+    jd_tokens_raw = _normalize_text(job_description).split()
+    stop_words = {
+        "the", "a", "an", "and", "or", "to", "for", "with", "of", "in", "on", "is",
+        "are", "we", "you", "our", "will", "be", "as", "by", "from", "that",
+    }
+    jd_tokens = [tok for tok in jd_tokens_raw if len(tok) > 2 and tok not in stop_words]
+    jd_unique = sorted(set(jd_tokens))
+    matched_keywords = [kw for kw in jd_unique if kw in resume_tokens]
+    missing_keywords = [kw for kw in jd_unique if kw not in resume_tokens]
+
+    if selected_role and selected_role in ROLE_SKILLS:
+        role_critical = ROLE_SKILLS[selected_role]["critical"]
+        for skill in role_critical:
+            if skill not in matched_keywords and skill not in missing_keywords:
+                missing_keywords.append(skill)
+
+    match_ratio = len(matched_keywords) / max(1, len(jd_unique))
+    match_percent = int(round(max(35.0, min(95.0, 35.0 + (match_ratio * 60.0)))))
+
+    suggestions = []
+    if missing_keywords:
+        suggestions.append(
+            f"Add 2 project bullets covering these JD gaps: {', '.join(missing_keywords[:4])}."
+        )
+    suggestions.append("Mirror exact JD phrasing in your Skills and Experience sections for better ATS parsing.")
+    suggestions.append("Add one measurable achievement per key requirement you already match.")
+
+    return {
+        "match_percent": match_percent,
+        "matched_keywords": matched_keywords[:20],
+        "missing_keywords": missing_keywords[:20],
+        "suggestions": suggestions,
+    }
+
+
+def extract_resume_sections(resume_text: str) -> Dict[str, object]:
+    text = resume_text or ""
+    lowered = _normalize_text(text)
+    skills = list(extract_skills_with_strength(text).keys())[:20]
+    years = _estimate_experience_years(text)
+
+    project_lines = [
+        line.strip().lstrip("-•* ").strip()
+        for line in text.splitlines()
+        if line.strip() and ("project" in line.lower() or "developed" in line.lower() or "built" in line.lower())
+    ][:5]
+
+    name = ""
+    for line in text.splitlines():
+        clean = line.strip()
+        if not clean:
+            continue
+        if "@" in clean or len(clean.split()) > 6:
+            continue
+        if any(ch.isdigit() for ch in clean):
+            continue
+        name = clean
+        break
+
+    return {
+        "name": name or "Candidate",
+        "skills_extracted": skills,
+        "experience_extracted": f"{years:.0f}+ years" if years > 0 else "Experience duration not explicitly found",
+        "projects_extracted": project_lines,
+        "ats_format_check": {
+            "has_summary": "summary" in lowered or "profile" in lowered,
+            "has_experience": "experience" in lowered,
+            "has_projects": "project" in lowered,
+            "has_skills": "skills" in lowered,
+            "has_education": "education" in lowered,
+        },
+    }
+
+
+def generate_interview_questions(resume_text: str, role: str) -> Dict[str, List[str]]:
+    role_name = role if role in ROLE_SKILLS else "Software Engineer"
+    role_profile = ROLE_SKILLS[role_name]
+    strengths = extract_skills_with_strength(resume_text)
+    highlighted = [skill for skill in role_profile["critical"] if strengths.get(skill, 0.0) >= 0.5][:3]
+    weak = [skill for skill in role_profile["critical"] if strengths.get(skill, 0.0) < 0.4][:3]
+
+    hr = [
+        f"Why are you interested in this {role_name} role?",
+        "Tell me about a time you handled a difficult deadline and how you prioritized your work.",
+        "Describe how you collaborate with cross-functional teams to deliver outcomes.",
+    ]
+    technical = [
+        f"Explain how you applied {highlighted[0] if highlighted else role_profile['critical'][0]} in a production project.",
+        f"How would you improve reliability and scalability in a system using {role_profile['critical'][0]}?",
+        f"What trade-offs would you evaluate when implementing {weak[0] if weak else role_profile['core'][0]}?",
+    ]
+    project_based = [
+        "Walk me through your most impactful project and the measurable results.",
+        "What technical decisions did you make, and what would you change today?",
+        "How did you validate quality, performance, and stakeholder impact?",
+    ]
+    return {"hr": hr, "technical": technical, "project_based": project_based}

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { MessageCircle, Send, X } from "lucide-react"
 import { API_BASE_URL } from "../services/api"
+import { useAnalysis } from "../context/AnalysisContext"
 
 const initialMessages = [
   { id: 1, role: "bot", text: "Hi, I am your resume assistant. Ask me how to improve your resume." },
 ]
 
 export default function FloatingChatbot() {
+  const { analysisResult, analysisInput } = useAnalysis()
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState(initialMessages)
@@ -36,7 +38,12 @@ export default function FloatingChatbot() {
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content, history }),
+        body: JSON.stringify({
+          message: content,
+          history,
+          role: analysisInput?.role || analysisResult?.job_role,
+          resume_id: analysisResult?.id,
+        }),
       })
       const data = await response.json().catch(() => ({}))
       const reply = data?.reply || "Add quantified achievements and relevant skills."

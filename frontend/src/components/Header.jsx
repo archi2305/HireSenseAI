@@ -57,10 +57,7 @@ function Header({ notifications, onCommandPalette }) {
     const fetchSuggestions = async () => {
       setSearchLoading(true)
       try {
-        const [candidateRes, analysesRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/candidates?search=${encodeURIComponent(debouncedSearch)}`),
-          axios.get(`${API_BASE_URL}/analyses`),
-        ])
+        const searchRes = await axios.get(`${API_BASE_URL}/api/global-search?q=${encodeURIComponent(debouncedSearch)}`)
 
         const next = []
         const seen = new Set()
@@ -74,16 +71,12 @@ function Header({ notifications, onCommandPalette }) {
           next.push({ id: key, type, label: normalized })
         }
 
-        ;(candidateRes.data || []).forEach((candidate) => {
-          pushSuggestion("candidate", candidate.name)
-          pushSuggestion("role", candidate.role)
-          ;(candidate.skills || []).forEach((skill) => pushSuggestion("skill", skill))
-        })
-
-        ;(analysesRes.data || []).forEach((analysis) => {
+        ;(searchRes.data?.resumes || []).forEach((analysis) => {
           pushSuggestion("resume", analysis.resume_name)
           pushSuggestion("role", analysis.job_role)
         })
+        ;(searchRes.data?.roles || []).forEach((role) => pushSuggestion("role", role))
+        ;(searchRes.data?.skills || []).forEach((skill) => pushSuggestion("skill", skill))
 
         if (!cancelled) {
           setSuggestions(next.slice(0, 8))

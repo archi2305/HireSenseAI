@@ -42,6 +42,16 @@ ROLE_ACTION_TEMPLATES: Dict[str, List[str]] = {
         "Show process clarity: research insights, wireframes, prototypes, and iteration outcomes.",
         "Quantify design impact through conversion, task completion, or satisfaction metrics.",
     ],
+    "Cloud Engineer": [
+        "Add a cloud migration or deployment project using {skill} with uptime/cost metrics.",
+        "Highlight infrastructure reliability improvements and incident-response outcomes.",
+        "Show IaC and automation practices that reduced manual operations effort.",
+    ],
+    "Software Engineer": [
+        "Add a production feature built with {skill} and measurable user/business impact.",
+        "Quantify performance, quality, or delivery improvements from your implementation.",
+        "Highlight design tradeoffs and engineering decisions in real scenarios.",
+    ],
 }
 
 
@@ -63,6 +73,12 @@ def _clean_bullets(text: str) -> List[str]:
     bullets = []
     for line in lines:
         stripped = re.sub(r"^[\-\*\u2022]\s*", "", line).strip()
+        if "@" in stripped or "linkedin" in stripped.lower() or "github" in stripped.lower():
+            continue
+        if re.search(r"\+?\d[\d\s\-\(\)]{7,}", stripped):
+            continue
+        if len(stripped.split()) > 30:
+            continue
         if len(stripped.split()) >= 4:
             bullets.append(stripped)
     return bullets[:5]
@@ -82,7 +98,7 @@ def improve_bullet_line(bullet: str, context: str = ""):
 
 def generate_suggestions(missing_skills, role: str = "", score_breakdown: Dict[str, float] | None = None):
     deduped = _dedupe_skills(missing_skills)
-    role_key = role if role in ROLE_ACTION_TEMPLATES else "Full Stack Developer"
+    role_key = role if role in ROLE_ACTION_TEMPLATES else "Software Engineer"
     templates = ROLE_ACTION_TEMPLATES[role_key]
 
     if deduped:

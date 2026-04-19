@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import List
 import logging
+import re
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,7 +36,13 @@ logger.info("Google OAuth configured: %s", bool(GOOGLE_CLIENT_ID))
 logger.info("GitHub OAuth configured: %s", bool(GITHUB_CLIENT_ID))
 
 try:
-    from services.skill_matcher import calculate_ats_score, detect_best_role
+    from services.skill_matcher import (
+        calculate_ats_score,
+        calculate_job_description_match,
+        detect_best_role,
+        extract_resume_sections,
+        generate_interview_questions,
+    )
     from services.suggestion_engine import (
         generate_suggestions,
         generate_smart_suggestions,
@@ -43,7 +50,13 @@ try:
     )
     from services.resume_parser import extract_text_from_pdf, extract_text_from_file
 except ImportError:
-    from backend.services.skill_matcher import calculate_ats_score, detect_best_role
+    from backend.services.skill_matcher import (
+        calculate_ats_score,
+        calculate_job_description_match,
+        detect_best_role,
+        extract_resume_sections,
+        generate_interview_questions,
+    )
     from backend.services.suggestion_engine import (
         generate_suggestions,
         generate_smart_suggestions,
@@ -118,6 +131,8 @@ class BulletImproveRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     history: Optional[List[str]] = None
+    role: Optional[str] = None
+    resume_id: Optional[int] = None
 
 
 class CoverLetterRequest(BaseModel):
@@ -128,6 +143,18 @@ class CoverLetterRequest(BaseModel):
     highlights: Optional[List[str]] = None
     tone: Optional[str] = "formal"
     paragraphs: Optional[int] = 5
+
+
+class RecalculateRequest(BaseModel):
+    analysis_id: int
+    role: Optional[str] = None
+    job_description: Optional[str] = None
+
+
+class InterviewQuestionRequest(BaseModel):
+    analysis_id: Optional[int] = None
+    role: Optional[str] = None
+    resume_text: Optional[str] = None
 
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -219,10 +246,10 @@ app.mount("/avatars", StaticFiles(directory="uploads/avatars"), name="avatars")
 from fastapi import Depends
 from sqlalchemy.orm import Session
 try:
-    from database import get_db
+    from database import get_db, SessionLocal
     from models import ResumeAnalysis, User
 except ImportError:
-    from backend.database import get_db
+    from backend.database import get_db, SessionLocal
     from backend.models import ResumeAnalysis, User
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -311,6 +338,12 @@ async def upload_resume(
                 effective_role = detected_role
 
         jd = job_description or _default_job_description(effective_role)
+        parsed_sections = extract_resume_sections(resume_text)
+        jd_match = calculate_job_description_match(
+            resume_text,
+            jd,
+            selected_role=effective_role if effective_role != "Not specified" else None,
+        )
         
         ats_score, matched_skills, missing_skills, score_breakdown = calculate_ats_score(
             resume_text,
@@ -348,6 +381,8 @@ async def upload_resume(
             "suggestions": suggestions,
             "ai_suggestions": ai_suggestions,
             "score_breakdown": score_breakdown,
+            "jd_match": jd_match,
+            "parsed_sections": parsed_sections,
             "suggestions_text": db_analysis.suggestions,
             "created_at": db_analysis.created_at,
             "warning": parsing_warning,
@@ -445,6 +480,18 @@ def chat_assistant(payload: ChatRequest):
     message = (payload.message or "").strip()
     lower = message.lower()
     history = [h.strip().lower() for h in (payload.history or []) if (h or "").strip()]
+    role_context = payload.role or ""
+    analysis = None
+    if payload.resume_id:
+        db = SessionLocal()
+        try:
+            analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.resume_id).first()
+            if analysis and not role_context:
+                role_context = analysis.job_role or ""
+        except Exception:
+            analysis = None
+        finally:
+            db.close()
 
     if not lower:
         return {
@@ -527,6 +574,8 @@ def chat_assistant(payload: ChatRequest):
 
     if "improve" in lower or "better" in lower:
         role = detect_role(lower)
+        if not role and role_context:
+            role = role_context
         role_hint = f" for {role}" if role else ""
         reply = (
             f"Action plan{role_hint}:\n"
@@ -538,6 +587,9 @@ def chat_assistant(payload: ChatRequest):
         return {"reply": avoid_repeat(reply, ["Share one bullet, and I will rewrite it into a high-impact ATS-friendly version."])}
 
     if "skill" in lower or "skills" in lower:
+        if analysis and analysis.missing_skills:
+            targeted = ", ".join((analysis.missing_skills or [])[:6])
+            return {"reply": f"Based on your latest resume, prioritize these missing skills: {targeted}. Add each one to a project bullet with measurable impact."}
         reply = (
             "Prioritize skills in this order:\n"
             "- Must-have: role-critical stack (top 6 from JD)\n"
@@ -623,6 +675,148 @@ def generate_cover_letter(payload: CoverLetterRequest, db: Session = Depends(get
     return {"cover_letter": letter}
 
 
+@app.post("/api/recalculate-score")
+def recalculate_score(payload: RecalculateRequest, db: Session = Depends(get_db)):
+    analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.analysis_id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    if not analysis.file_path or not os.path.exists(analysis.file_path):
+        raise HTTPException(status_code=404, detail="Original resume file not found")
+
+    resume_text = extract_text_from_file(analysis.file_path, analysis.resume_name or "")
+    target_role = payload.role or analysis.job_role or "Software Engineer"
+    effective_jd = payload.job_description or _default_job_description(target_role)
+
+    score, matched, missing, breakdown = calculate_ats_score(
+        resume_text, effective_jd, selected_role=target_role
+    )
+    jd_match = calculate_job_description_match(
+        resume_text, effective_jd, selected_role=target_role
+    )
+    suggestions = generate_suggestions(missing, role=target_role, score_breakdown=breakdown)
+    ai_suggestions = generate_smart_suggestions(
+        missing, role=target_role, resume_text=resume_text
+    )
+
+    analysis.job_role = target_role
+    analysis.ats_score = score
+    analysis.matched_skills = matched
+    analysis.missing_skills = missing
+    analysis.suggestions = "\n".join(f"- {item}" for item in suggestions)
+    db.commit()
+    db.refresh(analysis)
+
+    return {
+        "id": analysis.id,
+        "job_role": analysis.job_role,
+        "ats_score": analysis.ats_score,
+        "matched_skills": analysis.matched_skills,
+        "missing_skills": analysis.missing_skills,
+        "score_breakdown": breakdown,
+        "jd_match": jd_match,
+        "suggestions": suggestions,
+        "ai_suggestions": ai_suggestions,
+    }
+
+
+@app.post("/api/interview-questions")
+def interview_questions(payload: InterviewQuestionRequest, db: Session = Depends(get_db)):
+    resume_text = (payload.resume_text or "").strip()
+    role = (payload.role or "").strip() or "Software Engineer"
+
+    if payload.analysis_id:
+        analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.analysis_id).first()
+        if analysis:
+            if not payload.role:
+                role = analysis.job_role or role
+            if analysis.file_path and os.path.exists(analysis.file_path):
+                resume_text = extract_text_from_file(analysis.file_path, analysis.resume_name or "")
+
+    if not resume_text:
+        return {
+            "hr": ["Tell me about yourself and your most relevant experience."],
+            "technical": [f"What core skills are required for a {role} role?"],
+            "project_based": ["Describe a project where you improved a measurable KPI."],
+        }
+
+    return generate_interview_questions(resume_text, role)
+
+
+@app.post("/api/ats-format-check")
+def ats_format_check(payload: RecalculateRequest, db: Session = Depends(get_db)):
+    analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.analysis_id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    if not analysis.file_path or not os.path.exists(analysis.file_path):
+        raise HTTPException(status_code=404, detail="Original resume file not found")
+
+    resume_text = extract_text_from_file(analysis.file_path, analysis.resume_name or "")
+    parsed = extract_resume_sections(resume_text)
+    checks = parsed.get("ats_format_check", {})
+    issues = []
+    if not checks.get("has_summary"):
+        issues.append("Add a short summary/profile section at the top.")
+    if not checks.get("has_experience"):
+        issues.append("Add a clear Experience section with timeline and outcomes.")
+    if not checks.get("has_projects"):
+        issues.append("Add a Projects section with measurable results.")
+    if not checks.get("has_skills"):
+        issues.append("Add a dedicated Skills section with role-relevant tools.")
+    if not checks.get("has_education"):
+        issues.append("Add an Education section for ATS completeness.")
+
+    return {"checks": checks, "issues": issues}
+
+
+@app.post("/api/improve-resume")
+def improve_resume(payload: RecalculateRequest, db: Session = Depends(get_db)):
+    analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.analysis_id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    if not analysis.file_path or not os.path.exists(analysis.file_path):
+        raise HTTPException(status_code=404, detail="Original resume file not found")
+
+    resume_text = extract_text_from_file(analysis.file_path, analysis.resume_name or "")
+    bullets = [
+        line.strip().lstrip("-•* ").strip()
+        for line in resume_text.splitlines()
+        if line.strip()
+        and len(line.split()) >= 4
+        and "@" not in line
+        and "linkedin" not in line.lower()
+        and "github" not in line.lower()
+        and not line.lower().strip().startswith(("location:", "languages:", "skills:", "education:"))
+        and not re.search(r"\+?\d[\d\s\-\(\)]{7,}", line)
+    ][:5]
+    improved = [improve_bullet_line(bullet, payload.role or analysis.job_role) for bullet in bullets]
+    return {"original_bullets": bullets, "improved_bullets": improved}
+
+
+@app.get("/api/global-search")
+def global_search(q: str = "", db: Session = Depends(get_db)):
+    query = (q or "").strip().lower()
+    if not query:
+        return {"resumes": [], "skills": [], "roles": []}
+
+    analyses = db.query(ResumeAnalysis).order_by(ResumeAnalysis.created_at.desc()).all()
+    resumes = []
+    roles = set()
+    skills = set()
+
+    for item in analyses:
+        if query in (item.resume_name or "").lower() or query in (item.job_role or "").lower():
+            resumes.append(
+                {"id": item.id, "resume_name": item.resume_name, "job_role": item.job_role, "ats_score": item.ats_score}
+            )
+        if query in (item.job_role or "").lower():
+            roles.add(item.job_role)
+        for skill in item.matched_skills or []:
+            if query in skill.lower():
+                skills.add(skill)
+
+    return {"resumes": resumes[:20], "skills": sorted(skills)[:20], "roles": sorted([r for r in roles if r])[:20]}
+
+
 @app.delete("/candidate/{candidate_id}")
 def delete_candidate(candidate_id: int, db: Session = Depends(get_db)):
     candidate = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == candidate_id).first()
@@ -699,29 +893,60 @@ def get_analysis_by_id(analysis_id: int, db: Session = Depends(get_db)):
         if cleaned:
             suggestions.append(cleaned)
 
-    base_score = float(analysis.ats_score or 0)
-    score_breakdown = {
-        "skills": max(40.0, min(95.0, base_score + 4)),
-        "experience": max(35.0, min(92.0, base_score - 5)),
-        "projects": max(35.0, min(92.0, base_score - 2)),
-        "keywords": max(35.0, min(90.0, base_score - 3)),
-    }
-    ai_suggestions = generate_smart_suggestions(
-        analysis.missing_skills or [],
-        role=analysis.job_role or "Software Engineer",
-        resume_text="\n".join(suggestions),
-    )
+    resume_text = ""
+    if analysis.file_path and os.path.exists(analysis.file_path):
+        resume_text = extract_text_from_file(analysis.file_path, analysis.resume_name or "")
+
+    if resume_text:
+        score, matched, missing, score_breakdown = calculate_ats_score(
+            resume_text,
+            _default_job_description(analysis.job_role or "Software Engineer"),
+            selected_role=analysis.job_role or "Software Engineer",
+        )
+        jd_match = calculate_job_description_match(
+            resume_text,
+            _default_job_description(analysis.job_role or "Software Engineer"),
+            selected_role=analysis.job_role or "Software Engineer",
+        )
+        parsed_sections = extract_resume_sections(resume_text)
+        ai_suggestions = generate_smart_suggestions(
+            missing,
+            role=analysis.job_role or "Software Engineer",
+            resume_text=resume_text,
+        )
+        matched_skills = matched
+        missing_skills = missing
+        ats_score = score
+    else:
+        score_breakdown = {
+            "skills": max(40.0, min(95.0, float(analysis.ats_score or 0))),
+            "experience": max(35.0, min(92.0, float(analysis.ats_score or 0) - 4)),
+            "projects": max(35.0, min(92.0, float(analysis.ats_score or 0) - 2)),
+            "formatting": max(35.0, min(92.0, float(analysis.ats_score or 0) - 5)),
+        }
+        jd_match = {"match_percent": int(analysis.ats_score or 0), "matched_keywords": [], "missing_keywords": [], "suggestions": []}
+        parsed_sections = {"name": "Candidate", "skills_extracted": analysis.matched_skills or [], "experience_extracted": "", "projects_extracted": []}
+        ai_suggestions = generate_smart_suggestions(
+            analysis.missing_skills or [],
+            role=analysis.job_role or "Software Engineer",
+            resume_text="\n".join(suggestions),
+        )
+        matched_skills = analysis.matched_skills or []
+        missing_skills = analysis.missing_skills or []
+        ats_score = analysis.ats_score
 
     return {
         "id": analysis.id,
         "resume_name": analysis.resume_name,
         "job_role": analysis.job_role,
-        "ats_score": analysis.ats_score,
-        "matched_skills": analysis.matched_skills or [],
-        "missing_skills": analysis.missing_skills or [],
+        "ats_score": ats_score,
+        "matched_skills": matched_skills,
+        "missing_skills": missing_skills,
         "suggestions": suggestions,
         "ai_suggestions": ai_suggestions,
         "score_breakdown": score_breakdown,
+        "jd_match": jd_match,
+        "parsed_sections": parsed_sections,
         "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
     }
 

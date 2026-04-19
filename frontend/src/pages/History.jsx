@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowRight, Briefcase, Search } from "lucide-react"
 import toast from "react-hot-toast"
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 import { useAnalysis } from "../context/AnalysisContext"
 import { fetchAnalysesHistory } from "../services/analysisService"
 
@@ -13,6 +14,8 @@ function History() {
   const [analyses, setAnalyses] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState(initialQuery)
+  const [compareA, setCompareA] = useState("")
+  const [compareB, setCompareB] = useState("")
 
   useEffect(() => {
     setSearch(initialQuery)
@@ -44,6 +47,25 @@ function History() {
     )
   }, [analyses, search])
 
+  const trendData = useMemo(
+    () =>
+      [...analyses]
+        .reverse()
+        .map((item, idx) => ({
+          name: `Run ${idx + 1}`,
+          score: Number(item.ats_score || 0),
+        })),
+    [analyses]
+  )
+
+  const compareResult = useMemo(() => {
+    const first = analyses.find((item) => String(item.id) === String(compareA))
+    const second = analyses.find((item) => String(item.id) === String(compareB))
+    if (!first || !second) return null
+    const delta = Number(second.ats_score || 0) - Number(first.ats_score || 0)
+    return { first, second, delta }
+  }, [analyses, compareA, compareB])
+
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1280, margin: "0 auto", display: "grid", gap: 18 }}>
       <div className="card" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -63,6 +85,53 @@ function History() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="card" style={{ padding: 16 }}>
+        <p style={{ margin: "0 0 10px", fontWeight: 800 }}>Score trend</p>
+        {trendData.length === 0 ? (
+          <p style={{ margin: 0, color: "var(--text-2)", fontSize: 13 }}>Not enough data to plot trend.</p>
+        ) : (
+          <div style={{ height: 220 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" stroke="var(--text-2)" />
+                <YAxis stroke="var(--text-2)" />
+                <Tooltip />
+                <Line dataKey="score" stroke="var(--accent)" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: 16 }}>
+        <p style={{ margin: "0 0 10px", fontWeight: 800 }}>Compare old vs new resume</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+          <select className="input" value={compareA} onChange={(e) => setCompareA(e.target.value)}>
+            <option value="">Select older analysis</option>
+            {analyses.map((item) => (
+              <option key={`old-${item.id}`} value={item.id}>
+                #{item.id} · {item.resume_name}
+              </option>
+            ))}
+          </select>
+          <select className="input" value={compareB} onChange={(e) => setCompareB(e.target.value)}>
+            <option value="">Select newer analysis</option>
+            {analyses.map((item) => (
+              <option key={`new-${item.id}`} value={item.id}>
+                #{item.id} · {item.resume_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {compareResult ? (
+          <p style={{ margin: "10px 0 0", fontSize: 13, color: compareResult.delta >= 0 ? "var(--success)" : "var(--error)" }}>
+            Score change: {compareResult.first.ats_score}% → {compareResult.second.ats_score}% ({compareResult.delta >= 0 ? "+" : ""}
+            {compareResult.delta.toFixed(1)}%)
+          </p>
+        ) : null}
       </div>
 
       <div className="card" style={{ padding: 16 }}>
