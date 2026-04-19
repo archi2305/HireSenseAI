@@ -1,114 +1,66 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
+import axios from "axios"
+import toast from "react-hot-toast"
 
-const DashboardContext = createContext();
+const DashboardContext = createContext()
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
 
 export function DashboardProvider({ children }) {
-  const [candidates, setCandidates] = useState([]);
-  const [analytics, setAnalytics] = useState(null);
-  const [updateCounter, setUpdateCounter] = useState(0);
+  const [candidates, setCandidates] = useState([])
+  const [analytics, setAnalytics] = useState(null)
+  const [updateCounter, setUpdateCounter] = useState(0)
   
   // Filters
-  const [searchTerm, setSearchTerm] = useState("");
-  const [skillFilter, setSkillFilter] = useState("");
-  const [minScoreFilter, setMinScoreFilter] = useState("");
-  const [roleFilter, setRoleFilter] = useState(""); // For Top Job Role click
+  const [searchTerm, setSearchTerm] = useState("")
+  const [skillFilter, setSkillFilter] = useState("")
+  const [minScoreFilter, setMinScoreFilter] = useState("")
+  const [roleFilter, setRoleFilter] = useState("")
   
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true)
 
   const fetchDashboardData = useCallback(async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append("search", searchTerm);
-      if (skillFilter) params.append("skills", skillFilter);
-      if (minScoreFilter) params.append("min_score", minScoreFilter);
-      // Wait: our API search supports role internally inside search or we can adapt it
-      if (roleFilter) params.append("search", roleFilter); // Appends twice? We handled it as single search param in backend, so combine them:
-      
+      const params = new URLSearchParams()
+      if (searchTerm || roleFilter) {
+        params.append("search", `${searchTerm} ${roleFilter}`.trim())
+      }
+      if (skillFilter) params.append("skills", skillFilter)
+      if (minScoreFilter) params.append("min_score", minScoreFilter)
+
       const [candidatesRes, overviewRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/candidates?${params.toString()}`),
         axios.get(`${API_BASE_URL}/analytics/overview`)
-      ]);
-      
-      setCandidates(candidatesRes.data);
-      setAnalytics(overviewRes.data);
-      setUpdateCounter(prev => prev + 1);
+      ])
+
+      setCandidates(candidatesRes.data)
+      setAnalytics(overviewRes.data)
+      setUpdateCounter((prev) => prev + 1)
     } catch (err) {
-      console.error("Failed to load dashboard data", err);
-      toast.error("Failed to load pipeline data");
+      console.error("Failed to load dashboard data", err)
+      toast.error("Failed to load pipeline data")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [searchTerm, skillFilter, minScoreFilter, roleFilter]);
+  }, [searchTerm, skillFilter, minScoreFilter, roleFilter])
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      fetchDashboardData();
-    }, 300);
-    return () => clearTimeout(delayDebounce);
-  }, [fetchDashboardData]);
+      fetchDashboardData()
+    }, 300)
+    return () => clearTimeout(delayDebounce)
+  }, [fetchDashboardData])
 
   const removeCandidate = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}/candidate/${id}`);
-      toast.success("Candidate deleted successfully");
-      fetchDashboardData();
+      await axios.delete(`${API_BASE_URL}/candidate/${id}`)
+      toast.success("Candidate deleted successfully")
+      fetchDashboardData()
     } catch (err) {
-      toast.error("Failed to delete candidate");
+      toast.error("Failed to delete candidate")
     }
-  };
-
-  const uploadResume = async (file, role = "") => {
-    const formData = new FormData();
-    formData.append("resume", file);
-    formData.append("job_description", "");
-    formData.append("job_role", role);
-    
-    try {
-      await toast.promise(
-        axios.post(`${API_BASE_URL}/upload-resume`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        }),
-        {
-          loading: 'Analyzing resume...',
-          success: 'Resume parsed successfully!',
-          error: 'Failed to upload resume',
-        }
-      );
-      fetchDashboardData();
-    } catch (err) {
-      console.error("Upload error", err);
-    }
-  };
-
-  const bulkUploadResumes = async (files, role = "") => {
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-        formData.append("resumes", files[i]);
-    }
-    formData.append("job_description", "");
-    formData.append("job_role", role);
-    
-    try {
-      await toast.promise(
-        axios.post(`${API_BASE_URL}/bulk-upload`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        }),
-        {
-          loading: `Uploading ${files.length} resumes...`,
-          success: (res) => `Successfully processed ${res.data.processed} resumes!`,
-          error: 'Bulk upload failed',
-        }
-      );
-      fetchDashboardData();
-    } catch (err) {
-      console.error("Bulk upload error", err);
-    }
-  };
+  }
 
   return (
     <DashboardContext.Provider
@@ -122,14 +74,12 @@ export function DashboardProvider({ children }) {
         minScoreFilter, setMinScoreFilter,
         roleFilter, setRoleFilter,
         fetchDashboardData,
-        removeCandidate,
-        uploadResume,
-        bulkUploadResumes
+        removeCandidate
       }}
     >
       {children}
     </DashboardContext.Provider>
-  );
+  )
 }
 
-export const useDashboard = () => useContext(DashboardContext);
+export const useDashboard = () => useContext(DashboardContext)

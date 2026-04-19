@@ -445,6 +445,31 @@ def list_analyses(db: Session = Depends(get_db)):
     return results
 
 
+@app.get("/analyses/{analysis_id}")
+def get_analysis_by_id(analysis_id: int, db: Session = Depends(get_db)):
+    analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == analysis_id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    suggestions = []
+    raw_suggestions = analysis.suggestions or ""
+    for line in raw_suggestions.split("\n"):
+        cleaned = line.strip().lstrip("-").strip()
+        if cleaned:
+            suggestions.append(cleaned)
+
+    return {
+        "id": analysis.id,
+        "resume_name": analysis.resume_name,
+        "job_role": analysis.job_role,
+        "ats_score": analysis.ats_score,
+        "matched_skills": analysis.matched_skills or [],
+        "missing_skills": analysis.missing_skills or [],
+        "suggestions": suggestions,
+        "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
+    }
+
+
 @app.get("/score-history")
 def get_score_history(db: Session = Depends(get_db)):
     analyses = db.query(ResumeAnalysis).order_by(ResumeAnalysis.created_at.asc()).all()

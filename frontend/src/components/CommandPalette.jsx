@@ -3,14 +3,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom"
 import {
   Search, LayoutDashboard, FileText, Settings,
-  History, Zap, ArrowRight, User, BarChart2, X
+  History, Zap, ArrowRight, User, X
 } from "lucide-react"
 import { useDashboard } from "../context/DashboardContext"
 
 const PAGES = [
   { id:"dashboard", label:"Dashboard",      icon:LayoutDashboard, path:"/dashboard",   group:"Pages"   },
   { id:"analyzer",  label:"Analyzer",       icon:FileText,         path:"/analyzer",    group:"Pages"   },
-  { id:"results",   label:"Results",        icon:BarChart2,        path:"/results",     group:"Pages"   },
   { id:"history",   label:"History",         icon:History,          path:"/history",     group:"Pages"   },
   { id:"settings",  label:"Preferences",     icon:Settings,         path:"/preferences", group:"Pages"   },
   { id:"profile",   label:"Profile",         icon:User,             path:"/profile",     group:"Pages"   },
@@ -18,7 +17,6 @@ const PAGES = [
 
 const ACTIONS = [
   { id:"upload",    label:"Upload Resume",   icon:Zap,              action:"upload",     group:"Actions" },
-  { id:"analyze",   label:"New Analysis",   icon:FileText,          action:"analyze",    group:"Actions" },
   { id:"history",   label:"Open History",   icon:History,           action:"history",    group:"Actions" },
 ]
 
@@ -58,7 +56,6 @@ export default function CommandPalette({ open, onClose }) {
   const handleSelect = useCallback((item) => {
     if (item.path)   { navigate(item.path); onClose() }
     else if (item.action === "upload")  { navigate("/analyzer"); onClose() }
-    else if (item.action === "analyze") { navigate("/analyzer"); onClose() }
     else if (item.action === "history") { navigate("/history"); onClose() }
     else onClose()
   }, [navigate, onClose])

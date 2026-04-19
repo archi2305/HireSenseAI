@@ -1,5 +1,5 @@
 import React from "react"
-import { LayoutDashboard, FileText, History, Settings, User, Zap, BarChart3, Workflow, Search } from "lucide-react"
+import { LayoutDashboard, FileText, History, Settings, User, Zap } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 
@@ -9,10 +9,7 @@ function Sidebar() {
   const menu = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { name: "Analyzer", path: "/analyzer", icon: FileText },
-    { name: "Analytics", path: "/analytics", icon: BarChart3 },
-    { name: "Pipelines", path: "/pipelines", icon: Workflow },
     { name: "History", path: "/history", icon: History },
-    { name: "Search", path: "/search", icon: Search },
   ]
   const bottomMenu = [
     { name: "Preferences", path: "/preferences", icon: Settings }

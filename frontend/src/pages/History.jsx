@@ -1,35 +1,38 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import axios from "axios"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowRight, Briefcase, Search } from "lucide-react"
 import toast from "react-hot-toast"
-import ActivityFeed from "../components/ActivityFeed"
-import CandidateTable from "../components/CandidateTable"
 import { useAnalysis } from "../context/AnalysisContext"
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
+import { fetchAnalysesHistory } from "../services/analysisService"
 
 function History() {
   const navigate = useNavigate()
-  const { setAnalysisResult } = useAnalysis()
+  const [searchParams] = useSearchParams()
+  const initialQuery = searchParams.get("q") || ""
+  const { setHistory } = useAnalysis()
   const [analyses, setAnalyses] = useState([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(initialQuery)
+
+  useEffect(() => {
+    setSearch(initialQuery)
+  }, [initialQuery])
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/analyses`)
-        setAnalyses(response.data || [])
+        const records = await fetchAnalysesHistory()
+        setAnalyses(records || [])
+        setHistory(records || [])
       } catch (error) {
         console.error("Failed to fetch history API", error)
-        toast.error("Unable to fetch parsed resumes")
+        toast.error("Unable to fetch previous analyses")
       } finally {
         setLoading(false)
       }
     }
     fetchHistory()
-  }, [])
+  }, [setHistory])
 
   const filteredAnalyses = useMemo(() => {
     if (!search.trim()) return analyses
@@ -48,7 +51,7 @@ function History() {
           <p style={{ fontSize: 11, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
             History
           </p>
-          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900 }}>Pipeline Activity and Resume Archive</h1>
+          <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900 }}>Previous Analyses</h1>
         </div>
         <div style={{ position: "relative", minWidth: 280 }}>
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-2)" }} />
@@ -63,20 +66,10 @@ function History() {
       </div>
 
       <div className="card" style={{ padding: 16 }}>
-        <p style={{ margin: "0 0 10px", fontWeight: 800 }}>Live stream</p>
-        <ActivityFeed />
-      </div>
-
-      <div className="card" style={{ padding: 16 }}>
-        <p style={{ margin: "0 0 10px", fontWeight: 800 }}>Candidate feed</p>
-        <CandidateTable searchQuery={search} />
-      </div>
-
-      <div className="card" style={{ padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <p style={{ margin: 0, fontWeight: 800 }}>Parsed resumes list</p>
+          <p style={{ margin: 0, fontWeight: 800 }}>Resume analysis history</p>
           <button className="btn btn-secondary" onClick={() => navigate("/analyzer")}>
-            New Extraction
+            Upload Resume
           </button>
         </div>
 
@@ -125,10 +118,7 @@ function History() {
                     <button
                       className="btn btn-secondary"
                       style={{ padding: "6px 12px" }}
-                      onClick={() => {
-                        setAnalysisResult(item)
-                        navigate("/results")
-                      }}
+                      onClick={() => navigate(`/results/${item.id}`)}
                     >
                       Open
                       <ArrowRight size={12} />

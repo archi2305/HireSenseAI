@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import InputField from "../components/InputField";
 import SocialButton from "../components/SocialButton";
 import SectionReveal from "../components/SectionReveal";
+import { AUTH_BASE_URL } from "../services/api";
 
 function Login() {
   const { login } = useAuth();
@@ -102,10 +103,10 @@ function Login() {
       return;
     }
     if (provider === "google") {
-      window.location.href = "http://localhost:8000/auth/google/login";
+      window.location.href = `${AUTH_BASE_URL}/auth/google/login`;
       return;
     }
-    window.location.href = "http://localhost:8000/auth/github/login";
+    window.location.href = `${AUTH_BASE_URL}/auth/github/login`;
   };
 
   const GoogleIcon = (props) => (

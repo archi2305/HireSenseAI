@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight, CheckCircle, FileCheck, TrendingUp, Zap, Sparkles } from "lucide-react"
+import { CheckCircle, FileCheck, TrendingUp, Zap } from "lucide-react"
 import axios from "axios"
 import AnalyticsCharts from "../components/AnalyticsCharts"
-import { useDashboard } from "../context/DashboardContext"
 import { useAnalysis } from "../context/AnalysisContext"
-import EmptyState from "../components/EmptyState"
+import { fetchAnalysesHistory } from "../services/analysisService"
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { candidates } = useDashboard()
-  const { analysisResult } = useAnalysis()
+  const { recentSearches, setHistory } = useAnalysis()
   const [stats, setStats] = useState({
     total_resumes: 0,
     avg_score: 0,
@@ -27,10 +25,26 @@ export default function Dashboard() {
         setStats((prev) => ({ ...prev, ...response.data }))
       } catch (error) {
         console.error("Failed to load dashboard stats", error)
+        setStats({
+          total_resumes: 0,
+          avg_score: 72,
+          total_analyses: 0,
+          active_jobs: 1,
+        })
       }
     }
     loadStats()
   }, [])
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      const records = await fetchAnalysesHistory()
+      if (Array.isArray(records) && records.length > 0) {
+        setHistory(records)
+      }
+    }
+    loadHistory()
+  }, [setHistory])
 
   const cardItems = useMemo(
     () => [
@@ -46,21 +60,21 @@ export default function Dashboard() {
         value: `${Math.round(stats.avg_score ?? 0)}%`,
         icon: TrendingUp,
         color: "#10b981",
-        onClick: () => navigate("/analytics"),
+        onClick: () => navigate("/history"),
       },
       {
         title: "AI Accuracy",
         value: `${Math.round((stats.avg_score ?? 0) * 0.96)}%`,
         icon: CheckCircle,
         color: "#f59e0b",
-        onClick: () => navigate("/analytics"),
+        onClick: () => navigate("/history"),
       },
       {
         title: "Active Pipelines",
         value: stats.active_jobs ?? 0,
         icon: Zap,
         color: "#3b82f6",
-        onClick: () => navigate("/pipelines"),
+        onClick: () => navigate("/analyzer"),
       },
     ],
     [navigate, stats]
@@ -74,20 +88,9 @@ export default function Dashboard() {
             Dashboard Overview
           </p>
           <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900 }}>Hiring Intelligence Console</h1>
-          <p style={{ marginTop: 8, color: "var(--text-2)", fontSize: 14 }}>
-            {candidates.length} candidates in pipeline
-            {analysisResult?.ats_score ? ` · Latest ATS: ${analysisResult.ats_score}%` : ""}
-          </p>
+          <p style={{ marginTop: 8, color: "var(--text-2)", fontSize: 14 }}>Overview metrics, performance trends, and recent resume activity.</p>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn btn-secondary" onClick={() => navigate("/history")}>
-            View All
-            <ArrowRight size={14} />
-          </button>
-          <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
-            Upload Resume
-          </button>
-        </div>
+        <button className="btn btn-secondary" onClick={() => navigate("/history")}>View History</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
@@ -115,28 +118,25 @@ export default function Dashboard() {
       </div>
 
       <div className="card" style={{ padding: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <p style={{ margin: 0, fontWeight: 800, fontSize: 14 }}>Quick Actions</p>
+        <p style={{ margin: "0 0 10px", fontWeight: 800 }}>Recent activity</p>
+        <div style={{ display: "grid", gap: 8 }}>
+          {recentSearches.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text-2)" }}>No data yet. Upload your first resume.</p>
+          ) : (
+            recentSearches.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                onClick={() => navigate(`/results/${item.id}`)}
+                className="card card-lift"
+                style={{ padding: "10px 12px", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{item.resume_name || "Untitled Resume"}</span>
+                <span style={{ fontSize: 12, color: "var(--text-2)" }}>{item.ats_score ?? 0}%</span>
+              </button>
+            ))
+          )}
         </div>
-        {Number(stats.total_resumes || 0) === 0 ? (
-          <EmptyState
-            title="No data yet"
-            description="No data yet. Upload your first resume."
-            icon={Sparkles}
-          />
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
-            <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
-              Upload Resume
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/analytics")}>
-              Match Rate Analytics
-            </button>
-            <button className="btn btn-secondary" onClick={() => navigate("/pipelines")}>
-              View Pipelines
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

@@ -5,7 +5,6 @@ import { useEffect, useState } from "react"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { DashboardProvider } from "./context/DashboardContext"
 import { AnalysisProvider } from "./context/AnalysisContext"
-import ToastContainer from "./components/ToastContainer"
 import PageTransition from "./components/PageTransition"
 import CommandPalette from "./components/CommandPalette"
 
@@ -18,9 +17,6 @@ import Analyzer from "./pages/Analyzer"
 import History from "./pages/History"
 import Results from "./pages/Results"
 import Settings from "./pages/Settings"
-import Analytics from "./pages/Analytics"
-import Pipelines from "./pages/Pipelines"
-import SearchResults from "./pages/SearchResults"
 import OAuthSuccess from "./pages/OAuthSuccess"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
@@ -84,20 +80,17 @@ function Layout() {
             <Routes location={location} key={location.pathname}>
               <Route path="dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
               <Route path="analyzer"  element={<PageTransition><Analyzer /></PageTransition>} />
-              <Route path="analytics" element={<PageTransition><Analytics /></PageTransition>} />
-              <Route path="pipelines" element={<PageTransition><Pipelines /></PageTransition>} />
-              <Route path="search" element={<PageTransition><SearchResults /></PageTransition>} />
-              <Route path="results"   element={<PageTransition><Results /></PageTransition>} />
+              <Route path="results/:id" element={<PageTransition><Results /></PageTransition>} />
+              <Route path="results" element={<Navigate to="/history" replace />} />
               <Route path="history"   element={<PageTransition><History /></PageTransition>} />
               <Route path="profile"   element={<PageTransition><Profile /></PageTransition>} />
               <Route path="preferences" element={<PageTransition><Settings /></PageTransition>} />
               <Route path="settings"  element={<PageTransition><Settings /></PageTransition>} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </AnimatePresence>
         </main>
       </div>
-
-      <ToastContainer />
     </div>
   )
 }
@@ -109,6 +102,7 @@ function App() {
         <AnalysisProvider>
           <Toaster 
             position="top-right" 
+            containerStyle={{ zIndex: 1200, top: 16, right: 16 }}
             toastOptions={{ 
               className: '!border-theme-border !text-theme-text !bg-theme-surface !shadow-lg',
               duration: 4000,
