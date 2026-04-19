@@ -36,11 +36,19 @@ logger.info("GitHub OAuth configured: %s", bool(GITHUB_CLIENT_ID))
 
 try:
     from services.skill_matcher import calculate_ats_score, detect_best_role
-    from services.suggestion_engine import generate_suggestions
+    from services.suggestion_engine import (
+        generate_suggestions,
+        generate_smart_suggestions,
+        improve_bullet_line,
+    )
     from services.resume_parser import extract_text_from_pdf, extract_text_from_file
 except ImportError:
     from backend.services.skill_matcher import calculate_ats_score, detect_best_role
-    from backend.services.suggestion_engine import generate_suggestions
+    from backend.services.suggestion_engine import (
+        generate_suggestions,
+        generate_smart_suggestions,
+        improve_bullet_line,
+    )
     from backend.services.resume_parser import extract_text_from_pdf, extract_text_from_file
 
 ROLE_JD_TEMPLATES = {
@@ -100,6 +108,15 @@ class AnalysisResult(BaseModel):
     suggestions: List[str]
     created_at: datetime
     file_path: Optional[str] = None
+
+
+class BulletImproveRequest(BaseModel):
+    bullet: str
+    context: Optional[str] = None
+
+
+class ChatRequest(BaseModel):
+    message: str
 
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -290,6 +307,7 @@ async def upload_resume(
             selected_role=effective_role if effective_role != "Not specified" else None,
         )
         suggestions = generate_suggestions(missing_skills)
+        ai_suggestions = generate_smart_suggestions(missing_skills, role=effective_role)
         suggestions_text = "\n".join(f"- {item}" for item in suggestions)
 
         db_analysis = ResumeAnalysis(
@@ -313,6 +331,7 @@ async def upload_resume(
             "matched_skills": db_analysis.matched_skills,
             "missing_skills": db_analysis.missing_skills,
             "suggestions": suggestions,
+            "ai_suggestions": ai_suggestions,
             "suggestions_text": db_analysis.suggestions,
             "created_at": db_analysis.created_at,
             "warning": parsing_warning,
@@ -380,6 +399,37 @@ async def bulk_upload(
             results.append({"filename": resume.filename, "status": "error", "message": str(e)})
             
     return {"processed": len(results), "results": results}
+
+
+@app.post("/api/improve-bullet")
+def improve_bullet(payload: BulletImproveRequest):
+    improved = improve_bullet_line(payload.bullet, payload.context or "")
+    return {
+        "original": payload.bullet,
+        "improved": improved,
+        "tips": [
+            "Add measurable results",
+            "Use action verbs",
+            "Mention tools and scope",
+        ],
+    }
+
+
+@app.post("/chat")
+def chat_assistant(payload: ChatRequest):
+    message = (payload.message or "").strip()
+    lower = message.lower()
+    if not lower:
+        return {"reply": "Share a resume bullet or ask what to improve, and I will suggest a stronger version."}
+
+    if "improve" in lower or "better" in lower:
+        return {"reply": "Focus on quantified outcomes, strong action verbs, and include the tools you used."}
+    if "skill" in lower or "skills" in lower:
+        return {"reply": "Add a dedicated skills section and mirror the job description keywords that match your experience."}
+    if "summary" in lower:
+        return {"reply": "Keep your summary to 2-3 lines with role, years of experience, and one measurable achievement."}
+
+    return {"reply": "Highlight impact with numbers, tailor keywords to the target role, and emphasize recent projects."}
 
 
 @app.delete("/candidate/{candidate_id}")

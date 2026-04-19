@@ -17,6 +17,7 @@ export default function Dashboard() {
     total_analyses: 0,
     active_jobs: 0,
   })
+  const [statsLoading, setStatsLoading] = useState(true)
 
   useEffect(() => {
     const loadStats = async () => {
@@ -31,6 +32,8 @@ export default function Dashboard() {
           total_analyses: 0,
           active_jobs: 1,
         })
+      } finally {
+        setStatsLoading(false)
       }
     }
     loadStats()
@@ -82,6 +85,14 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1320, margin: "0 auto", display: "grid", gap: 20 }}>
+      <div className="card" style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>Start a new resume analysis</p>
+          <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-2)" }}>Upload from analyzer for the full guided flow.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>Upload Resume</button>
+      </div>
+
       <div className="card" style={{ padding: 24, display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
         <div>
           <p style={{ fontSize: 11, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".09em", marginBottom: 6 }}>
@@ -93,7 +104,7 @@ export default function Dashboard() {
         <button className="btn btn-secondary" onClick={() => navigate("/history")}>View History</button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
         {cardItems.map((item) => (
           <button
             type="button"
@@ -114,7 +125,11 @@ export default function Dashboard() {
       </div>
 
       <div className="card" style={{ padding: 16 }}>
-        <AnalyticsCharts showSkills={false} />
+        {statsLoading ? (
+          <div className="skeleton" style={{ height: 260 }} />
+        ) : (
+          <AnalyticsCharts showSkills={false} />
+        )}
       </div>
 
       <div className="card" style={{ padding: 16 }}>

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { ArrowRight, CheckCircle2, AlertTriangle, Sparkles, BriefcaseBusiness, Download } from "lucide-react"
+import toast from "react-hot-toast"
 import { useAnalysis } from "../context/AnalysisContext"
 import { API_BASE_URL } from "../services/api"
-import { fetchAnalysisById } from "../services/analysisService"
+import { fetchAnalysisById, improveBullet } from "../services/analysisService"
 
 function normalizeList(value) {
   if (!value) return []
@@ -23,6 +24,8 @@ export default function Results() {
   const { id } = useParams()
   const { analysisResult, analysisInput, uploadedResume, history, recentSearches, recordAnalysis } = useAnalysis()
   const [activeResult, setActiveResult] = useState(analysisResult)
+  const [smartSuggestions, setSmartSuggestions] = useState([])
+  const [improvingIndex, setImprovingIndex] = useState(-1)
 
   useEffect(() => {
     const analysisId = id ? String(id) : ""
@@ -43,6 +46,24 @@ export default function Results() {
     }
     load()
   }, [id, history, recordAnalysis])
+
+  useEffect(() => {
+    if (!activeResult) {
+      setSmartSuggestions([])
+      return
+    }
+    const fromApi = Array.isArray(activeResult.ai_suggestions) ? activeResult.ai_suggestions : []
+    if (fromApi.length > 0) {
+      setSmartSuggestions(fromApi)
+      return
+    }
+    const fallbackTips = normalizeList(activeResult?.suggestions).slice(0, 3).map((item) => ({
+      original: item.replace(/^Add\s+/i, "Built "),
+      improved: `${item}. Demonstrated measurable impact with a 20% performance gain.`,
+      tips: ["Add measurable results", "Use action verbs", "Mention tools used"],
+    }))
+    setSmartSuggestions(fallbackTips)
+  }, [activeResult])
 
   const data = useMemo(() => {
     const matchedSkills = normalizeList(
@@ -85,6 +106,21 @@ export default function Results() {
     projects: Math.max(35, Math.min(96, activeResult?.score_breakdown?.projects ?? atsScore - 3)),
   }
   const analysisId = activeResult?.id
+
+  const handleImproveBullet = async (index) => {
+    const target = smartSuggestions[index]
+    if (!target) return
+    setImprovingIndex(index)
+    const improved = await improveBullet({
+      bullet: target.original,
+      context: analysisInput.role || activeResult?.job_role || "software engineering",
+    })
+    setSmartSuggestions((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, ...improved } : item))
+    )
+    setImprovingIndex(-1)
+    toast.success("Bullet improved")
+  }
 
   return (
     <div style={{ padding: "32px 40px", maxWidth: 1240, margin: "0 auto", display: "grid", gap: 18 }}>
@@ -178,6 +214,40 @@ export default function Results() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+        <div className="card card-lift" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8 }}>
+            <Sparkles size={15} style={{ color: "var(--accent)" }} />
+            AI Suggestions (Before vs After)
+          </h3>
+          <div style={{ display: "grid", gap: 10 }}>
+            {smartSuggestions.length === 0 ? (
+              <p style={{ margin: 0, color: "var(--text-2)", fontSize: 13 }}>No suggestions yet.</p>
+            ) : (
+              smartSuggestions.map((item, idx) => (
+                <div key={`${item.original}-${idx}`} className="card" style={{ padding: 12 }}>
+                  <p style={{ margin: 0, fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: ".06em" }}>Before</p>
+                  <p style={{ margin: "2px 0 8px", fontSize: 13 }}>{item.original}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: ".06em" }}>After</p>
+                  <p style={{ margin: "2px 0 8px", fontSize: 13, color: "var(--success)", fontWeight: 600 }}>{item.improved}</p>
+                  <ul style={{ margin: "0 0 8px", paddingLeft: 16, display: "grid", gap: 4 }}>
+                    {(item.tips || []).map((tip) => (
+                      <li key={tip} style={{ fontSize: 12, color: "var(--text-2)" }}>{tip}</li>
+                    ))}
+                  </ul>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ width: "100%", justifyContent: "center" }}
+                    onClick={() => handleImproveBullet(idx)}
+                    disabled={improvingIndex === idx}
+                  >
+                    {improvingIndex === idx ? "Improving..." : "Improve this bullet"}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         <div className="card card-lift" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8 }}>
             <Sparkles size={15} style={{ color: "var(--accent)" }} />

@@ -7,6 +7,7 @@ import { DashboardProvider } from "./context/DashboardContext"
 import { AnalysisProvider } from "./context/AnalysisContext"
 import PageTransition from "./components/PageTransition"
 import CommandPalette from "./components/CommandPalette"
+import FloatingChatbot from "./components/FloatingChatbot"
 
 import Sidebar from "./components/sidebar"
 import Header from "./components/Header"
@@ -91,6 +92,7 @@ function Layout() {
           </AnimatePresence>
         </main>
       </div>
+      <FloatingChatbot />
     </div>
   )
 }

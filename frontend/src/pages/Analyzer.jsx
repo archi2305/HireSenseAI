@@ -1,10 +1,11 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { UploadCloud, Sparkles, ArrowRight } from "lucide-react"
 import toast from "react-hot-toast"
 import { motion } from "framer-motion"
 import { useAnalysis } from "../context/AnalysisContext"
 import { analyzeResume } from "../services/analysisService"
+import AnalyzerLoadingSteps from "../components/AnalyzerLoadingSteps"
 
 const ROLES = [
   "Frontend Developer",
@@ -27,8 +28,24 @@ export default function Analyzer() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const [loading, setLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [file, setFile] = useState(null)
   const { analysisInput, setAnalysisInput, recordAnalysis, setUploadedResume } = useAnalysis()
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStep(0)
+      return
+    }
+    const timers = [700, 1400, 2100].map((ms, idx) =>
+      setTimeout(() => {
+        setLoadingStep(idx + 1)
+      }, ms)
+    )
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer))
+    }
+  }, [loading])
 
   const onSubmit = async (event) => {
     event.preventDefault()
@@ -179,6 +196,12 @@ export default function Analyzer() {
           </button>
         </div>
       </form>
+
+      {loading ? (
+        <div style={{ marginTop: 18 }}>
+          <AnalyzerLoadingSteps currentStep={loadingStep} />
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -21,6 +21,13 @@ function buildMockAnalysis({ file, role, jobDescription }) {
       "Highlight role-specific keywords from the job description",
       "Include a dedicated skills section near the top",
     ],
+    ai_suggestions: [
+      {
+        original: "Built inventory system",
+        improved: "Developed scalable inventory system reducing stock errors by 30%.",
+        tips: ["Add measurable results", "Use action verbs", "Mention tools used"],
+      },
+    ],
     score_breakdown: {
       skills: mockRoleDefaults.skills + (seed % 6),
       experience: mockRoleDefaults.experience + (seed % 8),
@@ -31,6 +38,30 @@ function buildMockAnalysis({ file, role, jobDescription }) {
     isMock: true,
     job_description: jobDescription || "",
   }
+}
+
+function buildAiSuggestions(result) {
+  if (Array.isArray(result?.ai_suggestions) && result.ai_suggestions.length > 0) {
+    return result.ai_suggestions
+  }
+
+  const missing = Array.isArray(result?.missing_skills) ? result.missing_skills : []
+  const target = missing.slice(0, 3)
+  if (target.length === 0) {
+    return [
+      {
+        original: "Built internal dashboard",
+        improved: "Built internal dashboard that reduced manual reporting time by 35%.",
+        tips: ["Add measurable results", "Use action verbs", "Mention tools used"],
+      },
+    ]
+  }
+
+  return target.map((skill) => ({
+    original: `Worked on ${skill} features`,
+    improved: `Implemented ${skill} features that improved delivery speed by 25%.`,
+    tips: ["Add measurable results", "Use action verbs", `Mention tools used for ${skill}`],
+  }))
 }
 
 export async function analyzeResume({ file, role, jobDescription }) {
@@ -50,7 +81,7 @@ export async function analyzeResume({ file, role, jobDescription }) {
       throw new Error(data?.detail?.message || data?.detail || "Analysis failed")
     }
 
-    return { ...data, isMock: false }
+    return { ...data, ai_suggestions: buildAiSuggestions(data), isMock: false }
   } catch (_) {
     return buildMockAnalysis({ file, role, jobDescription })
   }
@@ -74,8 +105,27 @@ export async function fetchAnalysisById(id) {
     if (!response.ok) {
       throw new Error("Failed to fetch analysis")
     }
-    return await response.json()
+    const data = await response.json()
+    return { ...data, ai_suggestions: buildAiSuggestions(data) }
   } catch (_) {
     return null
+  }
+}
+
+export async function improveBullet({ bullet, context }) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/improve-bullet`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bullet, context }),
+    })
+    if (!response.ok) throw new Error("Unable to improve bullet")
+    return await response.json()
+  } catch (_) {
+    return {
+      original: bullet,
+      improved: `Improved: ${bullet}. Delivered measurable business impact.`,
+      tips: ["Add measurable results", "Use action verbs", "Mention tools used"],
+    }
   }
 }
