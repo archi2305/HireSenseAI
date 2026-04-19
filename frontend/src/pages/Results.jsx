@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { ArrowRight, CheckCircle2, AlertTriangle, Sparkles, BriefcaseBusiness, Download, FilePenLine, RefreshCw, Clipboard, FileSearch, MessageSquareQuote } from "lucide-react"
 import toast from "react-hot-toast"
+import { motion } from "framer-motion"
 import { useAnalysis } from "../context/AnalysisContext"
 import { API_BASE_URL } from "../services/api"
 import {
@@ -127,9 +128,9 @@ export default function Results() {
   if (!activeResult) {
     return (
       <div style={{ padding: "32px 40px", maxWidth: 980, margin: "0 auto" }}>
-        <div className="card" style={{ padding: 28, textAlign: "center" }}>
+        <div className="card glow-card" style={{ padding: 28, textAlign: "center" }}>
           <p style={{ fontSize: 14, color: "var(--text-2)" }}>No analysis available yet.</p>
-          <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
+          <button className="btn btn-primary btn-glow" onClick={() => navigate("/analyzer")}>
             Upload Resume
           </button>
         </div>
@@ -221,8 +222,19 @@ export default function Results() {
   }
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: 1240, margin: "0 auto", display: "grid", gap: 18 }}>
-      <div className="card" style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      style={{ padding: "32px 40px", maxWidth: 1240, margin: "0 auto", display: "grid", gap: 18 }}
+    >
+      <motion.div
+        className="card card-lift glow-card"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.06 }}
+        style={{ padding: 24, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}
+      >
         <div>
           <p style={{ fontSize: 11, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
             Analysis Results
@@ -260,19 +272,23 @@ export default function Results() {
             <FilePenLine size={14} />
             {coverLoading ? "Generating..." : "Generate Cover Letter"}
           </button>
-          <button className="btn btn-primary" onClick={() => navigate("/analyzer")}>
+          <button className="btn btn-primary btn-glow" onClick={() => navigate("/analyzer")}>
             Upload Resume
             <ArrowRight size={14} />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-        <div className="card card-lift" style={{ padding: 24 }}>
+        <motion.div
+        className="card card-lift glow-card"
+        whileHover={{ y: -4 }}
+        style={{ padding: 24 }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 6 }}>
           ATS Score
         </p>
         <p
+          className="score-glow"
           style={{
             fontSize: 56,
             fontWeight: 900,
@@ -283,7 +299,7 @@ export default function Results() {
         >
           {atsScore}%
         </p>
-        </div>
+        </motion.div>
 
         <div className="card card-lift" style={{ padding: 20 }}>
           <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 14px" }}>Resume score breakdown</h3>
@@ -555,7 +571,7 @@ export default function Results() {
           </label>
         </div>
         <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary" onClick={handleGenerateCoverLetter} disabled={coverLoading}>
+          <button className="btn btn-primary btn-glow" onClick={handleGenerateCoverLetter} disabled={coverLoading}>
             {coverLoading ? "Generating..." : "Generate Cover Letter"}
           </button>
           <button
@@ -604,6 +620,6 @@ export default function Results() {
           </pre>
         </div>
       ) : null}
-    </div>
+    </motion.div>
   )
 }

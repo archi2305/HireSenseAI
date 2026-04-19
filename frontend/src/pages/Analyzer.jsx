@@ -96,8 +96,19 @@ export default function Analyzer() {
   }
 
   return (
-    <div style={{ padding: "32px 40px", maxWidth: 1180, margin: "0 auto" }}>
-      <div className="card" style={{ padding: 28, marginBottom: 22 }}>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      style={{ padding: "32px 40px", maxWidth: 1180, margin: "0 auto" }}
+    >
+      <motion.div
+        className="card card-lift glow-card"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.05 }}
+        style={{ padding: 28, marginBottom: 22 }}
+      >
         <p style={{ fontSize: 11, fontWeight: 800, color: "var(--accent)", textTransform: "uppercase", letterSpacing: ".09em", marginBottom: 8 }}>
           Resume Analyzer
         </p>
@@ -107,9 +118,16 @@ export default function Analyzer() {
         <p style={{ marginTop: 10, color: "var(--text-2)", fontSize: 14 }}>
           Upload your resume, choose a target role, and optionally add a job description for sharper matching.
         </p>
-      </div>
+      </motion.div>
 
-      <form className="card" style={{ padding: 24, display: "grid", gap: 18 }} onSubmit={onSubmit}>
+      <motion.form
+        className="card card-lift"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.1 }}
+        style={{ padding: 24, display: "grid", gap: 18 }}
+        onSubmit={onSubmit}
+      >
         <div>
           <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--text-2)", marginBottom: 8 }}>
             Resume Upload
@@ -171,7 +189,7 @@ export default function Analyzer() {
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <button
             type="submit"
-            className="btn btn-primary"
+            className="btn btn-primary btn-glow"
             disabled={loading || !file}
           >
             {loading ? (
@@ -193,13 +211,13 @@ export default function Analyzer() {
             )}
           </button>
         </div>
-      </form>
+      </motion.form>
 
       {loading ? (
         <div style={{ marginTop: 18 }}>
           <AnalyzerLoadingSteps currentStep={loadingStep} />
         </div>
       ) : null}
-    </div>
+    </motion.div>
   )
 }

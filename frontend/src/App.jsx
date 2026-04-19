@@ -67,9 +67,40 @@ function Layout() {
 
   return (
     <div style={{ display:"flex", height:"100vh", width:"100%", background:"var(--bg)", overflow:"hidden", position:"relative" }}>
-      {/* Soft bg glows */}
-      <div style={{ position:"absolute", top:"-10%", right:"-10%", width:"40%", height:"40%", background:"rgba(99,102,241,.04)", borderRadius:"50%", filter:"blur(120px)", pointerEvents:"none" }} />
-      <div style={{ position:"absolute", bottom:"-10%", left:"-10%", width:"40%", height:"40%", background:"rgba(59,130,246,.04)", borderRadius:"50%", filter:"blur(120px)", pointerEvents:"none" }} />
+      <motion.div
+        aria-hidden
+        style={{
+          position:"absolute",
+          top:"-14%",
+          right:"-8%",
+          width:"42%",
+          height:"42%",
+          background:"radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(99, 102, 241, 0.05) 56%, transparent 74%)",
+          borderRadius:"50%",
+          filter:"blur(78px)",
+          pointerEvents:"none",
+          zIndex:0,
+        }}
+        animate={{ x: [0, 18, -10, 0], y: [0, -12, 8, 0], scale: [1, 1.06, 0.98, 1] }}
+        transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        style={{
+          position:"absolute",
+          bottom:"-16%",
+          left:"-10%",
+          width:"40%",
+          height:"40%",
+          background:"radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, rgba(79, 70, 229, 0.05) 58%, transparent 76%)",
+          borderRadius:"50%",
+          filter:"blur(80px)",
+          pointerEvents:"none",
+          zIndex:0,
+        }}
+        animate={{ x: [0, -14, 12, 0], y: [0, 10, -8, 0], scale: [1, 0.95, 1.04, 1] }}
+        transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
       <Sidebar onCommandPalette={() => setCmdOpen(true)} />
