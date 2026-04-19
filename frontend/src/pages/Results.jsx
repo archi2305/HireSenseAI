@@ -28,6 +28,8 @@ export default function Results() {
   const [improvingIndex, setImprovingIndex] = useState(-1)
   const [coverLetter, setCoverLetter] = useState("")
   const [coverLoading, setCoverLoading] = useState(false)
+  const [coverTone, setCoverTone] = useState("formal")
+  const [coverParagraphs, setCoverParagraphs] = useState(5)
 
   useEffect(() => {
     const analysisId = id ? String(id) : ""
@@ -136,6 +138,8 @@ export default function Results() {
       jobDescription: analysisInput.jobDescription,
       matchedSkills: data.matchedSkills,
       highlights: data.improvementList,
+      tone: coverTone,
+      paragraphs: coverParagraphs,
     })
     setCoverLetter(result.cover_letter || "")
     setCoverLoading(false)
@@ -326,6 +330,46 @@ export default function Results() {
               </button>
             ))
           )}
+        </div>
+      </div>
+
+      <div className="card card-lift" style={{ padding: 20 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 12px", display: "flex", alignItems: "center", gap: 8 }}>
+          <FilePenLine size={15} style={{ color: "var(--accent)" }} />
+          Cover Letter Options
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+          <label style={{ display: "grid", gap: 6, fontSize: 12, color: "var(--text-2)" }}>
+            Tone
+            <select className="input" value={coverTone} onChange={(e) => setCoverTone(e.target.value)}>
+              <option value="formal">Formal</option>
+              <option value="confident">Confident</option>
+            </select>
+          </label>
+          <label style={{ display: "grid", gap: 6, fontSize: 12, color: "var(--text-2)" }}>
+            Paragraphs
+            <select className="input" value={coverParagraphs} onChange={(e) => setCoverParagraphs(Number(e.target.value))}>
+              <option value={3}>3</option>
+              <option value={4}>4</option>
+              <option value={5}>5</option>
+            </select>
+          </label>
+        </div>
+        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-primary" onClick={handleGenerateCoverLetter} disabled={coverLoading}>
+            {coverLoading ? "Generating..." : "Generate Cover Letter"}
+          </button>
+          {coverLetter ? (
+            <button
+              className="btn btn-secondary"
+              onClick={async () => {
+                await navigator.clipboard.writeText(coverLetter)
+                toast.success("Cover letter copied")
+              }}
+            >
+              Copy
+            </button>
+          ) : null}
         </div>
       </div>
 

@@ -140,6 +140,8 @@ export async function generateCoverLetter({
   jobDescription,
   matchedSkills,
   highlights,
+  tone,
+  paragraphs,
 }) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/generate-cover-letter`, {
@@ -151,6 +153,8 @@ export async function generateCoverLetter({
         job_description: jobDescription,
         matched_skills: matchedSkills || [],
         highlights: highlights || [],
+        tone: tone || "formal",
+        paragraphs: paragraphs || 5,
       }),
     })
     if (!response.ok) {

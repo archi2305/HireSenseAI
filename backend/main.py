@@ -125,6 +125,8 @@ class CoverLetterRequest(BaseModel):
     resume_id: Optional[int] = None
     matched_skills: Optional[List[str]] = None
     highlights: Optional[List[str]] = None
+    tone: Optional[str] = "formal"
+    paragraphs: Optional[int] = 5
 
 
 from starlette.middleware.sessions import SessionMiddleware
@@ -464,6 +466,8 @@ def generate_cover_letter(payload: CoverLetterRequest, db: Session = Depends(get
     job_description = (payload.job_description or "").strip()
     matched_skills = payload.matched_skills or []
     highlights = payload.highlights or []
+    tone = (payload.tone or "formal").strip().lower()
+    paragraphs = max(3, min(5, int(payload.paragraphs or 5)))
 
     if payload.resume_id:
         analysis = db.query(ResumeAnalysis).filter(ResumeAnalysis.id == payload.resume_id).first()
@@ -485,15 +489,35 @@ def generate_cover_letter(payload: CoverLetterRequest, db: Session = Depends(get
     )
     achievement_line = highlights[0] if highlights else "I consistently deliver measurable outcomes and maintain high engineering quality."
 
-    letter = (
-        f"Dear Hiring Manager,\n\n"
-        f"I am writing to express my interest in the {role} position. I am excited about the opportunity to contribute to your team by combining technical execution with business-focused outcomes.\n\n"
-        f"My recent experience aligns closely with this role, especially across {top_skills}. I have delivered production-grade work that improves reliability, performance, and user value through pragmatic architecture and iterative delivery.\n\n"
-        f"{achievement_line} In prior projects, I focused on clear ownership, cross-functional collaboration, and measurable improvements that supported both product and engineering goals.\n\n"
-        f"{jd_focus} I am confident that my background and execution mindset would make me a strong addition to your organization.\n\n"
-        f"Thank you for your time and consideration. I would welcome the opportunity to discuss how I can contribute to your team.\n\n"
-        f"Sincerely,\nCandidate"
+    intro_line = (
+        f"I am writing to express my interest in the {role} position."
+        if tone == "formal"
+        else f"I am excited to apply for the {role} role."
     )
+
+    parts = [
+        "Dear Hiring Manager,",
+        (
+            f"{intro_line} I am excited about the opportunity to contribute to your team "
+            "by combining technical execution with business-focused outcomes."
+        ),
+        (
+            f"My recent experience aligns closely with this role, especially across {top_skills}. "
+            "I have delivered production-grade work that improves reliability, performance, and user value through pragmatic architecture and iterative delivery."
+        ),
+        (
+            f"{achievement_line} In prior projects, I focused on clear ownership, cross-functional collaboration, "
+            "and measurable improvements that supported both product and engineering goals."
+        ),
+        (
+            f"{jd_focus} I am confident that my background and execution mindset would make me a strong addition to your organization."
+        ),
+        "Thank you for your time and consideration. I would welcome the opportunity to discuss how I can contribute to your team.",
+        "Sincerely,\nCandidate",
+    ]
+
+    body = parts[: paragraphs + 2]  # greeting + selected paragraphs + close
+    letter = "\n\n".join(body)
 
     return {"cover_letter": letter}
 
