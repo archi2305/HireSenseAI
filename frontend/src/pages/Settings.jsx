@@ -1,300 +1,694 @@
-import React, { useState, useEffect } from "react"
-import { 
-  User, Shield, Bell, Zap, Database, Save, LogOut, Download, Trash2, Key, CheckCircle, Moon, Palette as ColorIcon, ChevronRight, Target, ShieldCheck, Mail, Activity
-} from "lucide-react"
-import api from "../services/api"
-import { useAuth } from "../context/AuthContext"
-import { useTheme } from "../context/ThemeContext"
-import toast from "react-hot-toast"
-import { motion, AnimatePresence } from "framer-motion"
-import SectionReveal from "../components/SectionReveal"
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Bell,
+  Bot,
+  CreditCard,
+  Download,
+  Eye,
+  LogOut,
+  Moon,
+  Palette,
+  Save,
+  Shield,
+  Sparkles,
+  Sun,
+  Trash2,
+  User,
+  UserRoundX,
+  CheckCircle2,
+  BriefcaseBusiness,
+  Lock,
+  RefreshCw,
+  Gauge,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
+import api, { API_BASE_URL } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+
+const LOCAL_PREFS_KEY = "saas_settings_v1";
+const ROLE_OPTIONS = [
+  "Backend Developer",
+  "Frontend Developer",
+  "Full Stack Developer",
+  "DevOps Engineer",
+  "Data Analyst",
+  "Data Scientist",
+  "Machine Learning Engineer",
+  "Mobile Developer",
+  "UI/UX Designer",
+  "Cloud Engineer",
+];
+
+const initialLocalPrefs = {
+  ats_strictness: "Standard",
+  auto_suggestions: true,
+  ai_rewrite: true,
+  ai_mode: "Smart",
+  tone: "Professional",
+  chatbot_memory: true,
+  two_fa: false,
+  ui_density: "Comfortable",
+  weekly_tips: true,
+  resume_analysis_alerts: true,
+};
+
+function Toggle({ checked, onChange, label }) {
+  return (
+    <label className="flex items-center justify-between rounded-xl border border-theme-border bg-theme-surface px-4 py-3">
+      <span className="text-sm text-theme-text">{label}</span>
+      <button
+        type="button"
+        onClick={() => onChange(!checked)}
+        className={`h-6 w-11 rounded-full p-1 transition ${
+          checked ? "bg-theme-accent" : "bg-theme-sidebar"
+        }`}
+      >
+        <span
+          className={`block h-4 w-4 rounded-full bg-white transition ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </label>
+  );
+}
+
+function SectionCard({ title, description, children }) {
+  return (
+    <div className="rounded-2xl border border-theme-border bg-theme-surface p-5 md:p-6 shadow-sm">
+      <h3 className="text-lg font-semibold text-theme-text">{title}</h3>
+      <p className="mt-1 text-sm text-theme-textSecondary">{description}</p>
+      <div className="mt-5 space-y-4">{children}</div>
+    </div>
+  );
+}
 
 export default function Settings() {
-  const { user, logout } = useAuth()
-  const { theme } = useTheme()
-  const [activeTab, setActiveTab] = useState("account")
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [testingKey, setTestingKey] = useState(false)
-  const [keyStatus, setKeyStatus] = useState(null)
+  const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [activeSection, setActiveSection] = useState("account");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [usageStats, setUsageStats] = useState({ analyzed: 0, reports: 0 });
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
 
-  const [settings, setSettings] = useState({
-    fullname: "", email: "", company: "", job_role: "",
-    email_alerts: true, weekly_reports: false, resume_match_alerts: true,
-    openai_api_key: "", dark_mode: true, accent_color: "indigo"
-  })
+  const [form, setForm] = useState({
+    fullname: "",
+    email: "",
+    avatar_url: "",
+    job_role: "Backend Developer",
+    email_alerts: true,
+    weekly_reports: false,
+    resume_match_alerts: true,
+    ...initialLocalPrefs,
+  });
 
-  const [passwords, setPasswords] = useState({
-    current_password: "", new_password: "", confirm_password: ""
-  })
+  const sections = useMemo(
+    () => [
+      { id: "account", label: "Account Settings", icon: User },
+      { id: "resume", label: "Resume Settings", icon: BriefcaseBusiness },
+      { id: "ai", label: "AI Settings", icon: Bot },
+      { id: "notifications", label: "Notifications", icon: Bell },
+      { id: "security", label: "Security", icon: Shield },
+      { id: "appearance", label: "Appearance", icon: Palette },
+      { id: "privacy", label: "Data & Privacy", icon: Lock },
+      { id: "billing", label: "Billing", icon: CreditCard },
+    ],
+    []
+  );
 
-  useEffect(() => { fetchSettings() }, [])
+  useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const [settingsRes, profileRes] = await Promise.all([
+          api.get("/settings"),
+          api.get("/profile/me"),
+        ]);
+        const localPrefsRaw = localStorage.getItem(LOCAL_PREFS_KEY);
+        const localPrefs = localPrefsRaw ? JSON.parse(localPrefsRaw) : {};
+        setForm((prev) => ({
+          ...prev,
+          ...settingsRes.data,
+          ...profileRes.data,
+          ...initialLocalPrefs,
+          ...localPrefs,
+          email: profileRes.data.email || settingsRes.data.email || user?.email || "",
+          job_role:
+            profileRes.data.job_role ||
+            settingsRes.data.job_role ||
+            localPrefs.job_role ||
+            "Backend Developer",
+        }));
+      } catch (error) {
+        toast.error("Could not load settings. Using saved local preferences.");
+      } finally {
+        setLoading(false);
+      }
 
-  const fetchSettings = async () => {
+      try {
+        const [activityRes, historyRes] = await Promise.all([
+          api.get("/profile/activity"),
+          api.get("/analyses"),
+        ]);
+        setUsageStats({
+          analyzed: historyRes.data?.length || activityRes.data?.total_analyzed || 0,
+          reports: activityRes.data?.reports_generated || 0,
+        });
+      } catch {
+        setUsageStats({ analyzed: 0, reports: 0 });
+      }
+    };
+    bootstrap();
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (loading) return;
+    const localSubset = {
+      ats_strictness: form.ats_strictness,
+      auto_suggestions: form.auto_suggestions,
+      ai_rewrite: form.ai_rewrite,
+      ai_mode: form.ai_mode,
+      tone: form.tone,
+      chatbot_memory: form.chatbot_memory,
+      two_fa: form.two_fa,
+      ui_density: form.ui_density,
+      weekly_tips: form.weekly_tips,
+      resume_analysis_alerts: form.resume_analysis_alerts,
+      job_role: form.job_role,
+    };
+    localStorage.setItem(LOCAL_PREFS_KEY, JSON.stringify(localSubset));
+  }, [form, loading]);
+
+  useEffect(() => {
+    if (form.ui_density === "Compact") {
+      document.documentElement.setAttribute("data-density", "compact");
+    } else {
+      document.documentElement.setAttribute("data-density", "comfortable");
+    }
+  }, [form.ui_density]);
+
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const saveAll = async () => {
+    setSaving(true);
+    const loadingToast = toast.loading("Saving preferences...");
     try {
-      const res = await api.get("/settings")
-      setSettings(res.data)
-      setKeyStatus(res.data.openai_api_key ? 'connected' : 'disconnected')
-    } catch { toast.error("Failed to load settings.") } finally { setLoading(false) }
-  }
+      await Promise.all([
+        api.put("/settings", {
+          fullname: form.fullname,
+          job_role: form.job_role,
+          email_alerts: form.email_alerts,
+          weekly_reports: form.weekly_reports,
+          resume_match_alerts: form.resume_match_alerts,
+          dark_mode: theme === "dark",
+        }),
+        api.put("/profile/me", {
+          fullname: form.fullname,
+          job_role: form.job_role,
+          email_alerts: form.email_alerts,
+          weekly_reports: form.weekly_reports,
+        }),
+      ]);
+      toast.success("Settings saved.", { id: loadingToast });
+    } catch {
+      toast.error("Failed to save some settings.", { id: loadingToast });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setSettings(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
-  }
-
-  const handlePasswordChange = (e) => setPasswords({ ...passwords, [e.target.name]: e.target.value })
-
-  const saveSettings = async () => {
-    setSaving(true)
-    const toastId = toast.loading("Syncing preferences...")
+  const uploadAvatar = async (file) => {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
     try {
-      await api.put("/settings", settings)
-      toast.success("Preferences updated.", { id: toastId })
-    } catch { toast.error("Sync failed.", { id: toastId }) } finally { setSaving(false) }
+      const res = await api.post("/profile/avatar", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      updateField("avatar_url", res.data.avatar_url);
+      toast.success("Profile image updated.");
+    } catch {
+      toast.error("Avatar upload failed.");
+    }
+  };
+
+  const changePassword = async () => {
+    if (!passwordForm.current_password || !passwordForm.new_password) {
+      toast.error("Fill current and new password.");
+      return;
+    }
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+    try {
+      await api.post("/profile/change-password", {
+        current_password: passwordForm.current_password,
+        new_password: passwordForm.new_password,
+      });
+      setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
+      toast.success("Password changed successfully.");
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || "Password update failed.");
+    }
+  };
+
+  const logoutAllSessions = async () => {
+    try {
+      await api.post("/auth/logout-all-sessions");
+      logout();
+      toast.success("Logged out from all sessions.");
+    } catch {
+      toast.error("Could not log out all sessions.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm("Delete account permanently? This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      await api.delete("/auth/delete-account");
+      logout();
+      toast.success("Account deleted.");
+    } catch {
+      toast.error("Account deletion failed.");
+    }
+  };
+
+  const downloadData = async () => {
+    try {
+      const res = await api.get("/settings/export-data");
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], {
+        type: "application/json",
+      });
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = "hiresense-data-export.json";
+      anchor.click();
+      URL.revokeObjectURL(href);
+      toast.success("Data export downloaded.");
+    } catch {
+      toast.error("Data export failed.");
+    }
+  };
+
+  const clearHistory = async () => {
+    const ok = window.confirm("Clear analysis history?");
+    if (!ok) return;
+    try {
+      await api.delete("/settings/clear-history");
+      toast.success("History cleared.");
+    } catch {
+      toast.error("Failed to clear history.");
+    }
+  };
+
+  const deleteAllResumes = async () => {
+    const ok = window.confirm("Delete all resumes?");
+    if (!ok) return;
+    try {
+      await api.delete("/settings/delete-all-resumes");
+      toast.success("All resumes deleted.");
+    } catch {
+      toast.error("Failed to delete resumes.");
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-theme-textSecondary">Loading settings...</div>;
   }
-
-  const TABS = [
-    { id: "account", label: "Profile Interface", icon: User },
-    { id: "security", label: "Access Protocol", icon: Shield },
-    { id: "notifications", label: "Event Routing", icon: Activity },
-    { id: "integrations", label: "Intelligence Core", icon: Zap },
-    { id: "data", label: "Data Inventory", icon: Database },
-  ]
-
-  if (loading) return null
 
   return (
-    <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row gap-0 h-full w-full bg-theme-bg font-sans overflow-hidden">
-      
-      {/* Settings Navigation */}
-      <div className="w-full md:w-[280px] shrink-0 border-r border-theme-border bg-theme-sidebar/20 p-8 space-y-12 h-full transition-colors duration-500 relative">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[30%] bg-theme-accent/5 blur-3xl pointer-events-none" />
-        
-        <div>
-           <div className="flex items-center gap-2 text-theme-accent font-black text-[10px] uppercase tracking-[0.2em] mb-4 opacity-70">
-              <Target size={12} />
-              <span>Control Panel</span>
-           </div>
-           <nav className="flex flex-col gap-2 relative z-10">
-             {TABS.map((tab) => (
-               <button
-                 key={tab.id}
-                 onClick={() => setActiveTab(tab.id)}
-                 className={`flex items-center gap-4 px-4 py-3 rounded-2xl text-[14px] font-bold transition-all group relative overflow-hidden ${
-                   activeTab === tab.id 
-                     ? "text-theme-text shadow-premium border border-theme-border bg-theme-surface" 
-                     : "text-theme-textSecondary hover:text-theme-text hover:bg-theme-hover"
-                 }`}
-               >
-                 {activeTab === tab.id && (
-                   <motion.div 
-                     layoutId="settings-active"
-                     className="absolute inset-0 bg-theme-accent/5"
-                     transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 30 }}
-                   />
-                 )}
-                 <tab.icon size={18} className={`relative z-10 transition-colors ${activeTab === tab.id ? "text-theme-accent shadow-accent-glow" : "text-theme-textSecondary group-hover:text-theme-text"}`} />
-                 <span className="relative z-10">{tab.label}</span>
-                 {activeTab === tab.id && <ChevronRight size={14} className="ml-auto opacity-30 relative z-10" />}
-               </button>
-             ))}
-           </nav>
-        </div>
-      </div>
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 md:flex-row">
+      <aside className="md:sticky md:top-6 md:h-fit md:w-[280px] rounded-2xl border border-theme-border bg-theme-sidebar/40 p-4">
+        <p className="mb-3 px-2 text-xs uppercase tracking-[0.2em] text-theme-textSecondary">
+          Preferences
+        </p>
+        <nav className="space-y-1">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            const active = activeSection === section.id;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => setActiveSection(section.id)}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                  active
+                    ? "bg-theme-surface text-theme-accent"
+                    : "text-theme-textSecondary hover:bg-theme-surface hover:text-theme-text"
+                }`}
+              >
+                <Icon size={16} />
+                <span>{section.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
 
-      {/* Settings Viewport */}
-      <div className="flex-1 p-12 overflow-y-auto bg-theme-bg relative overflow-x-hidden">
-        {/* Background Mesh Glow */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-theme-accent/5 blur-[120px] -mr-32 -mt-32 pointer-events-none" />
-        
+      <div className="flex-1 space-y-4 pb-12">
+        <div className="rounded-2xl border border-theme-border bg-theme-surface p-5 md:p-6">
+          <h1 className="text-2xl font-semibold text-theme-text">Settings & Preferences</h1>
+          <p className="mt-1 text-sm text-theme-textSecondary">
+            Configure your account, AI behavior, and privacy controls.
+          </p>
+        </div>
+
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-2xl relative z-10"
+            key={activeSection}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.18 }}
           >
-            {activeTab === "account" && (
-              <div className="space-y-10">
-                <div>
-                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Profile <span className="text-theme-accent">Interface</span></h1>
-                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Information provided here reflects across your collaborative workspace.</p>
-                </div>
-                
-                <div className="space-y-6">
-                   <div className="space-y-2">
-                      <label className="text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Legal Full Name</label>
-                      <input type="text" name="fullname" value={settings.fullname} onChange={handleChange} className="linear-input w-full px-4 py-3 border-theme-border/60 focus:bg-theme-surface" />
-                   </div>
-                   <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                         <label className="text-[11px] font-black uppercase tracking-[0.2em] opacity-30">Auth Identifier</label>
-                         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-theme-border bg-theme-bg/50 opacity-60">
-                            <Mail size={16} className="text-theme-textSecondary" />
-                            <span className="text-[13px] font-bold text-theme-textSecondary">{settings.email}</span>
-                         </div>
-                      </div>
-                      <div className="space-y-2">
-                         <label className="text-[11px] font-black text-theme-textSecondary uppercase tracking-[0.2em] opacity-50">Active Org Index</label>
-                         <input type="text" name="company" value={settings.company || ""} onChange={handleChange} className="linear-input w-full px-4 py-3 focus:bg-theme-surface" />
-                      </div>
-                   </div>
-                </div>
-
-                <div className="pt-8">
-                   <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-8 py-3.5 shadow-accent-glow flex items-center gap-2 group">
-                      <Zap size={16} fill="white" />
-                      <span className="text-[14px] font-black uppercase tracking-widest">{saving ? "Syncing..." : "Update Workspace Protocol"}</span>
-                   </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "security" && (
-              <div className="space-y-10">
-                <div>
-                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Access <span className="text-theme-accent">Protocol</span></h1>
-                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Rotation of encryption keys ensures the integrity of your candidate library.</p>
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="p-6 rounded-2xl bg-theme-surface/50 border border-theme-border backdrop-blur-sm relative group overflow-hidden">
-                     <div className="absolute top-0 right-0 p-6 opacity-5">
-                        <Shield size={64} />
-                     </div>
-                     <h4 className="text-[15px] font-black text-theme-text mb-4 flex items-center gap-2">
-                        <ShieldCheck size={18} className="text-success" />
-                        Multi-Factor Security Active
-                     </h4>
-                     <p className="text-[12px] text-theme-textSecondary font-medium leading-relaxed opacity-70 mb-6 italic">Secure rotation is recommended every 90 days. Next scheduled rotation: April 15, 2026.</p>
-                     
-                     <button className="linear-btn-secondary px-6 py-2.5 flex items-center gap-2 group">
-                        <Key size={14} />
-                        <span className="text-[13px] font-bold uppercase tracking-widest">Generate New key</span>
-                     </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "notifications" && (
-              <div className="space-y-10">
-                <div>
-                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Event <span className="text-theme-accent">Routing</span></h1>
-                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Configure high-fidelity automated alerts for pipeline velocity shifts.</p>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { name: "email_alerts", title: "Real-time Neural Alerts", desc: "Push notifications for new match discoveries." },
-                    { name: "resume_match_alerts", title: "Priority Match Thresholds", desc: "Trigger alerts when candidate efficiency exceeds 85%." },
-                    { name: "weekly_reports", title: "Analytics Summary Extract", desc: "Consolidated performance deep-dive every Monday." }
-                  ].map((item) => (
-                    <div key={item.name} className="flex items-center justify-between p-6 rounded-2xl bg-theme-surface/40 hover:bg-theme-surface border border-theme-border transition-all duration-300 group">
-                      <div className="max-w-md">
-                        <div className="flex items-center gap-2 mb-1">
-                           <p className="text-[14px] font-black text-theme-text group-hover:text-theme-accent transition-colors">{item.title}</p>
-                           {settings[item.name] && <span className="w-1.5 h-1.5 rounded-full bg-theme-accent animate-pulse" />}
-                        </div>
-                        <p className="text-[12px] text-theme-textSecondary font-medium opacity-60 italic leading-snug">{item.desc}</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" name={item.name} checked={settings[item.name]} onChange={handleChange} />
-                        <div className="w-10 h-5 bg-theme-sidebar border border-theme-border rounded-full peer peer-checked:bg-theme-accent peer-checked:border-theme-accent after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-theme-textSecondary peer-checked:after:bg-white peer-checked:after:translate-x-5 after:rounded-full after:h-3 after:w-3 after:transition-all"></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-
-                <button onClick={saveSettings} disabled={saving} className="linear-btn-primary px-8 py-3.5 shadow-accent-glow flex items-center gap-2 group">
-                  <Activity size={16} />
-                  <span className="text-[14px] font-black uppercase tracking-widest">Save Event Logic</span>
-                </button>
-              </div>
-            )}
-
-            {activeTab === "integrations" && (
-              <div className="space-y-10">
-                <div>
-                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Intelligence <span className="text-theme-accent">Core</span></h1>
-                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Manage the core LLM identifiers that power your semantic scoring engine.</p>
-                </div>
-
-                <div className="p-8 bg-theme-surface border border-theme-border rounded-3xl shadow-premium relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-8 opacity-5">
-                     <Zap size={128} />
-                  </div>
-                  <div className="flex items-center gap-3 mb-8">
-                     <div className="w-10 h-10 rounded-xl bg-theme-accent flex items-center justify-center text-white shadow-accent-glow">
-                        <Zap size={20} fill="white" />
-                     </div>
-                     <div>
-                        <h4 className="text-[16px] font-black text-theme-text flex items-center gap-3">
-                           OpenAI Protocol 4.0
-                           {keyStatus === 'connected' && <span className="px-2 py-0.5 bg-success/10 text-success text-[10px] rounded-full border border-success/20 uppercase font-black tracking-widest">Synchronized</span>}
-                        </h4>
-                        <p className="text-[12px] text-theme-textSecondary font-bold italic opacity-60">Deep semantic vectoring engine.</p>
-                     </div>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <input 
-                      type="password" name="openai_api_key" 
-                      value={settings.openai_api_key} onChange={handleChange} 
-                      placeholder="sk-neural-..."
-                      className="linear-input flex-1 px-4 py-3 font-mono text-[13px] bg-theme-bg"
+            {activeSection === "account" && (
+              <SectionCard title="Account Settings" description="Manage identity and account-level actions.">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="space-y-1">
+                    <span className="text-xs text-theme-textSecondary">Name</span>
+                    <input
+                      className="linear-input w-full px-3 py-2"
+                      value={form.fullname}
+                      onChange={(e) => updateField("fullname", e.target.value)}
                     />
-                    <button onClick={saveSettings} disabled={testingKey} className="linear-btn-secondary px-6 shrink-0 group">
-                      <Zap size={15} className="group-hover:animate-pulse" />
-                      <span className="text-[13px] font-black uppercase tracking-widest">Link</span>
-                    </button>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs text-theme-textSecondary">Email (readonly)</span>
+                    <input className="linear-input w-full px-3 py-2 opacity-70" value={form.email} readOnly />
+                  </label>
+                </div>
+                <div className="rounded-xl border border-theme-border bg-theme-bg p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={
+                          form.avatar_url
+                            ? `${API_BASE_URL}${form.avatar_url}`
+                            : "https://ui-avatars.com/api/?name=User&background=6366f1&color=fff"
+                        }
+                        alt="Profile"
+                        className="h-12 w-12 rounded-full object-cover"
+                      />
+                      <p className="text-sm text-theme-textSecondary">Upload profile image</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => uploadAvatar(e.target.files?.[0])}
+                      className="text-xs text-theme-textSecondary file:mr-3 file:rounded-lg file:border-0 file:bg-theme-accent file:px-3 file:py-2 file:text-white"
+                    />
                   </div>
                 </div>
-              </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <input
+                    type="password"
+                    placeholder="Current password"
+                    value={passwordForm.current_password}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({ ...prev, current_password: e.target.value }))
+                    }
+                    className="linear-input px-3 py-2"
+                  />
+                  <input
+                    type="password"
+                    placeholder="New password"
+                    value={passwordForm.new_password}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({ ...prev, new_password: e.target.value }))
+                    }
+                    className="linear-input px-3 py-2"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm password"
+                    value={passwordForm.confirm_password}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({ ...prev, confirm_password: e.target.value }))
+                    }
+                    className="linear-input px-3 py-2"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={changePassword} className="linear-btn-secondary px-4 py-2">
+                    Change Password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <UserRoundX size={14} /> Delete Account
+                    </span>
+                  </button>
+                </div>
+              </SectionCard>
             )}
-            
-            {activeTab === "data" && (
-              <div className="space-y-10">
-                <div>
-                   <h1 className="text-[32px] font-black text-theme-text tracking-tighter mb-2 italic">Data <span className="text-theme-accent">Inventory</span></h1>
-                   <p className="text-[14px] text-theme-textSecondary leading-relaxed font-medium">Export high-fidelity datasets or perform recursive core deletions.</p>
-                </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="p-6 border border-theme-border rounded-2xl hover:bg-theme-surface transition-all duration-300 flex items-center justify-between cursor-pointer group shadow-sm hover:shadow-premium">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-theme-bg border border-theme-border flex items-center justify-center text-theme-textSecondary group-hover:text-theme-accent transition-colors">
-                          <Download size={18} />
-                       </div>
-                       <div>
-                         <h4 className="text-[14px] font-black text-theme-text group-hover:text-theme-accent transition-colors">Dataset Export (.json)</h4>
-                         <p className="text-[11px] text-theme-textSecondary font-bold opacity-60 uppercase tracking-widest">Full recovery dump of matched nodes.</p>
-                       </div>
-                    </div>
-                    <ChevronRight size={18} className="text-theme-textSecondary opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            {activeSection === "resume" && (
+              <SectionCard title="Resume Settings" description="Control scoring and analysis defaults.">
+                <label className="space-y-1 block">
+                  <span className="text-xs text-theme-textSecondary">Default role</span>
+                  <select
+                    className="linear-input w-full px-3 py-2"
+                    value={form.job_role}
+                    onChange={(e) => updateField("job_role", e.target.value)}
+                  >
+                    {ROLE_OPTIONS.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1 block">
+                  <span className="text-xs text-theme-textSecondary">ATS strictness</span>
+                  <select
+                    className="linear-input w-full px-3 py-2"
+                    value={form.ats_strictness}
+                    onChange={(e) => updateField("ats_strictness", e.target.value)}
+                  >
+                    <option>Basic</option>
+                    <option>Standard</option>
+                    <option>Strict</option>
+                  </select>
+                </label>
+                <Toggle
+                  label="Auto suggestions"
+                  checked={form.auto_suggestions}
+                  onChange={(value) => updateField("auto_suggestions", value)}
+                />
+                <Toggle
+                  label="AI rewrite"
+                  checked={form.ai_rewrite}
+                  onChange={(value) => updateField("ai_rewrite", value)}
+                />
+              </SectionCard>
+            )}
+
+            {activeSection === "ai" && (
+              <SectionCard title="AI Settings" description="Tune quality, speed, and style of AI output.">
+                <label className="space-y-1 block">
+                  <span className="text-xs text-theme-textSecondary">AI mode</span>
+                  <select
+                    className="linear-input w-full px-3 py-2"
+                    value={form.ai_mode}
+                    onChange={(e) => updateField("ai_mode", e.target.value)}
+                  >
+                    <option>Fast</option>
+                    <option>Smart</option>
+                  </select>
+                </label>
+                <label className="space-y-1 block">
+                  <span className="text-xs text-theme-textSecondary">Tone</span>
+                  <select
+                    className="linear-input w-full px-3 py-2"
+                    value={form.tone}
+                    onChange={(e) => updateField("tone", e.target.value)}
+                  >
+                    <option>Professional</option>
+                    <option>Creative</option>
+                    <option>Concise</option>
+                  </select>
+                </label>
+                <Toggle
+                  label="Chatbot memory"
+                  checked={form.chatbot_memory}
+                  onChange={(value) => updateField("chatbot_memory", value)}
+                />
+              </SectionCard>
+            )}
+
+            {activeSection === "notifications" && (
+              <SectionCard title="Notifications" description="Decide which updates you receive and when.">
+                <Toggle
+                  label="Email alerts"
+                  checked={form.email_alerts}
+                  onChange={(value) => updateField("email_alerts", value)}
+                />
+                <Toggle
+                  label="Resume analysis alerts"
+                  checked={form.resume_match_alerts}
+                  onChange={(value) => updateField("resume_match_alerts", value)}
+                />
+                <Toggle
+                  label="Weekly tips"
+                  checked={form.weekly_tips}
+                  onChange={(value) => updateField("weekly_tips", value)}
+                />
+              </SectionCard>
+            )}
+
+            {activeSection === "security" && (
+              <SectionCard title="Security" description="Keep your account protected and controlled.">
+                <Toggle
+                  label="Enable 2FA"
+                  checked={form.two_fa}
+                  onChange={(value) => updateField("two_fa", value)}
+                />
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={changePassword} className="linear-btn-secondary px-4 py-2">
+                    Change Password
+                  </button>
+                  <button
+                    type="button"
+                    onClick={logoutAllSessions}
+                    className="rounded-lg border border-theme-border px-4 py-2 text-sm text-theme-text hover:bg-theme-bg"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LogOut size={14} /> Logout all sessions
+                    </span>
+                  </button>
+                </div>
+              </SectionCard>
+            )}
+
+            {activeSection === "appearance" && (
+              <SectionCard title="Appearance" description="Customize how the dashboard looks and feels.">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setTheme("light")}
+                    className={`rounded-xl border px-4 py-3 text-sm ${
+                      theme === "light"
+                        ? "border-theme-accent bg-theme-accent/10 text-theme-accent"
+                        : "border-theme-border text-theme-textSecondary"
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Sun size={15} /> Light mode
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme("dark")}
+                    className={`rounded-xl border px-4 py-3 text-sm ${
+                      theme === "dark"
+                        ? "border-theme-accent bg-theme-accent/10 text-theme-accent"
+                        : "border-theme-border text-theme-textSecondary"
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Moon size={15} /> Dark mode
+                    </span>
+                  </button>
+                </div>
+                <label className="space-y-1 block">
+                  <span className="text-xs text-theme-textSecondary">UI density</span>
+                  <select
+                    className="linear-input w-full px-3 py-2"
+                    value={form.ui_density}
+                    onChange={(e) => updateField("ui_density", e.target.value)}
+                  >
+                    <option>Comfortable</option>
+                    <option>Compact</option>
+                  </select>
+                </label>
+              </SectionCard>
+            )}
+
+            {activeSection === "privacy" && (
+              <SectionCard title="Data & Privacy" description="Control your data, history, and resume records.">
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={downloadData} className="linear-btn-secondary px-4 py-2">
+                    <span className="inline-flex items-center gap-2">
+                      <Download size={14} /> Download data
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearHistory}
+                    className="rounded-lg border border-theme-border px-4 py-2 text-sm text-theme-text hover:bg-theme-bg"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <RefreshCw size={14} /> Clear history
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deleteAllResumes}
+                    className="rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Trash2 size={14} /> Delete all resumes
+                    </span>
+                  </button>
+                </div>
+              </SectionCard>
+            )}
+
+            {activeSection === "billing" && (
+              <SectionCard title="Billing (UI)" description="Plan status and usage for your workspace.">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-theme-border bg-theme-bg p-4">
+                    <p className="text-xs text-theme-textSecondary">Current Plan</p>
+                    <p className="mt-1 text-lg font-semibold text-theme-text">Free</p>
                   </div>
-                  
-                  <div className="p-6 border border-error/10 bg-error/[0.02] rounded-2xl hover:bg-error/[0.05] hover:border-error/30 transition-all duration-300 flex items-center justify-between cursor-pointer group shadow-sm">
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-theme-bg border border-error/10 flex items-center justify-center text-error opacity-40 group-hover:opacity-100 transition-opacity">
-                          <Trash2 size={18} />
-                       </div>
-                       <div>
-                         <h4 className="text-[14px] font-black text-error">Purge Intelligence History</h4>
-                         <p className="text-[11px] text-error/60 font-bold uppercase tracking-widest">Recursive destruction of all parsing models.</p>
-                       </div>
-                    </div>
-                    <ChevronRight size={18} className="text-error/30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <div className="rounded-xl border border-theme-border bg-theme-bg p-4">
+                    <p className="text-xs text-theme-textSecondary">Resumes analyzed</p>
+                    <p className="mt-1 text-lg font-semibold text-theme-text">{usageStats.analyzed}</p>
+                  </div>
+                  <div className="rounded-xl border border-theme-border bg-theme-bg p-4">
+                    <p className="text-xs text-theme-textSecondary">Reports generated</p>
+                    <p className="mt-1 text-lg font-semibold text-theme-text">{usageStats.reports}</p>
                   </div>
                 </div>
-              </div>
+                <button
+                  type="button"
+                  className="rounded-lg bg-theme-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                  onClick={() => toast.success("Upgrade flow can be connected to Stripe later.")}
+                >
+                  Upgrade Plan
+                </button>
+              </SectionCard>
             )}
           </motion.div>
         </AnimatePresence>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={saveAll}
+            disabled={saving}
+            className="rounded-lg bg-theme-accent px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Save size={15} /> {saving ? "Saving..." : "Save Changes"}
+            </span>
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

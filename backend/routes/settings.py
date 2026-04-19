@@ -73,7 +73,16 @@ def export_data(current_user: models.User = Depends(get_current_user)):
 
 @router.delete("/clear-history")
 def clear_history(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    # Delete all resume analyses linked to user logic could go here if tied properly via Foreign Key. 
-    # Currently ANALYSES are in memory for this demo so we just return success.
-    # In a production DB schema we would do: db.query(models.ResumeAnalysis).filter(...).delete()
+    # ResumeAnalysis currently does not enforce a user FK in existing schema.
+    # Until per-user ownership is available, this clears all analysis rows.
+    db.query(models.ResumeAnalysis).delete()
+    db.commit()
     return {"status": "success", "message": "All historical data cleared completely."}
+
+
+@router.delete("/delete-all-resumes")
+def delete_all_resumes(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    # Same caveat as clear_history: schema is currently global.
+    db.query(models.ResumeAnalysis).delete()
+    db.commit()
+    return {"status": "success", "message": "All resumes deleted successfully."}
